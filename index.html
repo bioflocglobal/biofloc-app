@@ -147,12 +147,38 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
 .form-inp:focus{border-color:var(--acc)}
 .farms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.75rem;margin-bottom:1rem}
 /* ── FEED ── */
-.feed-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem}
-.feed-card{background:var(--card);border:1px solid var(--b1);border-radius:8px;padding:.8rem 1rem}
-.feed-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;padding-bottom:.5rem;border-bottom:1px solid var(--b1)}
-.cump-val{font-size:18px;font-weight:800;font-family:var(--mono);color:var(--gold);margin:.3rem 0}
-.batch-row{display:flex;gap:5px;align-items:center;margin-bottom:4px}
-.batch-row input{background:var(--inp);border:1px solid var(--b2);border-radius:4px;color:var(--acc);font-size:11px;padding:3px 5px;outline:none;font-family:var(--mono)}
+.feed-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+.feed-card{background:var(--card);border:1px solid var(--b1);border-radius:12px;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.55rem;transition:border-color .2s}
+.feed-card:hover{border-color:var(--b2)}
+.feed-header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:.6rem;border-bottom:1px solid var(--b1)}
+.feed-tag{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.4px}
+.feed-stage-pill{font-size:9px;color:var(--t3);background:rgba(255,255,255,.04);border:1px solid var(--b1);border-radius:10px;padding:2px 7px;margin-top:3px;display:inline-block}
+.cump-block{display:flex;align-items:flex-end;gap:.6rem;padding:.45rem .6rem;background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.15);border-radius:8px}
+.cump-val{font-size:20px;font-weight:800;font-family:var(--mono);color:var(--gold);line-height:1}
+.cump-label{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;line-height:1.4;padding-bottom:2px}
+.stock-bar-wrap{height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin-top:2px}
+.stock-bar-fill{height:100%;border-radius:3px;transition:width .4s}
+.batch-section-title{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;font-weight:700;display:flex;align-items:center;justify-content:space-between}
+.batch-list{display:flex;flex-direction:column;gap:4px;max-height:140px;overflow-y:auto;padding-right:2px}
+.batch-list::-webkit-scrollbar{width:3px}.batch-list::-webkit-scrollbar-track{background:transparent}.batch-list::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+.batch-row{display:flex;gap:5px;align-items:center;background:var(--inp);border-radius:6px;padding:3px 6px}
+.batch-row input{background:transparent;border:none;border-bottom:1px solid var(--b2);color:var(--t1);font-size:11px;padding:1px 3px;outline:none;font-family:var(--mono);min-width:0}
+.batch-row input:focus{border-bottom-color:var(--acc)}
+.batch-row .batch-sep{font-size:9px;color:var(--t3);white-space:nowrap;flex-shrink:0}
+.batch-add-row{display:flex;gap:5px;align-items:center;margin-top:2px;padding-top:.45rem;border-top:1px dashed var(--b1)}
+.batch-add-row input{background:var(--inp);border:1px solid var(--b2);border-radius:5px;color:var(--t2);font-size:11px;padding:3px 6px;outline:none;font-family:var(--mono);flex:1;min-width:0}
+.batch-add-row input:focus{border-color:var(--acc);color:var(--t1)}
+.feed-summary-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem}
+.feed-sum-card{background:var(--card);border:1px solid var(--b1);border-radius:10px;padding:.65rem .7rem;text-align:center}
+.feed-sum-name{font-size:9px;font-weight:700;margin-bottom:.3rem}
+.feed-sum-cump{font-size:14px;font-weight:800;font-family:var(--mono);color:var(--gold)}
+.feed-sum-stock{font-size:10px;color:var(--t3);margin-top:2px}
+/* Sous-onglets Espace Responsable */
+.rsp-tab{background:none;border:none;color:var(--t2);font-size:11px;font-weight:600;padding:5px 14px;border-radius:7px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.rsp-tab:hover{color:var(--t1);background:var(--hov)}
+.rsp-tab.active{background:var(--acc2);color:#fff}
+.rsp-pane{display:block}
+.rsp-pane.hidden{display:none!important}
 /* ── LOADER ── */
 #loader{position:fixed;inset:0;background:rgba(4,16,30,.88);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:1rem}
 #loader.show{display:flex}
@@ -425,7 +451,13 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
             <option value="alerte">Alertes</option>
             <option value="erreur">Erreurs</option>
           </select>
-          <input type="date" id="adm-journal-filter-date" class="di2" style="font-size:11px;padding:3px 8px" onchange="renderAdminJournal()">
+          <div style="display:flex;align-items:center;gap:4px;background:var(--panel);border:1px solid var(--b1);border-radius:6px;padding:3px 7px">
+            <span style="font-size:9px;color:var(--t3);white-space:nowrap">Du</span>
+            <input type="date" id="adm-journal-filter-from" class="di2" style="font-size:11px;padding:2px 5px;border:none;background:transparent;color:var(--t1)" onchange="renderAdminJournal()">
+            <span style="font-size:9px;color:var(--t3);white-space:nowrap">Au</span>
+            <input type="date" id="adm-journal-filter-to" class="di2" style="font-size:11px;padding:2px 5px;border:none;background:transparent;color:var(--t1)" onchange="renderAdminJournal()">
+            <button onclick="G('adm-journal-filter-from').value='';G('adm-journal-filter-to').value='';renderAdminJournal()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:10px;padding:0 2px" title="Effacer les dates">✕</button>
+          </div>
         </div>
         <button class="sbtn" style="background:var(--dng)" onclick="exportAdminJournalPDF()">📄 Exporter PDF</button>
       </div>
@@ -510,8 +542,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
     <button class="tb" onclick="sw('t7')">🏆 Récoltes</button>
     <button class="tb" onclick="sw('t8')">🖨️ Fiche Collecte</button>
     <button class="tb" onclick="sw('t9')" style="border-color:rgba(167,139,250,.4);color:var(--purp)" title="Module IoT — en préparation">📡 Capteurs IoT</button>
-    <button class="tb" id="tab-t10" onclick="sw('t10')" style="display:none;border-color:rgba(61,142,245,.4);color:var(--acc2)">🛠️ Administration</button>
-    <button class="tb" id="tab-t11" onclick="sw('t11')" style="border-color:rgba(0,201,167,.3);color:var(--acc)">📋 Journal</button>
+    <button class="tb" id="tab-t10" onclick="sw('t10')" style="display:none;border-color:rgba(61,142,245,.4);color:var(--acc2)">🛠️ Espace Responsable</button>
   </div>
   <div class="main">
 
@@ -604,13 +635,28 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
           </div>
           <div class="card">
             <div class="ctitle"><span class="dot"></span>Les 5 types d'aliment</div>
-            <p style="font-size:11px;color:var(--t2);line-height:1.8;margin-bottom:.6rem">Chaque bassin a son type d'aliment sélectionnable selon le stade de croissance. Gérez vos lots d'achat dans l'onglet <em>🌾 Aliments</em>.</p>
-            ${[['#a78bfa','Granulé 1','< 5 g','Stade larve / post-larve. Très petits granulés pour les premières semaines.'],
-               ['#34d399','Granulé 2','5 – 20 g','Stade juvénile. Début de croissance active.'],
-               ['#60a5fa','Granulé 3','20 – 150 g','Stade grossissement. Principal aliment de production.'],
-               ['#f59e0b','Granulé 4','200 – 400 g','Stade pré-finition. Poissons en forte prise de masse.'],
-               ['#f87171','Granulé 6','400 – 600 g','Stade finition. Phase finale avant récolte.']
-              ].map(([c,n,s,d])=>`<div style="display:flex;align-items:flex-start;gap:8px;padding:.45rem 0;border-bottom:1px solid var(--b1)"><div style="min-width:68px;font-weight:700;color:${c};font-size:11px;padding-top:1px">${n}</div><div><div style="font-size:10px;color:var(--acc);margin-bottom:2px">${s}</div><div style="font-size:11px;color:var(--t2)">${d}</div></div></div>`).join('')}
+            <p style="font-size:11px;color:var(--t2);line-height:1.8;margin-bottom:.9rem">
+              Chaque bassin se voit attribuer un type d'aliment selon le stade de croissance des poissons. Saisissez vos lots d'achat dans l'onglet <strong style="color:var(--t1)">🌾 Aliments</strong> — le <strong style="color:var(--gold)">CUMP</strong> est calculé automatiquement.
+            </p>
+            ${[
+              {c:'#a78bfa', id:'G1', n:'Granulé 1', s:'< 5 g',      icon:'🥚', label:'Larve / Post-larve',   d:'Très petits granulés pour les premières semaines d\'élevage. Phase critique de démarrage.',    tip:'Soyez attentif à la qualité de l\'eau pendant cette phase.'},
+              {c:'#34d399', id:'G2', n:'Granulé 2', s:'5 – 20 g',   icon:'🐟', label:'Juvénile',             d:'Début de croissance active. Le poisson commence à prendre du poids rapidement.',              tip:'Vérifiez le taux d\'alimentation régulièrement.'},
+              {c:'#60a5fa', id:'G3', n:'Granulé 3', s:'20 – 150 g', icon:'🐠', label:'Grossissement',        d:'Principal aliment de production. Stade le plus long. Optimisez le FCR pour réduire les coûts.', tip:'Type le plus utilisé — stockez en quantité suffisante.'},
+              {c:'#f59e0b', id:'G4', n:'Granulé 4', s:'200 – 400 g',icon:'🐡', label:'Pré-finition',         d:'Poissons en forte prise de masse. Aliment plus dense en énergie pour la phase finale.',        tip:'Surveillez la biomasse et ajustez les rations.'},
+              {c:'#f87171', id:'G6', n:'Granulé 6', s:'400 – 600 g',icon:'🎣', label:'Finition',             d:'Phase finale avant récolte. L\'objectif est d\'atteindre le poids de commercialisation optimal.', tip:'Préparez la récolte dès que le poids cible est atteint.'}
+            ].map(({c,id,n,s,icon,label,d,tip})=>`
+            <div style="display:flex;gap:12px;padding:.7rem 0;border-bottom:1px solid var(--b1);align-items:flex-start">
+              <div style="min-width:38px;height:38px;border-radius:10px;background:${c}18;border:1px solid ${c}30;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${icon}</div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">
+                  <span style="font-weight:700;font-size:12px;color:${c}">${n}</span>
+                  <span style="font-size:9px;padding:1px 7px;border-radius:10px;background:${c}15;color:${c};font-weight:700;border:1px solid ${c}25">${s}</span>
+                  <span style="font-size:9px;color:var(--t3)">${label}</span>
+                </div>
+                <div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:3px">${d}</div>
+                <div style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:4px"><span style="color:${c}">💡</span>${tip}</div>
+              </div>
+            </div>`).join('')}
           </div>
         </div>
       </div>
@@ -655,12 +701,31 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
 
     <!-- T2 ALIMENTS -->
     <div id="t2" class="pane">
-      <div class="card">
-        <div class="ctitle"><span class="dot"></span>Gestion des 5 types d'aliment — CUMP automatique</div>
-        <p style="font-size:11px;color:var(--t2);margin-bottom:.75rem">Saisissez vos lots d'achat. Le CUMP (Coût Unitaire Moyen Pondéré) est calculé automatiquement.</p>
-        <div class="feed-grid" id="feed-grid"></div>
+      <!-- Explication rapide -->
+      <div class="card" style="padding:.75rem 1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;border-color:rgba(251,191,36,.2)">
+        <div style="font-size:22px">🌾</div>
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:2px">Gestion des 5 types d'aliment — CUMP automatique</div>
+          <div style="font-size:10px;color:var(--t2);line-height:1.7">Saisissez vos <strong style="color:var(--t1)">lots d'achat</strong> (quantité + prix unitaire) pour chaque type. Le <strong style="color:var(--gold)">CUMP</strong> (Coût Unitaire Moyen Pondéré) est recalculé automatiquement à chaque ajout. Chaque bassin peut se voir attribuer un type d'aliment dans l'onglet Config Bassins.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+          <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.8px">Types disponibles</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
+            <span style="font-size:9px;padding:2px 7px;border-radius:10px;background:rgba(167,139,250,.15);color:#a78bfa;font-weight:700">G1 &lt;5g</span>
+            <span style="font-size:9px;padding:2px 7px;border-radius:10px;background:rgba(52,211,153,.15);color:#34d399;font-weight:700">G2 5-20g</span>
+            <span style="font-size:9px;padding:2px 7px;border-radius:10px;background:rgba(96,165,250,.15);color:#60a5fa;font-weight:700">G3 20-150g</span>
+            <span style="font-size:9px;padding:2px 7px;border-radius:10px;background:rgba(245,158,11,.15);color:#f59e0b;font-weight:700">G4 200-400g</span>
+            <span style="font-size:9px;padding:2px 7px;border-radius:10px;background:rgba(248,113,113,.15);color:#f87171;font-weight:700">G6 400-600g</span>
+          </div>
+        </div>
       </div>
-      <div class="card"><div class="ctitle"><span class="dot"></span>Résumé stock aliments</div><div class="mgrid" id="feed-metrics"></div></div>
+      <!-- Grille des 5 types -->
+      <div class="feed-grid" id="feed-grid"></div>
+      <!-- Résumé bas de page -->
+      <div class="card">
+        <div class="ctitle" style="margin-bottom:.7rem"><span class="dot"></span>Résumé — CUMP &amp; Stock par type</div>
+        <div class="feed-summary-grid" id="feed-metrics"></div>
+      </div>
     </div>
 
     <!-- T3 SUIVI CROISSANCE -->
@@ -893,70 +958,113 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
       </div>
     </div>
 
-    <!-- T10 ADMINISTRATION RESPONSABLE -->
+    <!-- T10 ESPACE RESPONSABLE (Administration + Journal fusionnés) -->
     <div id="t10" class="pane">
-      <div class="card">
-        <div class="ctitle"><span class="dot"></span>Créer un opérateur pour cette ferme</div>
-        <div class="admin-form">
-          <div class="form-group"><div class="form-lbl">Nom complet</div><input id="r-nu-name" class="form-inp" placeholder="Ex: Jean Dupont"></div>
-          <div class="form-group"><div class="form-lbl">Nom d'utilisateur (login)</div><input id="r-nu-user" class="form-inp" placeholder="Ex: jean" style="text-transform:lowercase"></div>
-          <div class="form-group"><div class="form-lbl">Mot de passe</div><input id="r-nu-pass" class="form-inp" type="password" placeholder="Min. 6 caractères"></div>
-          <div class="form-group"><div class="form-lbl">Permission sauvegarde</div>
-            <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-              <input type="checkbox" id="r-nu-backup" style="width:16px;height:16px;accent-color:var(--acc2)">
-              <span style="font-size:11px;color:var(--t2)">Autoriser backup &amp; restauration</span>
+      <!-- Sous-navigation interne -->
+      <div style="display:flex;gap:4px;margin-bottom:.9rem;background:var(--panel);border:1px solid var(--b1);border-radius:10px;padding:4px;width:fit-content">
+        <button id="rsp-tab-ops" class="rsp-tab active" onclick="swResp('ops')">👥 Opérateurs</button>
+        <button id="rsp-tab-bkp" class="rsp-tab" onclick="swResp('bkp')">💾 Sauvegardes</button>
+        <button id="rsp-tab-log" class="rsp-tab" onclick="swResp('log')">📋 Journal</button>
+      </div>
+
+      <!-- SOUS-ONGLET : OPÉRATEURS -->
+      <div id="rsp-ops" class="rsp-pane">
+        <div class="two">
+          <div class="card">
+            <div class="ctitle"><span class="dot"></span>Créer un opérateur</div>
+            <div class="admin-form">
+              <div class="form-group"><div class="form-lbl">Nom complet</div><input id="r-nu-name" class="form-inp" placeholder="Ex: Jean Dupont"></div>
+              <div class="form-group"><div class="form-lbl">Nom d'utilisateur (login)</div><input id="r-nu-user" class="form-inp" placeholder="Ex: jean" style="text-transform:lowercase"></div>
+              <div class="form-group"><div class="form-lbl">Mot de passe</div><input id="r-nu-pass" class="form-inp" type="password" placeholder="Min. 6 caractères"></div>
+              <div class="form-group"><div class="form-lbl">Permission sauvegarde</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+                  <input type="checkbox" id="r-nu-backup" style="width:16px;height:16px;accent-color:var(--acc2)">
+                  <span style="font-size:11px;color:var(--t2)">Autoriser backup &amp; restauration</span>
+                </div>
+              </div>
+            </div>
+            <button class="sbtn" onclick="respCreateOperator()">+ Créer l'opérateur</button>
+            <div id="r-nu-msg" style="font-size:11px;margin-top:.5rem"></div>
+          </div>
+          <div class="card">
+            <div class="ctitle"><span class="dot"></span>Opérateurs de cette ferme</div>
+            <div class="tw"><table>
+              <thead><tr><th>Nom</th><th>Username</th><th>Backup</th><th>Actions</th></tr></thead>
+              <tbody id="resp-users-tbody"></tbody>
+            </table></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SOUS-ONGLET : SAUVEGARDES -->
+      <div id="rsp-bkp" class="rsp-pane hidden">
+        <div class="card" style="max-width:520px">
+          <div class="ctitle"><span class="dot"></span>💾 Sauvegarde &amp; Restauration — <span id="rsp-bkp-farmcode" style="color:var(--acc2)"></span></div>
+          <p style="font-size:11px;color:var(--t2);line-height:1.8;margin-bottom:.85rem">
+            Téléchargez une copie complète des données de votre ferme. En cas de problème ou de perte de données, restaurez depuis un fichier de backup existant.
+          </p>
+          <div style="display:flex;flex-direction:column;gap:.6rem">
+            <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem;background:rgba(61,142,245,.07);border:1px solid rgba(61,142,245,.2);border-radius:8px">
+              <div style="font-size:22px">⬇️</div>
+              <div style="flex:1">
+                <div style="font-size:12px;font-weight:700;color:var(--t1)">Sauvegarder</div>
+                <div style="font-size:10px;color:var(--t2)">Exporte bassins, suivi, aliments et données journalières en fichier JSON</div>
+              </div>
+              <button class="sbtn" style="background:var(--acc2);flex-shrink:0" onclick="downloadBackupFarm()">Sauvegarder</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem;background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.2);border-radius:8px">
+              <div style="font-size:22px">⬆️</div>
+              <div style="flex:1">
+                <div style="font-size:12px;font-weight:700;color:var(--t1)">Restaurer</div>
+                <div style="font-size:10px;color:var(--warn)">⚠️ Remplace toutes les données actuelles de la ferme</div>
+              </div>
+              <button class="sbtn" style="background:var(--purp);flex-shrink:0" onclick="G('restore-file-resp').click()">Restaurer</button>
+              <input type="file" id="restore-file-resp" accept=".json" style="display:none" onchange="restoreBackupFarm(this)">
             </div>
           </div>
         </div>
-        <button class="sbtn" onclick="respCreateOperator()">+ Créer l'opérateur</button>
-        <div id="r-nu-msg" style="font-size:11px;margin-top:.5rem"></div>
       </div>
-      <div class="card">
-        <div class="ctitle"><span class="dot"></span>Opérateurs de cette ferme</div>
-        <div class="tw"><table>
-          <thead><tr><th>Nom</th><th>Username</th><th>Backup</th><th>Actions</th></tr></thead>
-          <tbody id="resp-users-tbody"></tbody>
-        </table></div>
-      </div>
-      <div class="card">
-        <div class="ctitle"><span class="dot"></span>💾 Sauvegarde &amp; Restauration</div>
-        <div style="display:flex;gap:.5rem">
-          <button class="sbtn" style="background:var(--acc2)" onclick="downloadBackupFarm()">⬇️ Sauvegarder</button>
-          <button class="sbtn" style="background:var(--purp)" onclick="G('restore-file-resp').click()">⬆️ Restaurer</button>
-          <input type="file" id="restore-file-resp" accept=".json" style="display:none" onchange="restoreBackupFarm(this)">
+
+      <!-- SOUS-ONGLET : JOURNAL -->
+      <div id="rsp-log" class="rsp-pane hidden">
+        <!-- Filtres -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-bottom:.75rem">
+          <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+            <select id="journal-filter-type" class="si" style="font-size:11px" onchange="renderJournal()">
+              <option value="">Tous les événements</option>
+              <option value="connexion">Connexions</option>
+              <option value="modification">Modifications</option>
+              <option value="sauvegarde">Sauvegardes</option>
+              <option value="alerte">Alertes</option>
+              <option value="erreur">Erreurs</option>
+            </select>
+            <select id="journal-filter-user" class="si" style="font-size:11px" onchange="renderJournal()">
+              <option value="">Tous les utilisateurs</option>
+            </select>
+            <div style="display:flex;align-items:center;gap:4px;background:var(--panel);border:1px solid var(--b1);border-radius:6px;padding:3px 7px">
+              <span style="font-size:9px;color:var(--t3);white-space:nowrap">Du</span>
+              <input type="date" id="journal-filter-from" class="di2" style="font-size:11px;padding:2px 5px;border:none;background:transparent;color:var(--t1)" onchange="renderJournal()">
+              <span style="font-size:9px;color:var(--t3);white-space:nowrap">Au</span>
+              <input type="date" id="journal-filter-to" class="di2" style="font-size:11px;padding:2px 5px;border:none;background:transparent;color:var(--t1)" onchange="renderJournal()">
+              <button onclick="G('journal-filter-from').value='';G('journal-filter-to').value='';renderJournal()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:10px;padding:0 2px" title="Effacer les dates">✕</button>
+            </div>
+          </div>
+          <button class="sbtn" style="background:var(--dng)" onclick="exportJournalPDF()">📄 Exporter PDF</button>
+        </div>
+        <div id="journal-metrics" class="mgrid" style="margin-bottom:.75rem"></div>
+        <div class="tw" style="max-height:460px;overflow-y:auto">
+          <table id="journal-table">
+            <thead><tr>
+              <th>Date &amp; Heure</th><th>Utilisateur</th><th>Type</th><th>Action</th><th>Détail</th><th>Appareil</th>
+            </tr></thead>
+            <tbody id="journal-tbody"></tbody>
+          </table>
         </div>
       </div>
     </div>
 
-    <!-- T11 JOURNAL D'AUDIT -->
-    <div id="t11" class="pane">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-bottom:.75rem">
-        <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
-          <select id="journal-filter-type" class="si" style="font-size:11px" onchange="renderJournal()">
-            <option value="">Tous les événements</option>
-            <option value="connexion">Connexions</option>
-            <option value="modification">Modifications</option>
-            <option value="sauvegarde">Sauvegardes</option>
-            <option value="alerte">Alertes</option>
-            <option value="erreur">Erreurs</option>
-          </select>
-          <select id="journal-filter-user" class="si" style="font-size:11px" onchange="renderJournal()">
-            <option value="">Tous les utilisateurs</option>
-          </select>
-          <input type="date" id="journal-filter-date" class="di2" style="font-size:11px;padding:3px 8px" onchange="renderJournal()">
-        </div>
-        <button class="sbtn" style="background:var(--dng)" onclick="exportJournalPDF()">📄 Exporter PDF</button>
-      </div>
-      <div id="journal-metrics" class="mgrid" style="margin-bottom:.75rem"></div>
-      <div class="tw" style="max-height:500px;overflow-y:auto">
-        <table id="journal-table">
-          <thead><tr>
-            <th>Date &amp; Heure</th><th>Utilisateur</th><th>Type</th><th>Action</th><th>Détail</th><th>Appareil</th>
-          </tr></thead>
-          <tbody id="journal-tbody"></tbody>
-        </table>
-      </div>
-    </div>
+    <!-- T11 — désactivé, contenu fusionné dans T10 -->
+    <div id="t11" class="pane" style="display:none"></div>
 
   </div>
 </div>
@@ -1688,7 +1796,16 @@ function sw(id){
   if(id==='t2')renderFeed();if(id==='t3')renderChart();if(id==='t4')upLog();
   if(id==='t5')upCompta();if(id==='t6')upCons();if(id==='t7')renderRecoltes();
   if(id==='t8')renderFiche();if(id==='t9')renderIoT();
-  if(id==='t10')renderRespAdmin();if(id==='t11')renderJournal();
+  if(id==='t10'){renderRespAdmin();const fc=G('rsp-bkp-farmcode');if(fc)fc.textContent=APP.farmCode||'';}
+}
+
+// Sous-onglets Espace Responsable
+function swResp(tab){
+  ['ops','bkp','log'].forEach(t=>{
+    const p=G('rsp-'+t);if(p){p.classList.toggle('hidden',t!==tab);}
+    const b=G('rsp-tab-'+t);if(b){b.classList.toggle('active',t===tab);}
+  });
+  if(tab==='log')renderJournal();
 }
 
 // ═══════════════════════════════════════════════
@@ -1898,51 +2015,118 @@ function upConfigCalcs(){
 function renderFeed(){
   const grid=G('feed-grid');if(!grid)return;grid.innerHTML='';
   FEED_TYPES.forEach((ft,fi)=>{
-    const c=cump(ft),tq=ft.batches.reduce((s,b)=>s+b.qty,0);
-    const div=document.createElement('div');div.className='feed-card';
-    div.innerHTML=`<div class="feed-header"><div><div style="font-weight:700;font-size:12px;color:${ft.color}">${ft.name}</div><div style="font-size:9px;color:var(--t3)">${ft.stage}</div></div><div class="badge b-gold">${xof(c)}/kg</div></div>
-      <div class="cump-val">${c>0?xof(c):'—'}</div>
-      <div style="font-size:9px;color:var(--t3);margin-bottom:.5rem">CUMP | Stock : ${tq.toLocaleString()} kg</div>
-      <div style="font-size:9px;color:var(--t2);margin-bottom:.4rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px">Lots d'achat</div>
-      <div id="batches-${fi}"></div>
-      <div class="batch-row" style="margin-top:.5rem">
-        <input type="number" id="nqty-${fi}" placeholder="Qté (kg)" style="width:72px">
-        <input type="number" id="nprice-${fi}" placeholder="Prix/kg XOF" style="width:90px">
-        <button class="sbtn" style="padding:3px 9px;font-size:10px" onclick="addBatch(${fi})">+ Lot</button>
+    const c=cump(ft);
+    const tq=ft.batches.reduce((s,b)=>s+b.qty,0);
+    // Stock bar : max basé sur 500 kg pour l'indicateur visuel
+    const pct=Math.min(100,Math.round(tq/500*100));
+    const barColor=pct>60?ft.color:pct>25?'var(--warn)':'var(--dng)';
+    const div=document.createElement('div');
+    div.className='feed-card';
+    div.style.borderTopColor=ft.color;
+    div.style.borderTopWidth='2px';
+    div.innerHTML=`
+      <!-- EN-TÊTE -->
+      <div class="feed-header">
+        <div>
+          <div class="feed-tag" style="background:${ft.color}18;color:${ft.color};border:1px solid ${ft.color}30">
+            <span style="width:7px;height:7px;border-radius:50%;background:${ft.color};display:inline-block;flex-shrink:0"></span>
+            ${ft.name}
+          </div>
+          <div class="feed-stage-pill">🐟 Poisson ${ft.stage}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:9px;color:var(--t3);margin-bottom:2px">Stock total</div>
+          <div style="font-size:13px;font-weight:800;font-family:var(--mono);color:${tq>0?'var(--t1)':'var(--t3)'}">${tq>0?tq.toLocaleString()+' kg':'—'}</div>
+          <div class="stock-bar-wrap" style="width:70px;margin-left:auto;margin-top:4px">
+            <div class="stock-bar-fill" style="width:${pct}%;background:${barColor}"></div>
+          </div>
+        </div>
+      </div>
+      <!-- CUMP -->
+      <div class="cump-block">
+        <div>
+          <div class="cump-label">CUMP calculé</div>
+          <div class="cump-val" id="cump-val-${fi}">${c>0?xof(c):'—'}</div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div style="font-size:9px;color:var(--t3)">par kg</div>
+          ${ft.batches.length>1?`<div style="font-size:9px;color:var(--t2);margin-top:2px">${ft.batches.length} lots</div>`:''}
+        </div>
+      </div>
+      <!-- LOTS EXISTANTS -->
+      <div>
+        <div class="batch-section-title">
+          <span>Lots d'achat</span>
+          <span style="color:var(--t3);font-weight:400">${ft.batches.length} lot${ft.batches.length>1?'s':''}</span>
+        </div>
+        <div class="batch-list" id="batches-${fi}" style="margin-top:.35rem"></div>
+      </div>
+      <!-- AJOUT LOT -->
+      <div class="batch-add-row">
+        <input type="number" id="nqty-${fi}" placeholder="Quantité (kg)" min="0" step="1">
+        <input type="number" id="nprice-${fi}" placeholder="Prix/kg (XOF)" min="0" step="1">
+        <button class="sbtn" style="padding:4px 10px;font-size:10px;white-space:nowrap;flex-shrink:0" onclick="addBatch(${fi})">+ Lot</button>
       </div>`;
-    grid.appendChild(div);renderBatches(fi);
+    grid.appendChild(div);
+    renderBatches(fi);
   });
   renderFeedMetrics();
 }
+
 function renderBatches(fi){
-  const ft=FEED_TYPES[fi],el=G(`batches-${fi}`);if(!el)return;el.innerHTML='';
+  const ft=FEED_TYPES[fi],el=G(`batches-${fi}`);if(!el)return;
+  if(ft.batches.length===0){
+    el.innerHTML=`<div style="font-size:10px;color:var(--t3);padding:.35rem 0;text-align:center;font-style:italic">Aucun lot enregistré</div>`;
+    return;
+  }
+  el.innerHTML='';
   ft.batches.forEach((b,bi)=>{
-    const row=document.createElement('div');row.className='batch-row';
-    row.innerHTML=`<input type="number" value="${b.qty}" style="width:62px" onchange="FEED_TYPES[${fi}].batches[${bi}].qty=+this.value;renderFeedCard(${fi})">
-      <span style="font-size:9px;color:var(--t3)">kg @</span>
-      <input type="number" value="${b.price}" style="width:78px" onchange="FEED_TYPES[${fi}].batches[${bi}].price=+this.value;renderFeedCard(${fi})">
-      <span style="font-size:9px;color:var(--t3)">XOF</span>
-      <button class="dbtn" onclick="removeBatch(${fi},${bi})">✕</button>`;
+    const row=document.createElement('div');
+    row.className='batch-row';
+    row.innerHTML=`
+      <span style="font-size:9px;color:var(--t3);min-width:16px;text-align:right">#${bi+1}</span>
+      <input type="number" value="${b.qty}" style="width:58px;text-align:right" title="Quantité (kg)"
+        onchange="FEED_TYPES[${fi}].batches[${bi}].qty=+this.value;renderFeedCard(${fi})">
+      <span class="batch-sep">kg &nbsp;@</span>
+      <input type="number" value="${b.price}" style="width:72px;text-align:right" title="Prix unitaire (XOF/kg)"
+        onchange="FEED_TYPES[${fi}].batches[${bi}].price=+this.value;renderFeedCard(${fi})">
+      <span class="batch-sep">XOF/kg</span>
+      <button class="dbtn" style="padding:2px 6px;font-size:10px;margin-left:auto;flex-shrink:0" title="Supprimer ce lot" onclick="removeBatch(${fi},${bi})">✕</button>`;
     el.appendChild(row);
   });
 }
+
 function renderFeedCard(fi){
   const ft=FEED_TYPES[fi],c=cump(ft);
-  const cards=G('feed-grid')?.querySelectorAll('.feed-card');
-  if(cards&&cards[fi]){const cv=cards[fi].querySelector('.cump-val');if(cv)cv.textContent=c>0?xof(c):'—';const bv=cards[fi].querySelector('.badge');if(bv)bv.textContent=xof(c)+'/kg';}
+  const cv=G(`cump-val-${fi}`);if(cv)cv.textContent=c>0?xof(c):'—';
   renderBatches(fi);renderFeedMetrics();saveFeed();
 }
+
 function addBatch(fi){
-  const qty=parseFloat(G(`nqty-${fi}`)?.value)||0,price=parseFloat(G(`nprice-${fi}`)?.value)||0;
-  if(!qty||!price){alert('Saisir quantité et prix.');return;}
+  const qty=parseFloat(G(`nqty-${fi}`)?.value)||0;
+  const price=parseFloat(G(`nprice-${fi}`)?.value)||0;
+  if(!qty||!price){alert('⚠️ Saisir la quantité ET le prix avant d\'ajouter un lot.');return;}
   FEED_TYPES[fi].batches.push({id:batchId++,qty,price});
-  G(`nqty-${fi}`).value='';G(`nprice-${fi}`).value='';saveFeed();renderFeed();
+  G(`nqty-${fi}`).value='';G(`nprice-${fi}`).value='';
+  saveFeed();renderFeed();
 }
-function removeBatch(fi,bi){FEED_TYPES[fi].batches.splice(fi,1);saveFeed();renderFeed();}
+
+function removeBatch(fi,bi){
+  if(!confirm('Supprimer ce lot d\'achat ?'))return;
+  FEED_TYPES[fi].batches.splice(bi,1);
+  saveFeed();renderFeed();
+}
+
 function renderFeedMetrics(){
   const m=G('feed-metrics');if(!m)return;
-  m.innerHTML=FEED_TYPES.map(ft=>{const c=cump(ft),tq=ft.batches.reduce((s,b)=>s+b.qty,0);
-    return `<div class="met"><div class="mlbl" style="color:${ft.color}">${ft.name}</div><div class="mval" style="font-size:13px;color:var(--gold)">${c>0?xof(c):'—'}<br><span class="munit">${tq.toLocaleString()} kg</span></div></div>`;
+  m.innerHTML=FEED_TYPES.map(ft=>{
+    const c=cump(ft),tq=ft.batches.reduce((s,b)=>s+b.qty,0);
+    return `<div class="feed-sum-card" style="border-top:2px solid ${ft.color}">
+      <div class="feed-sum-name" style="color:${ft.color}">${ft.name}</div>
+      <div style="font-size:8px;color:var(--t3);margin-bottom:.3rem">${ft.stage}</div>
+      <div class="feed-sum-cump">${c>0?xof(c):'—'}</div>
+      <div class="feed-sum-stock">${tq>0?tq.toLocaleString()+' kg stock':'Aucun stock'}</div>
+    </div>`;
   }).join('');
 }
 
@@ -2610,35 +2794,48 @@ function renderJournal(){
   loadJournalData().then(()=>{
     const typeF=G('journal-filter-type')?.value||'';
     const userF=G('journal-filter-user')?.value||'';
-    const dateF=G('journal-filter-date')?.value||'';
+    const fromF=G('journal-filter-from')?.value||'';
+    const toF=G('journal-filter-to')?.value||'';
     let rows=APP_journal;
     if(typeF)rows=rows.filter(e=>e.type===typeF);
     if(userF)rows=rows.filter(e=>e.userName===userF);
-    if(dateF)rows=rows.filter(e=>e.timestampLocal&&e.timestampLocal.startsWith(dateF));
+    if(fromF||toF){
+      rows=rows.filter(e=>{
+        const d=(e.timestampLocal||'').substring(0,10);
+        if(!d)return false;
+        if(fromF&&toF)return d>=fromF&&d<=toF;
+        if(fromF)return d>=fromF;
+        if(toF)return d<=toF;
+        return true;
+      });
+    }
     const tb=G('journal-tbody');if(!tb)return;
+    const typeColor=(t)=>({connexion:'b-ok',modification:'b-warn',sauvegarde:'b-purp',alerte:'b-dng',erreur:'b-dng',connexion_echec:'b-dng'}[t]||'b-ok');
     tb.innerHTML=rows.map(e=>{
       const dt=e.timestamp?.toDate?.()?.toLocaleString('fr-FR')||e.timestampLocal?.replace('T',' ').substring(0,19)||'—';
-      const typeColor={connexion:'b-ok',modification:'b-warn',sauvegarde:'b-purp',alerte:'b-dng',erreur:'b-dng'}[e.type]||'b-ok';
       return `<tr>
         <td class="cf" style="white-space:nowrap">${dt}</td>
         <td class="cn">${e.userName||'—'}</td>
-        <td><span class="badge ${typeColor}" style="font-size:9px">${e.type||'—'}</span></td>
+        <td><span class="badge ${typeColor(e.type)}" style="font-size:9px">${e.type||'—'}</span></td>
         <td style="font-size:11px;color:var(--t1)">${e.action||'—'}</td>
         <td style="font-size:10px;color:var(--t2);max-width:200px">${e.detail||'—'}</td>
         <td style="font-size:10px;color:var(--t3)">${e.device||'—'}</td>
       </tr>`;
-    }).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:1rem">Aucun événement enregistré</td></tr>';
-    // Métriques
+    }).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:1rem">Aucun événement pour ces critères</td></tr>';
     const m=G('journal-metrics');
     if(m){
       const total=rows.length;
       const connexions=rows.filter(e=>e.type==='connexion').length;
       const modifs=rows.filter(e=>e.type==='modification').length;
+      const saves=rows.filter(e=>e.type==='sauvegarde').length;
       const alertes=rows.filter(e=>e.type==='alerte').length;
+      const periode=fromF&&toF?`${fromF===toF?fromF:fromF+' → '+toF}`:(fromF?'Depuis '+fromF:toF?'Jusqu\'au '+toF:'Toutes dates');
       m.innerHTML=`
-        <div class="met"><div class="mlbl">Total événements</div><div class="mval">${total}</div></div>
+        <div class="met"><div class="mlbl">Période</div><div class="mval" style="font-size:10px;color:var(--acc2)">${periode}</div></div>
+        <div class="met"><div class="mlbl">Total</div><div class="mval">${total}</div></div>
         <div class="met ok"><div class="mlbl">Connexions</div><div class="mval">${connexions}</div></div>
         <div class="met warn"><div class="mlbl">Modifications</div><div class="mval">${modifs}</div></div>
+        <div class="met"><div class="mlbl">Sauvegardes</div><div class="mval" style="color:var(--purp)">${saves}</div></div>
         <div class="met dng"><div class="mlbl">Alertes</div><div class="mval">${alertes}</div></div>`;
     }
   });
@@ -2647,43 +2844,50 @@ function renderJournal(){
 function exportJournalPDF(){
   const typeF=G('journal-filter-type')?.value||'';
   const userF=G('journal-filter-user')?.value||'';
-  const dateF=G('journal-filter-date')?.value||'';
+  const fromF=G('journal-filter-from')?.value||'';
+  const toF=G('journal-filter-to')?.value||'';
   let rows=APP_journal;
   if(typeF)rows=rows.filter(e=>e.type===typeF);
   if(userF)rows=rows.filter(e=>e.userName===userF);
-  if(dateF)rows=rows.filter(e=>e.timestampLocal&&e.timestampLocal.startsWith(dateF));
-
+  if(fromF||toF){
+    rows=rows.filter(e=>{
+      const d=(e.timestampLocal||'').substring(0,10);if(!d)return false;
+      if(fromF&&toF)return d>=fromF&&d<=toF;
+      if(fromF)return d>=fromF;if(toF)return d<=toF;return true;
+    });
+  }
+  const periode=fromF&&toF?(fromF===toF?`Le ${fromF}`:`Du ${fromF} au ${toF}`):(fromF?`Depuis ${fromF}`:toF?`Jusqu'au ${toF}`:'Toutes dates');
+  const typeColor=(t)=>({connexion:'b-ok',modification:'b-warn',sauvegarde:'b-purp',alerte:'b-dng',erreur:'b-dng',connexion_echec:'b-dng'}[t]||'b-ok');
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>Journal d'audit — ${APP.farmName||APP.farmCode}</title>
   <style>
     body{font-family:Arial,sans-serif;font-size:11px;color:#222;margin:20px}
     h1{font-size:16px;margin-bottom:4px}
-    .sub{font-size:10px;color:#666;margin-bottom:16px}
-    table{width:100%;border-collapse:collapse;margin-top:10px}
+    .sub{font-size:10px;color:#666;margin-bottom:6px}
+    .filtre{font-size:10px;background:#f0f0f0;padding:4px 8px;border-radius:4px;margin-bottom:14px;display:inline-block}
+    table{width:100%;border-collapse:collapse;margin-top:6px}
     th{background:#0e2236;color:#fff;padding:6px 8px;text-align:left;font-size:10px}
     td{padding:5px 8px;border-bottom:1px solid #ddd;font-size:10px}
     tr:nth-child(even){background:#f9f9f9}
     .badge{padding:2px 6px;border-radius:8px;font-size:9px;font-weight:700}
-    .b-ok{background:#d1fae5;color:#065f46}
-    .b-warn{background:#fef3c7;color:#92400e}
-    .b-dng{background:#fee2e2;color:#991b1b}
-    .b-purp{background:#ede9fe;color:#4c1d95}
+    .b-ok{background:#d1fae5;color:#065f46}.b-warn{background:#fef3c7;color:#92400e}
+    .b-dng{background:#fee2e2;color:#991b1b}.b-purp{background:#ede9fe;color:#4c1d95}
   </style></head><body>
   <h1>📋 Journal d'audit — ${APP.farmName||APP.farmCode}</h1>
   <div class="sub">Exporté le ${new Date().toLocaleString('fr-FR')} par ${APP.user?.name||'—'} — ${rows.length} événements</div>
-  <table><thead><tr><th>Date & Heure</th><th>Utilisateur</th><th>Rôle</th><th>Type</th><th>Action</th><th>Détail</th><th>Appareil</th></tr></thead>
+  <div class="filtre">Période : ${periode}${typeF?' | Type : '+typeF:''}${userF?' | Utilisateur : '+userF:''}</div>
+  <table><thead><tr><th>Date &amp; Heure</th><th>Utilisateur</th><th>Rôle</th><th>Type</th><th>Action</th><th>Détail</th><th>Appareil</th></tr></thead>
   <tbody>${rows.map(e=>{
     const dt=e.timestamp?.toDate?.()?.toLocaleString('fr-FR')||e.timestampLocal?.replace('T',' ').substring(0,19)||'—';
-    const typeColor={connexion:'b-ok',modification:'b-warn',sauvegarde:'b-purp',alerte:'b-dng',erreur:'b-dng'}[e.type]||'b-ok';
+    const tc=typeColor(e.type);
     return `<tr><td>${dt}</td><td><strong>${e.userName||'—'}</strong></td><td>${e.userRole||'—'}</td>
-      <td><span class="badge ${typeColor}">${e.type||'—'}</span></td>
+      <td><span class="badge ${tc}">${e.type||'—'}</span></td>
       <td>${e.action||'—'}</td><td>${e.detail||'—'}</td><td>${e.device||'—'}</td></tr>`;
   }).join('')}</tbody></table>
   </body></html>`;
-
   const win=window.open('','_blank');
-  win.document.write(html);
-  win.document.close();
+  if(!win){alert('⚠️ Autorisez les popups pour exporter le PDF.');return;}
+  win.document.write(html);win.document.close();
   setTimeout(()=>{win.print();},500);
 }
 
@@ -2852,14 +3056,12 @@ async function checkPasswordReset(firebaseUser){
 let ADM_JOURNAL=[];
 
 async function renderAdminJournal(){
-  // Charger les logs globaux
   try{
     const snap=await db.collection('superadmin').doc('auditLog').collection('logs')
       .orderBy('timestamp','desc').limit(500).get();
     ADM_JOURNAL=snap.docs.map(d=>({id:d.id,...d.data()}));
   }catch(e){console.warn('Admin journal load:',e);ADM_JOURNAL=[];}
 
-  // Peupler filtre fermes
   const farmSel=G('adm-journal-filter-farm');
   if(farmSel){
     const farms=[...new Set(ADM_JOURNAL.map(e=>e.farmCode).filter(Boolean))].sort();
@@ -2869,11 +3071,18 @@ async function renderAdminJournal(){
 
   const typeF=G('adm-journal-filter-type')?.value||'';
   const farmF=G('adm-journal-filter-farm')?.value||'';
-  const dateF=G('adm-journal-filter-date')?.value||'';
+  const fromF=G('adm-journal-filter-from')?.value||'';
+  const toF=G('adm-journal-filter-to')?.value||'';
   let rows=ADM_JOURNAL;
   if(typeF)rows=rows.filter(e=>e.type===typeF);
   if(farmF)rows=rows.filter(e=>e.farmCode===farmF);
-  if(dateF)rows=rows.filter(e=>e.timestampLocal&&e.timestampLocal.startsWith(dateF));
+  if(fromF||toF){
+    rows=rows.filter(e=>{
+      const d=(e.timestampLocal||'').substring(0,10);if(!d)return false;
+      if(fromF&&toF)return d>=fromF&&d<=toF;
+      if(fromF)return d>=fromF;if(toF)return d<=toF;return true;
+    });
+  }
 
   const tb=G('adm-journal-tbody');if(!tb)return;
   const typeColor=(t)=>({connexion:'b-ok',modification:'b-warn',sauvegarde:'b-purp',alerte:'b-dng',erreur:'b-dng',connexion_echec:'b-dng'}[t]||'b-ok');
@@ -2889,9 +3098,8 @@ async function renderAdminJournal(){
       <td style="font-size:10px;color:var(--t2);max-width:180px">${e.detail||'—'}</td>
       <td style="font-size:10px;color:var(--t3)">${e.device||'—'}</td>
     </tr>`;
-  }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--t3);padding:1rem">Aucun événement enregistré</td></tr>';
+  }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--t3);padding:1rem">Aucun événement pour ces critères</td></tr>';
 
-  // Métriques
   const m=G('adm-journal-metrics');
   if(m){
     const total=rows.length;
@@ -2899,11 +3107,13 @@ async function renderAdminJournal(){
     const echecs=rows.filter(e=>e.type==='connexion_echec').length;
     const modifs=rows.filter(e=>e.type==='modification').length;
     const saves=rows.filter(e=>e.type==='sauvegarde').length;
+    const periode=fromF&&toF?(fromF===toF?fromF:fromF+' → '+toF):(fromF?'Depuis '+fromF:toF?'Jusqu\'au '+toF:'Toutes dates');
     m.innerHTML=`
-      <div class="met"><div class="mlbl">Total événements</div><div class="mval">${total}</div></div>
+      <div class="met"><div class="mlbl">Période</div><div class="mval" style="font-size:10px;color:var(--acc2)">${periode}</div></div>
+      <div class="met"><div class="mlbl">Total</div><div class="mval">${total}</div></div>
       <div class="met ok"><div class="mlbl">Connexions réussies</div><div class="mval">${connexions}</div></div>
       <div class="met dng"><div class="mlbl">Tentatives échouées</div><div class="mval">${echecs}</div></div>
-      <div class="met warn"><div class="mlbl">Modifications données</div><div class="mval">${modifs}</div></div>
+      <div class="met warn"><div class="mlbl">Modifications</div><div class="mval">${modifs}</div></div>
       <div class="met"><div class="mlbl">Sauvegardes</div><div class="mval" style="color:var(--purp)">${saves}</div></div>`;
   }
 }
@@ -2911,13 +3121,21 @@ async function renderAdminJournal(){
 function exportAdminJournalPDF(){
   const typeF=G('adm-journal-filter-type')?.value||'';
   const farmF=G('adm-journal-filter-farm')?.value||'';
-  const dateF=G('adm-journal-filter-date')?.value||'';
+  const fromF=G('adm-journal-filter-from')?.value||'';
+  const toF=G('adm-journal-filter-to')?.value||'';
   let rows=ADM_JOURNAL;
   if(typeF)rows=rows.filter(e=>e.type===typeF);
   if(farmF)rows=rows.filter(e=>e.farmCode===farmF);
-  if(dateF)rows=rows.filter(e=>e.timestampLocal&&e.timestampLocal.startsWith(dateF));
+  if(fromF||toF){
+    rows=rows.filter(e=>{
+      const d=(e.timestampLocal||'').substring(0,10);if(!d)return false;
+      if(fromF&&toF)return d>=fromF&&d<=toF;
+      if(fromF)return d>=fromF;if(toF)return d<=toF;return true;
+    });
+  }
+  const periode=fromF&&toF?(fromF===toF?`Le ${fromF}`:`Du ${fromF} au ${toF}`):(fromF?`Depuis ${fromF}`:toF?`Jusqu'au ${toF}`:'Toutes dates');
   const typeColor=(t)=>({connexion:'b-ok',modification:'b-warn',sauvegarde:'b-purp',alerte:'b-dng',erreur:'b-dng',connexion_echec:'b-dng'}[t]||'b-ok');
-  const filtreStr=[typeF&&`Type: ${typeF}`,farmF&&`Ferme: ${farmF}`,dateF&&`Date: ${dateF}`].filter(Boolean).join(' | ')||'Aucun filtre';
+  const filtreStr=[`Période: ${periode}`,typeF&&`Type: ${typeF}`,farmF&&`Ferme: ${farmF}`].filter(Boolean).join(' | ');
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>Journal d'audit global — BIOFLOC</title>
   <style>
