@@ -329,6 +329,17 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
           <div class="form-group"><div class="form-lbl">Code ferme (unique)</div><input id="nf-code" class="form-inp" placeholder="Ex: FARM01" style="text-transform:uppercase"></div>
           <div class="form-group"><div class="form-lbl">Responsable</div><input id="nf-resp" class="form-inp" placeholder="Nom du responsable"></div>
           <div class="form-group"><div class="form-lbl">Localisation</div><input id="nf-loc" class="form-inp" placeholder="Ville / région"></div>
+          <div class="form-group">
+            <div class="form-lbl">🐟 Espèce élevée <span style="color:var(--dng);font-size:9px">(définitif — non modifiable après création)</span></div>
+            <select id="nf-species" class="form-inp si">
+              <option value="">-- Choisir une espèce --</option>
+              <option value="tilapia">🐟 Tilapia — Oreochromis niloticus</option>
+              <option value="clarias">🐠 Poisson-chat — Clarias gariepinus</option>
+              <option value="carpe">🐡 Carpe commune — Cyprinus carpio</option>
+              <option value="crevette">🦐 Crevette — Litopenaeus vannamei</option>
+              <option value="custom">⚙️ Espèce personnalisée</option>
+            </select>
+          </div>
         </div>
         <button class="sbtn" onclick="createFarm()">+ Créer la ferme</button>
         <div id="nf-msg" style="font-size:11px;margin-top:.5rem"></div>
@@ -336,7 +347,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
       <div class="card">
         <div class="ctitle"><span class="dot"></span>Fermes existantes</div>
         <div class="tw"><table>
-          <thead><tr><th>Code</th><th>Nom</th><th>Responsable</th><th>Localisation</th><th>Statut</th><th>Utilisateurs</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Code</th><th>Nom</th><th>Responsable</th><th>Localisation</th><th>Espèce</th><th>Statut</th><th>Utilisateurs</th><th>Actions</th></tr></thead>
           <tbody id="farms-table-body"></tbody>
         </table></div>
       </div>
@@ -1847,10 +1858,19 @@ async function doLogin(){
     const role=userData.role||'Opérateur';
     APP.user={uid:cred.user.uid,email,name:userData.name||username,role,farmCode,canBackup:userData.canBackup||false};
     APP.farmCode=farmCode;
-    // Load farm info
+    // Load farm info — species locked at farm creation by Super Admin
     const farmSnap=await db.collection('farms').doc(farmCode).get();
     if(!farmSnap.exists){await auth.signOut();throw new Error('Ferme introuvable');}
-    APP.farmName=farmSnap.data().name||farmCode;
+    const farmData=farmSnap.data();
+    APP.farmName=farmData.name||farmCode;
+    // Charger le profil espèce depuis la fiche ferme (verrouillé par le Super Admin)
+    if(farmData.speciesId==='custom'&&farmData.speciesCustom){
+      const idx=SPECIES_PROFILES.findIndex(s=>s.id==='custom');
+      if(idx>=0)SPECIES_PROFILES[idx]={...SPECIES_PROFILES[idx],...farmData.speciesCustom};
+      APP.species=SPECIES_PROFILES[idx>=0?idx:0];
+    } else {
+      APP.species=SPECIES_PROFILES.find(s=>s.id===farmData.speciesId)||SPECIES_PROFILES[0];
+    }
     // Check if password was reset by admin/responsable
     await checkPasswordReset(cred.user);
     await loadFarmData();
@@ -1939,6 +1959,8 @@ async function showFarmApp(){
     }
   }catch(e){console.warn('User profile load:',e);}
   G('sc-date').value=today();G('cons-d').value=today();
+  // Mettre à jour le badge espèce (déjà chargé au login depuis la fiche ferme)
+  updateSpeciesBadge();
   buildBTable();popSelects();renderFeed();
   upAll();upLog();upCompta();
   setupFarmListeners();
@@ -1946,7 +1968,6 @@ async function showFarmApp(){
   showScreen('screen-farm');
   startSession();
   loadSuppliersFromFirestore();
-  loadSpeciesFromFirestore();
   const role=APP.user?.role||'Opérateur';
   if(role==='Responsable'||role==='Administrateur'){
     checkNotifications();
@@ -1965,9 +1986,10 @@ function applyRoleRestrictions(){
   const canBackup=APP.user?.canBackup||false;
   const isOp=role==='Opérateur';
   const isResp=role==='Responsable';
+  const isAdmin=role==='Administrateur';
   const hasBackupRight=isResp||canBackup;
   document.querySelectorAll('#screen-farm .tb').forEach((btn,i)=>{
-    const tabId=['t0','t1','t2','t3','t4','t5','t6','t7','t8','t9','t10','t11'][i];
+    const tabId=['t0','t1','t2','t3','t4','t5','t6','t7','t8','t9','t10','t11','t12'][i];
     if(tabId==='t5'&&isOp){
       btn.style.opacity='0.35';btn.style.cursor='not-allowed';btn.title='Accès réservé au Responsable';
       btn.onclick=(e)=>{e.stopPropagation();alert('🔒 Accès restreint\nCet onglet est réservé au niveau Responsable.');};
@@ -1988,6 +2010,33 @@ function applyRoleRestrictions(){
     const icon=isResp?'⭐':canBackup?'💾':'👤';
     ub.textContent=icon+' '+APP.user.name+' — '+role+(canBackup&&isOp?' (backup)':'');
     ub.className='badge '+(isResp?'b-purp':'b-ok');
+  }
+  // Badge espèce — NON cliquable pour Responsable et Opérateur
+  // L'espèce est verrouillée par le Super Admin à la création de la ferme
+  const sb=G('species-badge');
+  if(sb){
+    if(!isAdmin){
+      sb.style.cursor='default';
+      sb.title='Espèce définie par l\'administrateur pour cette ferme';
+      sb.onclick=null;
+    } else {
+      sb.style.cursor='pointer';
+      sb.title='Cliquer pour modifier le profil d\'espèce';
+      sb.onclick=()=>openSpeciesModal();
+    }
+  }
+  // Bandeau t0 — cacher le bouton "Changer" pour non-admins
+  const bannerBtn=G('t0-species-banner')?.querySelector('div:last-child');
+  if(bannerBtn){
+    bannerBtn.style.display=isAdmin?'block':'none';
+  }
+  // T0 banner non cliquable pour non-admins
+  const banner=G('t0-species-banner');
+  if(banner&&!isAdmin){
+    banner.style.cursor='default';
+    banner.onclick=null;
+    banner.onmouseover=null;
+    banner.onmouseout=null;
   }
 }
 
@@ -2114,9 +2163,11 @@ function renderAdminOverview(){
   const users=window._users||[];
   overview.innerHTML=farms.map(f=>{
     const farmUsers=users.filter(u=>u.farmCode===f.code||u.farmCode===f.id);
+    const spProfile=SPECIES_PROFILES.find(s=>s.id===f.speciesId)||null;
     return `<div class="farm-card" onclick="swAdmin('ta1')">
       <div class="farm-code">${f.code||f.id}</div>
       <div class="farm-name">${f.name||f.id}</div>
+      ${spProfile?`<div style="margin:.25rem 0;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:8px;font-size:9px;font-weight:700;background:${spProfile.color}15;color:${spProfile.color};border:1px solid ${spProfile.color}25">${spProfile.icon} ${spProfile.nom}</div>`:''}
       <div class="farm-stats">
         <div class="farm-stat"><strong>${farmUsers.length}</strong> utilisateurs</div>
         <div class="farm-stat" style="margin-left:auto"><span class="badge b-ok">Actif</span></div>
@@ -2138,16 +2189,21 @@ function renderFarmsTable(){
   tb.innerHTML=farms.map(f=>{
     const fc=f.code||f.id;
     const fu=users.filter(u=>u.farmCode===fc).length;
+    const sp=SPECIES_PROFILES.find(s=>s.id===f.speciesId)||null;
+    const spBadge=sp
+      ?`<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:8px;font-size:9px;font-weight:700;background:${sp.color}15;color:${sp.color};border:1px solid ${sp.color}30">${sp.icon} ${sp.nom}</span>`
+      :'<span style="font-size:9px;color:var(--t3)">—</span>';
     return `<tr>
       <td><span class="badge b-gold" style="font-family:var(--mono)">${fc}</span></td>
       <td class="cn">${f.name||'—'}</td>
       <td class="cf">${f.responsable||'—'}</td>
       <td class="cf">${f.localisation||'—'}</td>
+      <td>${spBadge}</td>
       <td><span class="badge b-ok">Actif</span></td>
       <td class="cf">${fu}</td>
       <td><button class="dbtn" onclick="deleteFarm('${fc}')">Supprimer</button></td>
     </tr>`;
-  }).join('') || '<tr><td colspan="7" style="color:var(--t3);padding:.75rem;text-align:center">Aucune ferme</td></tr>';
+  }).join('') || '<tr><td colspan="8" style="color:var(--t3);padding:.75rem;text-align:center">Aucune ferme</td></tr>';
 }
 
 function renderUsersTable(){
@@ -2187,14 +2243,25 @@ function populateFarmSelects(){
 async function createFarm(){
   const name=G('nf-name').value.trim(),code=G('nf-code').value.trim().toUpperCase();
   const resp=G('nf-resp').value.trim(),loc=G('nf-loc').value.trim();
+  const speciesId=G('nf-species').value;
   const msg=G('nf-msg');
   if(!name||!code){msg.style.color='var(--dng)';msg.textContent='⚠️ Nom et code obligatoires';return;}
+  if(!speciesId){msg.style.color='var(--dng)';msg.textContent='⚠️ Sélectionnez une espèce pour cette ferme';return;}
+  const speciesProfile=SPECIES_PROFILES.find(s=>s.id===speciesId)||SPECIES_PROFILES[0];
   showLoader('Création de la ferme…');
   try{
-    await db.collection('farms').doc(code).set({name,code,responsable:resp,localisation:loc,createdAt:firebase.firestore.FieldValue.serverTimestamp(),active:true});
-    G('nf-name').value='';G('nf-code').value='';G('nf-resp').value='';G('nf-loc').value='';
+    await db.collection('farms').doc(code).set({
+      name,code,responsable:resp,localisation:loc,
+      speciesId,
+      speciesNom:speciesProfile.nom,
+      speciesIcon:speciesProfile.icon,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+      active:true
+    });
+    G('nf-name').value='';G('nf-code').value='';G('nf-resp').value='';G('nf-loc').value='';G('nf-species').value='';
+    await logAudit('modification',`Création ferme`,`${code} — espèce: ${speciesProfile.nom}`);
     await loadAdminDashboard();
-    msg.style.color='var(--acc)';msg.textContent='✅ Ferme "'+name+'" créée avec succès !';
+    msg.style.color='var(--acc)';msg.textContent=`✅ Ferme "${name}" (${speciesProfile.icon} ${speciesProfile.nom}) créée avec succès !`;
   }catch(e){msg.style.color='var(--dng)';msg.textContent='❌ Erreur : '+e.message;}
   hideLoader();
 }
@@ -3869,6 +3936,12 @@ function exportAdminJournalPDF(){
 let SELECTED_SPECIES_ID='tilapia'; // espèce sélectionnée dans le modal (avant confirm)
 
 function openSpeciesModal(){
+  // Verrouillé pour Responsable et Opérateur — espèce définie par le Super Admin à la création
+  const role=APP.user?.role||'Opérateur';
+  if(role!=='Administrateur'){
+    alert(`🔒 L'espèce élevée dans cette ferme est définie par l'administrateur.\n\nFerme : ${APP.farmName||APP.farmCode}\nEspèce : ${sp().icon} ${sp().nom}`);
+    return;
+  }
   renderSpeciesGrid();
   renderSpeciesParams(sp());
   G('species-modal').classList.remove('hidden');
@@ -3946,6 +4019,12 @@ function renderSpeciesParams(s){
 }
 
 async function applySpecies(){
+  // Seul le Super Administrateur peut modifier l'espèce
+  if(APP.user?.role!=='Administrateur'){
+    alert('🔒 L\'espèce de la ferme est définie par le Super Administrateur et ne peut pas être modifiée.');
+    G('species-modal').classList.add('hidden');
+    return;
+  }
   let s=SPECIES_PROFILES.find(x=>x.id===SELECTED_SPECIES_ID)||SPECIES_PROFILES[0];
   // Si espèce personnalisée, lire les champs
   if(s.id==='custom'){
@@ -4015,24 +4094,9 @@ function updateSpeciesBadge(){
 }
 
 async function loadSpeciesFromFirestore(){
-  if(!APP.farmCode)return;
-  try{
-    const snap=await db.collection('farms').doc(APP.farmCode).get();
-    if(snap.exists){
-      const d=snap.data();
-      if(d.speciesId){
-        if(d.speciesId==='custom'&&d.speciesCustom){
-          const idx=SPECIES_PROFILES.findIndex(x=>x.id==='custom');
-          if(idx>=0)SPECIES_PROFILES[idx]={...SPECIES_PROFILES[idx],...d.speciesCustom};
-          APP.species=SPECIES_PROFILES[idx>=0?idx:0];
-        } else {
-          APP.species=SPECIES_PROFILES.find(x=>x.id===d.speciesId)||SPECIES_PROFILES[0];
-        }
-      }
-    }
-  }catch(e){console.warn('Species load:',e);}
+  // L'espèce est chargée au login depuis la fiche ferme.
+  // Cette fonction met simplement à jour l'affichage après chargement.
   updateSpeciesBadge();
-  // Rafraîchir t12 subtitle si chargé
   const s=sp();
   const t12sub=G('t12-subtitle');
   if(t12sub)t12sub.textContent=`${s.nomSci||s.nom} · Réduction Biofloc −${Math.round(s.bioflocReduction*100)}% · Imhoff optimal ${s.imhoffOpt[0]}–${s.imhoffOpt[1]} ml/L`;
