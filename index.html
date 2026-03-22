@@ -2233,6 +2233,8 @@ async function renameBassin(i, newName){
   }
   hideLoader();
 }
+
+async function saveBassinRow(i){
   const b=APP.state.bassins[i];
   b._hasData=true;
   const dateStr=APP_historyDate||today();
