@@ -271,7 +271,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
       <button class="boot-link" id="wa-link" onclick="openWhatsApp()">💬 Contacter l'admin</button>
     </div>
   </div>
-  <div class="boot-footer">Système protégé — accès réservé au personnel autorisé</div>
+  <div class="boot-footer">Système protégé — accès réservé au personnel autorisé &nbsp;·&nbsp; <button onclick="openThemeModal()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:10px">🎨 Thème</button></div>
 </div>
 
 <!-- Admin login modal -->
@@ -300,6 +300,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
       <div class="stat"><span>Bassins actifs</span><strong id="adm-stat-bassins">—</strong></div>
     </div>
     <div id="adm-session-badge" class="session-badge" style="margin-left:.5rem">—</div>
+    <button onclick="openThemeModal()" title="Changer de thème" style="background:none;border:1px solid var(--b2);border-radius:6px;color:var(--t2);font-size:13px;padding:3px 7px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--b2)'">🎨</button>
     <button class="logout-btn" onclick="doLogout()" style="margin-left:.5rem">⏻ Déconnexion</button>
   </div>
   <div class="tabnav">
@@ -540,6 +541,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
         style="cursor:pointer;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;background:rgba(0,201,167,.12);border:1px solid rgba(0,201,167,.3);color:var(--acc);white-space:nowrap">🐟 Tilapia</div>
       <div id="user-badge" class="badge b-ok" style="font-size:9px"></div>
       <div id="session-badge" class="session-badge">—</div>
+      <button onclick="openThemeModal()" title="Changer de thème" style="background:none;border:1px solid var(--b2);border-radius:6px;color:var(--t2);font-size:13px;padding:3px 7px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--b2)'">🎨</button>
       <div id="sync-dot" title="Sync Firebase" style="width:7px;height:7px;border-radius:50%;background:var(--acc);transition:background .3s"></div>
       <button class="logout-btn" onclick="doLogout()">⏻ Déconnexion</button>
     </div>
@@ -784,7 +786,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
             </div>
             <div style="display:flex;gap:8px;align-items:flex-start;font-size:11px">
               <span style="min-width:20px;height:20px;border-radius:50%;background:rgba(0,201,167,.15);color:var(--acc);font-weight:700;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">3</span>
-              <span style="color:var(--t2)"><strong style="color:var(--t1)">Mélasse C/N (15–20:1).</strong> 9004 Starter : 120–145 ml/kg aliment · 9008 Grower : 95–120 ml/kg aliment.</span>
+              <span style="color:var(--t2)"><strong style="color:var(--t1)">Mélasse C/N = 15:1 (Phase 1, TAN &lt;1 mg/L).</strong> 9004 Starter 40%prot : <strong style="color:var(--warn)">~1 364 ml/kg aliment</strong> · 9008 Grower 32%prot : <strong style="color:var(--warn)">~1 032 ml/kg aliment</strong> · <em>Phase 2 (TAN ≥1 mg/L) : basée sur TAN × volume — voir onglet 🍽️ Rationnement.</em></span>
             </div>
             <div style="display:flex;gap:8px;align-items:flex-start;font-size:11px">
               <span style="min-width:20px;height:20px;border-radius:50%;background:rgba(0,201,167,.15);color:var(--acc);font-weight:700;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">4</span>
@@ -823,30 +825,60 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
       </div>
 
       <!-- En-tête + Calculateur rapide -->
-      <div class="card" style="border-color:rgba(251,191,36,.2);padding:.8rem 1rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <div style="font-size:28px" id="t12-species-icon">🐟</div>
-        <div style="flex:1">
-          <div id="t12-title" style="font-size:13px;font-weight:700;color:var(--gold)">Plan de rationnement — Koudijs AKF adapté Biofloc Tilapia</div>
-          <div id="t12-subtitle" style="font-size:10px;color:var(--t2);margin-top:2px">Oreochromis niloticus · Lomé 28–30°C · Réduction Biofloc −20% (floc optimal tilapia 25–40 ml/L Imhoff)</div>
+      <div class="card" style="border-color:rgba(251,191,36,.2);padding:.8rem 1rem">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:.75rem">
+          <div style="font-size:28px" id="t12-species-icon">🐟</div>
+          <div style="flex:1">
+            <div id="t12-title" style="font-size:13px;font-weight:700;color:var(--gold)">Plan de rationnement — Koudijs AKF adapté Biofloc Tilapia</div>
+            <div id="t12-subtitle" style="font-size:10px;color:var(--t2);margin-top:2px">Oreochromis niloticus · Lomé 28–30°C · Réduction Biofloc −20% (floc optimal tilapia 25–40 ml/L Imhoff)</div>
+          </div>
         </div>
-        <!-- Calculateur rapide -->
-        <div style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.25);border-radius:10px;padding:.65rem .9rem;min-width:260px">
-          <div style="font-size:10px;font-weight:700;color:var(--gold);margin-bottom:.4rem">⚡ Calculateur rapide</div>
-          <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap">
+
+        <!-- Calculateur rapide étendu -->
+        <div style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.25);border-radius:10px;padding:.75rem 1rem">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:.6rem">
+            <span style="font-size:13px">⚡</span>
+            <span style="font-size:11px;font-weight:700;color:var(--gold)">Calculateur rapide — Ration &amp; Mélasse C:N = 15:1</span>
+          </div>
+
+          <!-- Ligne 1 : données poissons -->
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.5rem">
             <div>
-              <div style="font-size:9px;color:var(--t3)">Nb poissons</div>
-              <input type="number" id="calc-nb" class="ci" style="width:70px" placeholder="1000" oninput="calcRation()">
+              <div style="font-size:9px;color:var(--t3);margin-bottom:2px">Nb poissons</div>
+              <input type="number" id="calc-nb" class="ci" style="width:75px" placeholder="1000" oninput="calcRation()">
             </div>
             <div>
-              <div style="font-size:9px;color:var(--t3)">Poids moy. (g)</div>
-              <input type="number" id="calc-poids" class="ci" style="width:65px" placeholder="50" oninput="calcRation()">
+              <div style="font-size:9px;color:var(--t3);margin-bottom:2px">Poids moy. (g)</div>
+              <input type="number" id="calc-poids" class="ci" style="width:70px" placeholder="50" oninput="calcRation()">
             </div>
             <div>
-              <div style="font-size:9px;color:var(--t3)">Imhoff (ml/L)</div>
-              <input type="number" id="calc-imhoff" class="ci" style="width:60px" placeholder="30" oninput="calcRation()">
+              <div style="font-size:9px;color:var(--t3);margin-bottom:2px">Imhoff (ml/L)</div>
+              <input type="number" id="calc-imhoff" class="ci" style="width:65px" placeholder="30" oninput="calcRation()">
+            </div>
+            <div>
+              <div style="font-size:9px;color:var(--t3);margin-bottom:2px">Volume bassin (L)</div>
+              <input type="number" id="calc-vol" class="ci" style="width:80px" placeholder="3800" oninput="calcRation()">
+            </div>
+            <div>
+              <div style="font-size:9px;color:var(--t3);margin-bottom:2px">
+                TAN mesuré (mg/L)
+                <span id="calc-tan-phase-badge" style="margin-left:4px;padding:1px 5px;border-radius:6px;font-size:8px;font-weight:700;background:rgba(0,201,167,.15);color:var(--acc)">Phase 1</span>
+              </div>
+              <input type="number" id="calc-tan" class="ci" style="width:75px;border-color:var(--acc)" placeholder="ex: 0.5" step="0.1" oninput="calcRation()">
             </div>
           </div>
-          <div id="calc-result" style="margin-top:.5rem;font-size:11px;color:var(--t2);min-height:2rem"></div>
+
+          <!-- Explication phases -->
+          <div style="display:flex;gap:.5rem;margin-bottom:.6rem;flex-wrap:wrap">
+            <div style="font-size:9px;padding:3px 8px;border-radius:6px;background:rgba(0,201,167,.1);border:1px solid rgba(0,201,167,.2);color:var(--acc)">
+              <strong>Phase 1</strong> — TAN &lt; 1 mg/L : dose par kg d'aliment (formule classique)
+            </div>
+            <div style="font-size:9px;padding:3px 8px;border-radius:6px;background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.2);color:var(--warn)">
+              <strong>Phase 2</strong> — TAN ≥ 1 mg/L : dose selon TAN × volume bassin
+            </div>
+          </div>
+
+          <div id="calc-result" style="font-size:11px;color:var(--t2)"></div>
         </div>
       </div>
 
@@ -857,14 +889,14 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
         <div class="tw">
           <table>
             <thead><tr>
-              <th>Imhoff</th><th>État du floc</th><th>Réduction ration</th><th>Mélasse</th><th>Vidange</th><th>Actions clés</th>
+              <th>Imhoff</th><th>État du floc</th><th>Réduction ration</th><th>Mélasse C:N=15:1</th><th>Vidange</th><th>Actions clés</th>
             </tr></thead>
             <tbody>
               <tr style="background:rgba(255,61,87,.06)">
                 <td style="font-weight:700;color:var(--dng);white-space:nowrap">&lt; 10 ml/L</td>
                 <td style="font-size:10px">Floc insuffisant — risque NH₃</td>
                 <td><span class="badge b-ok">0% — Ration pleine</span></td>
-                <td style="font-size:10px">150–180 ml/kg</td>
+                <td style="font-size:10px"><strong>Phase 2</strong><br><span style="color:var(--t3);font-size:9px">selon TAN × vol</span></td>
                 <td><span class="badge b-dng">Non</span></td>
                 <td style="font-size:9px;color:var(--t2)">Arrêter toute vidange · Mélasse 2×/jour pendant 5j · DO ≥ 6 ppm · NH₃ quotidien</td>
               </tr>
@@ -872,7 +904,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
                 <td style="font-weight:700;color:var(--warn);white-space:nowrap">10–15 ml/L</td>
                 <td style="font-size:10px">Floc en développement</td>
                 <td><span class="badge b-warn">−10 à −15%</span></td>
-                <td style="font-size:10px">130–150 ml/kg</td>
+                <td style="font-size:10px"><strong>Phase 1</strong><br><span style="color:var(--t3);font-size:9px">~1 364 ml/kg (40%prot)<br>~1 032 ml/kg (32%prot)</span></td>
                 <td><span class="badge b-dng">Non</span></td>
                 <td style="font-size:9px;color:var(--t2)">Mélasse quotidienne · NH₃ 2×/semaine · Pas de vidange</td>
               </tr>
@@ -880,15 +912,15 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
                 <td style="font-weight:700;color:var(--warn);white-space:nowrap">15–25 ml/L</td>
                 <td style="font-size:10px">Floc actif — zone de transition</td>
                 <td><span class="badge b-warn">−15 à −20%</span></td>
-                <td style="font-size:10px">110–130 ml/kg</td>
+                <td style="font-size:10px"><strong>Phase 1</strong><br><span style="color:var(--t3);font-size:9px">~1 364 ml/kg (40%prot)<br>~1 032 ml/kg (32%prot)</span></td>
                 <td style="font-size:10px;color:var(--t3)">Surveillance</td>
                 <td style="font-size:9px;color:var(--t2)">Réduction progressive · DO après repas · Préparer protocole vidange</td>
               </tr>
               <tr style="background:rgba(0,201,167,.06)">
                 <td style="font-weight:700;color:var(--acc);white-space:nowrap">25–40 ml/L</td>
-                <td style="font-size:10px"><strong style="color:var(--acc)">✅ OPTIMAL TILAPIA</strong></td>
+                <td style="font-size:10px"><strong style="color:var(--acc)">✅ OPTIMAL</strong></td>
                 <td><span class="badge b-ok">−20 à −25%</span></td>
-                <td style="font-size:10px">95–120 ml/kg</td>
+                <td style="font-size:10px"><strong>Phase 1</strong><br><span style="color:var(--t3);font-size:9px">~1 364 ml/kg (40%prot)<br>~1 032 ml/kg (32%prot)</span></td>
                 <td><span class="badge b-ok">10% / 10 j</span></td>
                 <td style="font-size:9px;color:var(--t2)">Régime nominal · Vidange routine 10%/10j · DO 3×/jour · Pesée 2 semaines</td>
               </tr>
@@ -896,7 +928,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
                 <td style="font-weight:700;color:var(--warn);white-space:nowrap">40–50 ml/L</td>
                 <td style="font-size:10px">Floc dense — surveillance renforcée</td>
                 <td><span class="badge b-warn">−25%</span></td>
-                <td style="font-size:10px">80–95 ml/kg</td>
+                <td style="font-size:10px"><strong>Phase 1+2</strong><br><span style="color:var(--warn);font-size:9px">Réduire mélasse −20%</span></td>
                 <td><span class="badge b-warn">15% urgent</span></td>
                 <td style="font-size:9px;color:var(--t2)">Vidange 15% immédiate puis 10%/7j · Réduire mélasse 20% · DO continu</td>
               </tr>
@@ -904,14 +936,19 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
                 <td style="font-weight:700;color:var(--dng);white-space:nowrap">&gt; 50 ml/L</td>
                 <td style="font-size:10px"><strong style="color:var(--dng)">🚨 Floc EXCESSIF</strong></td>
                 <td><span class="badge b-dng">−30 à −40% ou arrêt</span></td>
-                <td style="font-size:10px;color:var(--dng)">Arrêt 48–72h</td>
+                <td style="font-size:10px;color:var(--dng)"><strong>Arrêt 48–72h</strong></td>
                 <td><span class="badge b-dng">15% urgent 2×/sem</span></td>
                 <td style="font-size:9px;color:var(--t2)">ALERTE · Vidange 15% immédiate · DO toutes les heures · Pas nourrissage si DO &lt;5</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div style="font-size:9px;color:var(--t3);margin-top:.5rem">La zone optimale tilapia (25–40 ml/L) diffère de la norme générique Biofloc (10–15 ml/L). Le tilapia consomme activement le floc — un volume élevé est une ressource tant que DO ≥ 5 ppm. Source : Luo et al. (2014), Azim &amp; Little (2008), Ekasari et al. (2015).</div>
+        <div style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:.55rem .75rem;margin-top:.5rem;font-size:9px;color:var(--t2);line-height:1.7">
+          <strong style="color:var(--gold)">📊 Doses mélasse C:N = 15:1 (Phase 1) :</strong>
+          Mélasse 31% carbone · densité 1.4 kg/L · 75% azote non assimilé · 16% carbone aliment non assimilé à 80%.<br>
+          <strong>9004 Starter 40%prot → ~1 364 ml/kg aliment</strong> · <strong>9008 Grower 32%prot → ~1 032 ml/kg aliment</strong><br>
+          <strong style="color:var(--warn)">Phase 2 (TAN ≥ 1 mg/L) :</strong> dose calculée selon TAN × volume bassin — utilisez le calculateur rapide en haut de page.
+        </div>
       </div>
 
       <!-- Tableau de rationnement principal -->
@@ -1011,6 +1048,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
             <th style="color:#a8d8ff">pH <small style="color:var(--t3)">(opt.)</small></th>
             <th style="color:#a8d8ff">DO mg/L <small style="color:var(--t3)">(opt.)</small></th>
             <th style="color:#a8d8ff">NH₃ mg/L <small style="color:var(--t3)">(opt.)</small></th>
+            <th style="color:var(--warn)">TAN mg/L <small style="color:var(--t3)" title="Azote ammoniacal total — détermine Phase 1 ou Phase 2 mélasse">(opt.)</small></th>
             <th>Actions</th>
           </tr></thead>
           <tbody id="b-tbody"></tbody>
@@ -1394,6 +1432,16 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
 <div id="access-denied-container"></div>
 
 <!-- Edit operator modal (Responsable) -->
+<!-- Modal Thème -->
+<div id="theme-modal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-title">🎨 Thème d'affichage</div>
+    <p style="font-size:11px;color:var(--t2);margin-bottom:1rem">Choisissez le thème qui convient le mieux à votre environnement de travail. Votre choix est sauvegardé automatiquement.</p>
+    <div id="theme-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:.65rem;margin-bottom:1rem"></div>
+    <button class="dbtn" style="width:100%;padding:7px" onclick="G('theme-modal').classList.add('hidden')">Fermer</button>
+  </div>
+</div>
+
 <!-- Modal Sélection Espèce -->
 <div id="species-modal" class="modal-overlay hidden">
   <div class="modal-box" style="max-width:620px;max-height:90vh;overflow-y:auto">
@@ -1595,9 +1643,9 @@ const SPECIES_PROFILES=[
     bioflocReduction:0.20,  // réduction ration vs élevage classique
     bioflocNote:'Le tilapia consomme activement le floc bactérien. Volume optimal 25–40 ml/L.',
     // Mélasse C/N
-    cnRatio:'15–20:1',
-    melasseStarter:130, // ml/kg aliment (moyenne)
-    melasseGrower:107,
+    cnRatio:'15:1',
+    melasseStarter:1364, // ml/kg aliment (C:N=15:1, 40%prot, densité 1.4kg/L)
+    melasseGrower:1032, // ml/kg aliment (C:N=15:1, 32%prot)
     // FCR cible
     fcrCible:1.2,
     fcrAlerte:1.8,
@@ -1620,9 +1668,9 @@ const SPECIES_PROFILES=[
     imhoffOpt:[15,30], imhoffMin:5, imhoffMax:40, // Moins tolérant aux volumes élevés
     bioflocReduction:0.15,
     bioflocNote:'Clarias tolère un DO plus bas (organe respiratoire accessoire). Imhoff optimal 15–30 ml/L.',
-    cnRatio:'15–20:1',
-    melasseStarter:120,
-    melasseGrower:95,
+    cnRatio:'15:1',
+    melasseStarter:1364, // ml/kg (C:N=15:1, 40%prot)
+    melasseGrower:1032, // ml/kg (C:N=15:1, 32%prot)
     fcrCible:1.0,
     fcrAlerte:1.5,
     densiteOpt:'30–80 kg/m³',
@@ -1643,9 +1691,9 @@ const SPECIES_PROFILES=[
     imhoffOpt:[20,35], imhoffMin:10, imhoffMax:45,
     bioflocReduction:0.18,
     bioflocNote:'La carpe est omnivore et exploite partiellement le floc. Température plus basse que le tilapia.',
-    cnRatio:'15–20:1',
-    melasseStarter:115,
-    melasseGrower:90,
+    cnRatio:'15:1',
+    melasseStarter:1157, // ml/kg (C:N=15:1, 35%prot)
+    melasseGrower:866, // ml/kg (C:N=15:1, 28%prot)
     fcrCible:1.5,
     fcrAlerte:2.0,
     densiteOpt:'15–40 kg/m³',
@@ -1667,8 +1715,8 @@ const SPECIES_PROFILES=[
     bioflocReduction:0.25,
     bioflocNote:'Les crevettes sont très sensibles à l\'ammoniac (seuil 10× plus bas). Imhoff optimal 15–25 ml/L. Salinité requise.',
     cnRatio:'12–15:1',
-    melasseStarter:100,
-    melasseGrower:80,
+    melasseStarter:1364, // ml/kg (C:N=15:1, 40%prot)
+    melasseGrower:1032, // ml/kg (C:N=15:1, 32%prot)
     fcrCible:1.3,
     fcrAlerte:1.8,
     densiteOpt:'100–300 ind/m³',
@@ -1691,9 +1739,9 @@ const SPECIES_PROFILES=[
     imhoffOpt:[15,35], imhoffMin:10, imhoffMax:50,
     bioflocReduction:0.20,
     bioflocNote:'Profil personnalisé — ajustez selon les normes de votre espèce.',
-    cnRatio:'15–20:1',
-    melasseStarter:120,
-    melasseGrower:95,
+    cnRatio:'15:1',
+    melasseStarter:1032, // ml/kg (C:N=15:1, 32%prot ref)
+    melasseGrower:1032, // ml/kg (C:N=15:1)
     fcrCible:1.5,
     fcrAlerte:2.0,
     densiteOpt:'—',
@@ -2091,7 +2139,7 @@ async function loadFarmData(){
   } else {
     APP.state.bassins=Array.from({length:16},(_,i)=>({
       name:`Bassin ${String(i+1).padStart(2,'0')}`,vol:3.8,nbInit:1000,mort:0,poids:5+i*0.3,
-      alimReel:0,temp:null,ph:null,DO:null,NH3:null,statut:'Actif',feedId:FEED_TYPES[0]?.id||'K1',harvestDate:null
+      alimReel:0,temp:null,ph:null,DO:null,NH3:null,TAN:null,statut:'Actif',feedId:FEED_TYPES[0]?.id||'K1',harvestDate:null
     }));
     APP.bCount=17;
   }
@@ -2433,16 +2481,61 @@ function calcBassin(b){
   return{nbActuel,biomasse,rat:r,alimTheo,ft,autoFt};
 }
 
+// ═══════════════════════════════════════════════
+// CONSTANTES CALCUL MÉLASSE C:N = 15:1
+// Source: Biofloc Carbon Source Calculator (QB Labs)
+// Mélasse : 31% carbone, densité 1.4 kg/L
+// Azote feed : protéines × 0.16, dont 75% non assimilé
+// Carbone feed : 16% du poids aliment, dont 80% non assimilé
+// ═══════════════════════════════════════════════
+const CN_TARGET=15;
+const MOLASSES_CARBON=0.31;   // 31% carbone
+const MOLASSES_DENSITY=1.4;   // kg/L
+const N_PROTEIN_FACTOR=0.16;  // 16% des protéines = azote
+const N_NOT_ASSIM=0.75;       // 75% azote non assimilé par le poisson
+const C_FEED_FACTOR=0.16;     // 16% de carbone dans l'aliment
+const C_NOT_ASSIM=0.80;       // 80% carbone non assimilé
+
+// Phase 1 : dose mélasse par kg d'aliment (TAN < 1 mg/L)
+// Formule classique basée sur charge protéique
+function calcMolassePhase1(feedKg, proteinPct){
+  const nNotAssim = feedKg * proteinPct * N_PROTEIN_FACTOR * N_NOT_ASSIM;
+  const cNotAssim = feedKg * C_FEED_FACTOR * C_NOT_ASSIM;
+  const cNeeded = nNotAssim * CN_TARGET - cNotAssim;
+  if(cNeeded <= 0) return 0;
+  const molassesKg = cNeeded / MOLASSES_CARBON;
+  return molassesKg / MOLASSES_DENSITY * 1000; // ml
+}
+
+// Phase 2 : dose mélasse basée sur TAN mesuré (TAN >= 1 mg/L)
+// Formule : traiter l'azote ammoniacal existant dans le volume d'eau
+function calcMolassePhase2(tanMgL, volL){
+  const tanKg = tanMgL * volL / 1e6;
+  const cNeeded = tanKg * CN_TARGET;
+  const molassesKg = cNeeded / MOLASSES_CARBON;
+  return molassesKg / MOLASSES_DENSITY * 1000; // ml
+}
+
 // Calculateur rapide onglet Rationnement
 function calcRation(){
   const nb=parseFloat(G('calc-nb')?.value)||0;
   const poids=parseFloat(G('calc-poids')?.value)||0;
   const imhoff=parseFloat(G('calc-imhoff')?.value)||30;
+  const vol=parseFloat(G('calc-vol')?.value)||3800;
+  const tan=G('calc-tan')?.value===''?null:parseFloat(G('calc-tan')?.value);
   const res=G('calc-result');if(!res)return;
-  if(!nb||!poids){res.innerHTML='<span style="color:var(--t3)">Saisissez le nombre et le poids moyen</span>';return;}
+
+  if(!nb||!poids){
+    res.innerHTML='<span style="color:var(--t3)">Saisissez le nombre de poissons et le poids moyen.</span>';
+    return;
+  }
+
   const biomasse=nb*poids/1000;
   const ft=getRationEntry(poids);
-  // Ajustement Imhoff
+  const nomComplet=getFeedFullName(ft);
+  const proteinPct=ft.protein/100||0.32;
+
+  // Ajustement Imhoff sur la ration
   let mult=1;
   if(imhoff<10)mult=1.0;
   else if(imhoff<15)mult=0.875;
@@ -2450,20 +2543,72 @@ function calcRation(){
   else if(imhoff<=40)mult=0.80;
   else if(imhoff<=50)mult=0.75;
   else mult=0.65;
+
   const rJour=biomasse*(ft.rate||0.020)*mult;
   const rRepas=rJour/(ft.freq||2);
-  const melas=rJour*(imhoff<=40?107:88); // ml mélasse
+
+  // Calcul mélasse selon phase
+  const isPhase2 = tan!==null && tan>=1;
+  const phaseBadge=G('calc-tan-phase-badge');
+  if(phaseBadge){
+    if(tan===null){
+      phaseBadge.textContent='Phase 1';
+      phaseBadge.style.background='rgba(0,201,167,.15)';
+      phaseBadge.style.color='var(--acc)';
+    } else if(isPhase2){
+      phaseBadge.textContent='Phase 2';
+      phaseBadge.style.background='rgba(245,166,35,.15)';
+      phaseBadge.style.color='var(--warn)';
+    } else {
+      phaseBadge.textContent='Phase 1';
+      phaseBadge.style.background='rgba(0,201,167,.15)';
+      phaseBadge.style.color='var(--acc)';
+    }
+  }
+
+  let melasseHtml='';
+  let melasseVal=0;
+  if(isPhase2){
+    // Phase 2 : basé sur TAN × volume
+    const mel2=calcMolassePhase2(tan,vol);
+    melasseVal=mel2;
+    melasseHtml=`
+      <div style="grid-column:1/-1;margin-top:.3rem;padding:.4rem .6rem;background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.25);border-radius:7px">
+        <div style="font-size:9px;color:var(--warn);font-weight:700;margin-bottom:3px">📊 PHASE 2 — TAN = ${tan} mg/L · Volume = ${vol} L</div>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap">
+          <div><span style="color:var(--t3)">TAN à traiter</span> <strong style="color:var(--warn)">${(tan*vol/1e6*1000).toFixed(1)} g</strong></div>
+          <div><span style="color:var(--t3)">Mélasse bassin/jour</span> <strong style="color:var(--warn);font-size:13px">${Math.round(mel2)} ml</strong></div>
+          <div><span style="color:var(--t3)">C:N cible</span> <strong style="color:var(--gold)">15:1</strong></div>
+        </div>
+        <div style="font-size:9px;color:var(--t3);margin-top:3px">Formule : TAN (mg/L) × Volume (L) × 15 ÷ 0.31 ÷ 1.4 ÷ 1000</div>
+      </div>`;
+  } else {
+    // Phase 1 : basé sur la ration d'aliment
+    const mel1=calcMolassePhase1(rJour, proteinPct);
+    melasseVal=mel1;
+    melasseHtml=`
+      <div style="grid-column:1/-1;margin-top:.3rem;padding:.4rem .6rem;background:rgba(0,201,167,.06);border:1px solid rgba(0,201,167,.2);border-radius:7px">
+        <div style="font-size:9px;color:var(--acc);font-weight:700;margin-bottom:3px">📊 PHASE 1 — TAN &lt; 1 mg/L · Protéines ${Math.round(proteinPct*100)}%${tan!==null?` · TAN = ${tan} mg/L`:''}</div>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap">
+          <div><span style="color:var(--t3)">Mélasse/kg aliment</span> <strong style="color:var(--acc)">${Math.round(mel1/rJour)} ml/kg</strong></div>
+          <div><span style="color:var(--t3)">Mélasse bassin/jour</span> <strong style="color:var(--acc);font-size:13px">${Math.round(mel1)} ml</strong></div>
+          <div><span style="color:var(--t3)">C:N cible</span> <strong style="color:var(--gold)">15:1</strong></div>
+        </div>
+        <div style="font-size:9px;color:var(--t3);margin-top:3px">Formule : (N×0.75×15 − C×0.80) ÷ 0.31 ÷ 1.4 — Mélasse : 31% carbone, densité 1.4 kg/L</div>
+      </div>`;
+  }
+
   const imhoffLabel=imhoff<10?'⚠️ Ration pleine':imhoff<=25?'Réduction −10 à −20%':imhoff<=40?'✅ Optimal −20%':imhoff<=50?'⚠️ Dense −25%':'🚨 Excessif';
-  const nomComplet=getFeedFullName(ft);
+
   res.innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem;margin-top:.3rem">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.35rem;margin-bottom:.3rem">
       <div><span style="color:var(--t3)">Biomasse</span> <strong style="color:var(--t1)">${biomasse.toFixed(1)} kg</strong></div>
       <div><span style="color:var(--t3)">Produit</span> <strong style="color:var(--gold)">${nomComplet}</strong></div>
       <div><span style="color:var(--t3)">Ration/jour</span> <strong style="color:var(--acc)">${rJour.toFixed(3)} kg</strong></div>
       <div><span style="color:var(--t3)">Par repas ×${ft.freq||2}</span> <strong style="color:var(--acc)">${rRepas.toFixed(3)} kg</strong></div>
-      <div><span style="color:var(--t3)">Mélasse/j</span> <strong style="color:var(--warn)">${Math.round(melas)} ml</strong></div>
       <div style="font-size:9px;color:var(--t3)">${imhoffLabel}</div>
-    </div>`;
+    </div>
+    ${melasseHtml}`;
 }
 
 // ═══════════════════════════════════════════════
@@ -2611,7 +2756,7 @@ function saveNotification(bassinIdx,dateStr,b){
     bassinName:b.name,
     dateModified:dateStr,
     dateAction:firebase.firestore.FieldValue.serverTimestamp(),
-    data:{alimReel:b.alimReel,temp:b.temp,ph:b.ph,DO:b.DO,NH3:b.NH3,poids:b.poids},
+    data:{alimReel:b.alimReel,temp:b.temp,ph:b.ph,DO:b.DO,NH3:b.NH3,TAN:b.TAN,poids:b.poids},
     read:false
   };
   farmCol('notifications').add(notif).catch(console.error);
@@ -2716,6 +2861,23 @@ function buildBTable(){
       <td><input type="number" id="bP-${i}" class="${optCls(b.ph)}" value="${optVal(b.ph)}" step="0.01" style="width:50px" placeholder="—" onchange="const v=this.value===''?null:+this.value;if(!APP_historyDate)APP.state.bassins[${i}].ph=v;else APP_historyData[${i}].ph=v;upConfigCalcs()"></td>
       <td><input type="number" id="bD-${i}" class="${optCls(b.DO)}" value="${optVal(b.DO)}" step="0.1" style="width:50px" placeholder="—" onchange="const v=this.value===''?null:+this.value;if(!APP_historyDate)APP.state.bassins[${i}].DO=v;else APP_historyData[${i}].DO=v;upConfigCalcs()"></td>
       <td><input type="number" id="bN-${i}" class="${optCls(b.NH3)}" value="${optVal(b.NH3)}" step="0.01" style="width:55px" placeholder="—" onchange="const v=this.value===''?null:+this.value;if(!APP_historyDate)APP.state.bassins[${i}].NH3=v;else APP_historyData[${i}].NH3=v;upConfigCalcs()"></td>
+      <td>
+        <input type="number" id="bTAN-${i}" class="${b.TAN!==null&&b.TAN>=1?'ci wi':'ci opt'}" value="${optVal(b.TAN)}" step="0.01" style="width:55px;border-color:${b.TAN!==null&&b.TAN>=1?'var(--warn)':'rgba(245,166,35,.25)'}"
+          placeholder="—" title="TAN ≥1 mg/L → Phase 2 mélasse · Saisir pour pré-remplir le calculateur"
+          onchange="
+            const v=this.value===''?null:+this.value;
+            if(!APP_historyDate)APP.state.bassins[${i}].TAN=v;
+            else APP_historyData[${i}].TAN=v;
+            upConfigCalcs();
+            const bx=APP_historyDate?APP_historyData[${i}]:APP.state.bassins[${i}];
+            if(G('calc-nb'))G('calc-nb').value=bx.nbInit-bx.mort;
+            if(G('calc-poids'))G('calc-poids').value=bx.poids;
+            if(G('calc-vol'))G('calc-vol').value=(bx.vol||3.8)*1000;
+            if(G('calc-tan')&&v!==null)G('calc-tan').value=v;
+            calcRation();
+          ">
+        <div id="bMel-${i}" style="font-size:9px;font-weight:700;text-align:center;margin-top:1px;color:var(--t3)" title="Mélasse C:N=15:1">—</div>
+      </td>
       <td style="white-space:nowrap">
         <button onclick="saveBassinRow(${i})" style="background:var(--acc);color:#04101e;border:none;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;font-weight:700;margin-right:2px" title="Enregistrer">💾</button>
         ${canDelete?`<button class="dbtn" onclick="removeBassin(${i})" title="Supprimer">🗑</button>`:`<button style="background:none;border:1px solid var(--b2);border-radius:4px;padding:3px 6px;font-size:10px;cursor:not-allowed;opacity:.4" title="Suppression réservée au Responsable">🔒</button>`}
@@ -2738,11 +2900,37 @@ function upConfigCalcs(){
     sc(`bP-${i}`,b.ph,b.ph!==null&&(b.ph>8.2||b.ph<6.5),false);
     sc(`bD-${i}`,b.DO,false,b.DO!==null&&b.DO<sp().doAlerte);
     sc(`bN-${i}`,b.NH3,false,b.NH3!==null&&b.NH3>sp().nh3Alerte);
+    sc(`bTAN-${i}`,b.TAN,false,b.TAN!==null&&b.TAN>=1);
+    // Afficher dose mélasse bassin si TAN renseigné
+    const melEl=G(`bMel-${i}`);
+    if(melEl){
+      if(b.TAN!==null&&b.TAN>=0){
+        const isP2=b.TAN>=1;
+        const ft=getRationEntry(b.poids||1);
+        const prot=ft.protein/100||0.32;
+        let mel;
+        if(isP2){mel=calcMolassePhase2(b.TAN,b.vol*1000);}
+        else{mel=calcMolassePhase1(c.alimTheo,prot);}
+        melEl.textContent=Math.round(mel)+' ml';
+        melEl.style.color=isP2?'var(--warn)':'var(--acc)';
+        melEl.title=(isP2?'Phase 2':'Phase 1')+' — C:N=15:1';
+      } else {
+        melEl.textContent='—';melEl.style.color='var(--t3)';
+      }
+    }
     tBio+=c.biomasse;tTheo+=c.alimTheo;tReel+=b.alimReel;
     if(b.statut==='Actif'){actifs++;if(b.ph!==null){sumPh+=b.ph;phCnt++;}if(b.temp!==null){sumT+=b.temp;tCnt++;}}
     if(b.statut==='Récolté')recoltes++;
   });
   const avgPh=phCnt?sumPh/phCnt:null,avgT=tCnt?sumT/tCnt:null;
+  // Mélasse totale journalière (bassins avec TAN renseigné)
+  let tMelas=0;
+  APP.state.bassins.filter(b=>b.statut==='Actif'&&b.TAN!==null).forEach(b=>{
+    const ft=getRationEntry(b.poids||1);
+    const c=calcBassin(b);
+    if(b.TAN>=1){tMelas+=calcMolassePhase2(b.TAN,b.vol*1000);}
+    else{tMelas+=calcMolassePhase1(c.alimTheo,ft.protein/100||0.32);}
+  });
   const m=G('b-metrics');
   if(m)m.innerHTML=`
     <div class="met${avgT!==null&&avgT<24?' warn':''}"><div class="mlbl">Temp moy</div><div class="mval">${avgT!==null?fmt(avgT,1):'—'}<span class="munit">°C</span></div></div>
@@ -2750,7 +2938,8 @@ function upConfigCalcs(){
     <div class="met"><div class="mlbl">Bassins actifs</div><div class="mval">${actifs}</div></div>
     <div class="met ok"><div class="mlbl">Biomasse totale</div><div class="mval">${fmt(tBio,2)}<span class="munit">kg</span></div></div>
     <div class="met"><div class="mlbl">Alim théo/j</div><div class="mval">${fmt(tTheo,3)}<span class="munit">kg</span></div></div>
-    <div class="met"><div class="mlbl">Alim réel/j</div><div class="mval">${fmt(tReel,3)}<span class="munit">kg</span></div></div>`;
+    <div class="met"><div class="mlbl">Alim réel/j</div><div class="mval">${fmt(tReel,3)}<span class="munit">kg</span></div></div>
+    ${tMelas>0?`<div class="met warn"><div class="mlbl">Mélasse totale/j</div><div class="mval" style="color:var(--warn)">${Math.round(tMelas)}<span class="munit">ml</span></div></div>`:''}`;
   G('s-actifs').textContent=actifs;G('s-bio').textContent=fmt(tBio,1)+' kg';G('s-alim').textContent=fmt(tTheo,3)+' kg';G('s-recolte').textContent=recoltes;
   const sp=fv('g-probio');G('s-stock').textContent=(sp/1000).toFixed(1)+' L';G('s-stock').style.color=sp<15000?'var(--dng)':sp<25000?'var(--warn)':'var(--t1)';
 }
@@ -4346,8 +4535,106 @@ async function deleteSupplier(){
 }
 
 // ═══════════════════════════════════════════════
+// SYSTÈME DE THÈMES
+// ═══════════════════════════════════════════════
+const THEMES={
+  dark:{
+    id:'dark', nom:'Nuit', icon:'🌑', desc:'Fond sombre — idéal en intérieur ou en faible luminosité',
+    vars:{
+      '--bg':'#04101e','--panel':'#091929','--card':'#0e2236','--inp':'#0a1f33','--hov':'#122a42',
+      '--t1':'#d8eaff','--t2':'#6a90b8','--t3':'#3d6080','--b1':'#1a3550','--b2':'#1e4060',
+      '--acc':'#00c9a7','--acc2':'#3d8ef5','--warn':'#f5a623','--dng':'#ff3d57','--purp':'#a78bfa','--gold':'#fbbf24'
+    }
+  },
+  light:{
+    id:'light', nom:'Jour', icon:'☀️', desc:'Fond clair — idéal en extérieur ou forte luminosité',
+    vars:{
+      '--bg':'#f0f4f8','--panel':'#ffffff','--card':'#ffffff','--inp':'#f8fafc','--hov':'#e8f0fe',
+      '--t1':'#1a2744','--t2':'#4a6080','--t3':'#8a9ab8','--b1':'#d0dcea','--b2':'#c0cedc',
+      '--acc':'#008f73','--acc2':'#2563eb','--warn':'#d97706','--dng':'#dc2626','--purp':'#7c3aed','--gold':'#b45309'
+    }
+  },
+  ocean:{
+    id:'ocean', nom:'Océan', icon:'🌊', desc:'Tons bleu-vert profond — ambiance aquacole',
+    vars:{
+      '--bg':'#020f1a','--panel':'#051824','--card':'#072030','--inp':'#041520','--hov':'#0a2538',
+      '--t1':'#b8f0e8','--t2':'#5ba8a0','--t3':'#2d6060','--b1':'#0d3040','--b2':'#0f3850',
+      '--acc':'#00e5c0','--acc2':'#00b4d8','--warn':'#ffd166','--dng':'#ff6b6b','--purp':'#c77dff','--gold':'#ffd700'
+    }
+  },
+  forest:{
+    id:'forest', nom:'Forêt', icon:'🌿', desc:'Tons verts naturels — reposant pour les longues sessions',
+    vars:{
+      '--bg':'#0a1a0f','--panel':'#0f2414','--card':'#132d18','--inp':'#0d2012','--hov':'#182f1d',
+      '--t1':'#d4f0d0','--t2':'#6a9e70','--t3':'#3d6040','--b1':'#1e4025','--b2':'#244a2c',
+      '--acc':'#4caf76','--acc2':'#2e86ab','--warn':'#f4a261','--dng':'#e76f51','--purp':'#a8dadc','--gold':'#e9c46a'
+    }
+  }
+};
+
+let CURRENT_THEME='dark';
+
+function applyTheme(id){
+  const t=THEMES[id];if(!t)return;
+  CURRENT_THEME=id;
+  const root=document.documentElement;
+  Object.entries(t.vars).forEach(([k,v])=>root.style.setProperty(k,v));
+  // Adapter le body background directement
+  document.body.style.background=t.vars['--bg'];
+  // Sauvegarder dans localStorage (persistance locale)
+  try{localStorage.setItem('biofloc_theme',id);}catch(e){}
+  // Marquer actif dans la grille
+  document.querySelectorAll('.theme-card').forEach(c=>{
+    const isActive=c.dataset.theme===id;
+    c.style.border=isActive?`2px solid ${t.vars['--acc']}`:'2px solid var(--b1)';
+    c.style.background=isActive?t.vars['--acc']+'18':'var(--card)';
+    const badge=c.querySelector('.theme-active-badge');
+    if(badge)badge.style.display=isActive?'block':'none';
+  });
+}
+
+function loadSavedTheme(){
+  try{
+    const saved=localStorage.getItem('biofloc_theme')||'dark';
+    if(THEMES[saved])applyTheme(saved);
+  }catch(e){applyTheme('dark');}
+}
+
+function openThemeModal(){
+  const grid=G('theme-grid');if(!grid)return;
+  grid.innerHTML=Object.values(THEMES).map(t=>{
+    const isActive=t.id===CURRENT_THEME;
+    return `<div class="theme-card" data-theme="${t.id}" onclick="applyTheme('${t.id}')" style="
+      cursor:pointer;border-radius:12px;padding:.75rem;text-align:center;
+      border:2px solid ${isActive?t.vars['--acc']:'var(--b1)'};
+      background:${isActive?t.vars['--acc']+'18':'var(--card)'};
+      transition:all .2s;position:relative">
+      <!-- Preview mini -->
+      <div style="border-radius:7px;overflow:hidden;margin-bottom:.5rem;border:1px solid ${t.vars['--b1']}">
+        <div style="background:${t.vars['--panel']};height:10px;display:flex;gap:3px;align-items:center;padding:0 5px">
+          <div style="width:16px;height:4px;border-radius:2px;background:${t.vars['--acc']}"></div>
+          <div style="width:10px;height:4px;border-radius:2px;background:${t.vars['--t3']}"></div>
+        </div>
+        <div style="background:${t.vars['--bg']};padding:5px;display:grid;grid-template-columns:1fr 1fr;gap:3px">
+          <div style="background:${t.vars['--card']};border-radius:4px;height:18px;border:1px solid ${t.vars['--b1']}"></div>
+          <div style="background:${t.vars['--card']};border-radius:4px;height:18px;border:1px solid ${t.vars['--b1']}"></div>
+          <div style="background:${t.vars['--acc']}22;border-radius:4px;height:8px;border:1px solid ${t.vars['--acc']}44"></div>
+          <div style="background:${t.vars['--warn']}22;border-radius:4px;height:8px;border:1px solid ${t.vars['--warn']}44"></div>
+        </div>
+      </div>
+      <div style="font-size:16px;margin-bottom:2px">${t.icon}</div>
+      <div style="font-size:11px;font-weight:700;color:var(--t1)">${t.nom}</div>
+      <div style="font-size:9px;color:var(--t2);margin-top:2px;line-height:1.4">${t.desc}</div>
+      <div class="theme-active-badge" style="display:${isActive?'block':'none'};position:absolute;top:5px;right:5px;font-size:8px;background:${t.vars['--acc']};color:#000;border-radius:8px;padding:1px 6px;font-weight:700">✓ Actif</div>
+    </div>`;
+  }).join('');
+  G('theme-modal').classList.remove('hidden');
+}
+
+// ═══════════════════════════════════════════════
 // INIT — show boot screen
 // ═══════════════════════════════════════════════
+loadSavedTheme();
 showScreen('screen-boot');
 </script>
 </body>
