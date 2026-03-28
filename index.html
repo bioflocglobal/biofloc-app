@@ -537,6 +537,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
       <div class="stat"><span>Récoltés</span><strong id="s-recolte" style="color:var(--purp)">—</strong></div>
     </div>
     <div style="display:flex;align-items:center;gap:.5rem;margin-left:auto">
+      <button id="btn-back-admin" onclick="showScreen('screen-admin')" style="display:none;background:var(--gold);color:#04101e;border:none;border-radius:6px;font-size:10px;font-weight:700;padding:4px 10px;cursor:pointer">← Dashboard Admin</button>
       <div id="species-badge" onclick="openSpeciesModal()" title="Cliquer pour changer d'espèce"
         style="cursor:pointer;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;background:rgba(0,201,167,.12);border:1px solid rgba(0,201,167,.3);color:var(--acc);white-space:nowrap">🐟 Tilapia</div>
       <div id="user-badge" class="badge b-ok" style="font-size:9px"></div>
@@ -1912,12 +1913,20 @@ async function doLogin(){
     const farmData=farmSnap.data();
     APP.farmName=farmData.name||farmCode;
     // Charger le profil espèce depuis la fiche ferme (verrouillé par le Super Admin)
-    if(farmData.speciesId==='custom'&&farmData.speciesCustom){
-      const idx=SPECIES_PROFILES.findIndex(s=>s.id==='custom');
-      if(idx>=0)SPECIES_PROFILES[idx]={...SPECIES_PROFILES[idx],...farmData.speciesCustom};
-      APP.species=SPECIES_PROFILES[idx>=0?idx:0];
-    } else {
-      APP.species=SPECIES_PROFILES.find(s=>s.id===farmData.speciesId)||SPECIES_PROFILES[0];
+    // Gestion des fermes créées avant l'ajout du champ speciesId (rétrocompatibilité)
+    try{
+      if(farmData.speciesId==='custom'&&farmData.speciesCustom){
+        const idx=SPECIES_PROFILES.findIndex(s=>s.id==='custom');
+        if(idx>=0)SPECIES_PROFILES[idx]={...SPECIES_PROFILES[idx],...farmData.speciesCustom};
+        APP.species=SPECIES_PROFILES[idx>=0?idx:0];
+      } else if(farmData.speciesId){
+        APP.species=SPECIES_PROFILES.find(s=>s.id===farmData.speciesId)||SPECIES_PROFILES[0];
+      } else {
+        // Ferme ancienne sans speciesId — tilapia par défaut, pas de blocage
+        APP.species=SPECIES_PROFILES[0];
+      }
+    }catch(specErr){
+      APP.species=SPECIES_PROFILES[0]; // fallback silencieux
     }
     // Check if password was reset by admin/responsable
     await checkPasswordReset(cred.user);
@@ -2036,55 +2045,72 @@ function applyRoleRestrictions(){
   const isResp=role==='Responsable';
   const isAdmin=role==='Administrateur';
   const hasBackupRight=isResp||canBackup;
+
+  // ── Réinitialiser TOUS les boutons d'abord (évite les états figés) ──
+  document.querySelectorAll('#screen-farm .tb').forEach(btn=>{
+    btn.style.opacity='1';
+    btn.style.cursor='pointer';
+    btn.title='';
+    // Restaurer le onclick original (sw() ou sw('tX'))
+    const id=btn.getAttribute('onclick')?.match(/sw\('(t\d+)'\)/)?.[1];
+    if(id)btn.onclick=()=>sw(id);
+  });
+
+  // ── Appliquer les restrictions Opérateur uniquement ──
   document.querySelectorAll('#screen-farm .tb').forEach((btn,i)=>{
     const tabId=['t0','t1','t2','t3','t4','t5','t6','t7','t8','t9','t10','t11','t12'][i];
-    if(tabId==='t5'&&isOp){
-      btn.style.opacity='0.35';btn.style.cursor='not-allowed';btn.title='Accès réservé au Responsable';
-      btn.onclick=(e)=>{e.stopPropagation();alert('🔒 Accès restreint\nCet onglet est réservé au niveau Responsable.');};
-    } else if(tabId==='t7'&&isOp&&!canBackup){
-      btn.style.opacity='0.35';btn.style.cursor='not-allowed';btn.title='Accès réservé au Responsable';
-      btn.onclick=(e)=>{e.stopPropagation();alert('🔒 Accès restreint\nCet onglet est réservé au niveau Responsable.');};
+    if(isOp){
+      if(tabId==='t5'){
+        // Comptabilité — réservé Responsable
+        btn.style.opacity='0.35';btn.style.cursor='not-allowed';
+        btn.title='Accès réservé au Responsable';
+        btn.onclick=(e)=>{e.stopPropagation();alert('🔒 Comptabilité réservée au Responsable.');};
+      } else if(tabId==='t7'&&!canBackup){
+        // Récoltes sans droit backup
+        btn.style.opacity='0.35';btn.style.cursor='not-allowed';
+        btn.title='Accès réservé au Responsable';
+        btn.onclick=(e)=>{e.stopPropagation();alert('🔒 Récoltes réservées au Responsable.');};
+      }
     }
   });
-  // Onglet Administration : visible seulement pour Responsable
+
+  // ── Onglet Espace Responsable (t10) — visible Responsable + Admin ──
   const tabT10=G('tab-t10');
-  if(tabT10)tabT10.style.display=isResp?'flex':'none';
-  // Backup bar dans Récoltes
+  if(tabT10)tabT10.style.display=(isResp||isAdmin)?'flex':'none';
+
+  // ── Backup bar ──
   const bar=G('farm-backup-bar');
   if(bar)bar.style.display=hasBackupRight?'flex':'none';
-  // Badge utilisateur
+
+  // ── Badge utilisateur ──
   const ub=G('user-badge');
   if(ub){
-    const icon=isResp?'⭐':canBackup?'💾':'👤';
+    const icon=isAdmin?'👑':isResp?'⭐':canBackup?'💾':'👤';
     ub.textContent=icon+' '+APP.user.name+' — '+role+(canBackup&&isOp?' (backup)':'');
-    ub.className='badge '+(isResp?'b-purp':'b-ok');
+    ub.className='badge '+(isAdmin?'b-gold':isResp?'b-purp':'b-ok');
   }
-  // Badge espèce — NON cliquable pour Responsable et Opérateur
-  // L'espèce est verrouillée par le Super Admin à la création de la ferme
+
+  // ── Badge espèce — cliquable Admin seulement ──
   const sb=G('species-badge');
   if(sb){
-    if(!isAdmin){
-      sb.style.cursor='default';
-      sb.title='Espèce définie par l\'administrateur pour cette ferme';
-      sb.onclick=null;
-    } else {
+    if(isAdmin){
       sb.style.cursor='pointer';
       sb.title='Cliquer pour modifier le profil d\'espèce';
       sb.onclick=()=>openSpeciesModal();
+    } else {
+      sb.style.cursor='default';
+      sb.title=`Espèce : ${sp().nom} — définie par l'administrateur`;
+      sb.onclick=null;
     }
   }
-  // Bandeau t0 — cacher le bouton "Changer" pour non-admins
+
+  // ── Bandeau t0 — "Changer" visible Admin seulement ──
   const bannerBtn=G('t0-species-banner')?.querySelector('div:last-child');
-  if(bannerBtn){
-    bannerBtn.style.display=isAdmin?'block':'none';
-  }
-  // T0 banner non cliquable pour non-admins
+  if(bannerBtn)bannerBtn.style.display=isAdmin?'block':'none';
   const banner=G('t0-species-banner');
   if(banner&&!isAdmin){
     banner.style.cursor='default';
-    banner.onclick=null;
-    banner.onmouseover=null;
-    banner.onmouseout=null;
+    banner.onclick=null;banner.onmouseover=null;banner.onmouseout=null;
   }
 }
 
@@ -2127,25 +2153,37 @@ function saveProbioStock(){
 }
 
 async function loadFarmData(){
-  const [bSnap,sSnap,fSnap,cfgSnap]=await Promise.all([
-    farmCol('bassins').orderBy('_order').get(),
-    farmCol('suivi').orderBy('date').get(),
-    farmCol('feed').get(),
-    farmCol('config').doc('app').get(),
-  ]);
-  if(!bSnap.empty){
-    APP.state.bassins=bSnap.docs.map(d=>{const x={...d.data()};delete x._order;if(!x.feedId)x.feedId=getRationEntry(x.poids||1)?.id||FEED_TYPES[0]?.id;return x;});
-    APP.bCount=APP.state.bassins.length+1;
-  } else {
-    APP.state.bassins=Array.from({length:16},(_,i)=>({
-      name:`Bassin ${String(i+1).padStart(2,'0')}`,vol:3.8,nbInit:1000,mort:0,poids:5+i*0.3,
-      alimReel:0,temp:null,ph:null,DO:null,NH3:null,TAN:null,statut:'Actif',feedId:FEED_TYPES[0]?.id||'K1',harvestDate:null
-    }));
-    APP.bCount=17;
+  if(!APP.farmCode){console.warn('loadFarmData: farmCode manquant');return;}
+  try{
+    const [bSnap,sSnap,fSnap,cfgSnap]=await Promise.all([
+      farmCol('bassins').orderBy('_order').get().catch(()=>({empty:true,docs:[]})),
+      farmCol('suivi').orderBy('date').get().catch(()=>({empty:true,docs:[]})),
+      farmCol('feed').get().catch(()=>({empty:true,docs:[]})),
+      farmCol('config').doc('app').get().catch(()=>({exists:false})),
+    ]);
+    if(!bSnap.empty){
+      APP.state.bassins=bSnap.docs.map(d=>{
+        const x={...d.data()};delete x._order;
+        if(!x.feedId)x.feedId=getRationEntry(x.poids||1)?.id||FEED_TYPES[0]?.id;
+        if(x.TAN===undefined)x.TAN=null; // rétrocompatibilité
+        return x;
+      });
+      APP.bCount=APP.state.bassins.length+1;
+    } else {
+      APP.state.bassins=Array.from({length:16},(_,i)=>({
+        name:`Bassin ${String(i+1).padStart(2,'0')}`,vol:3.8,nbInit:1000,mort:0,poids:5+i*0.3,
+        alimReel:0,temp:null,ph:null,DO:null,NH3:null,TAN:null,statut:'Actif',feedId:FEED_TYPES[0]?.id||'K1',harvestDate:null
+      }));
+      APP.bCount=17;
+    }
+    if(!sSnap.empty){APP.state.suivi=sSnap.docs.map(d=>({...d.data()}));APP.state.suiviId=Math.max(0,...APP.state.suivi.map(r=>r.id||0))+1;}
+    if(!fSnap.empty){fSnap.docs.forEach(d=>{const ft=FEED_TYPES.find(f=>f.id===d.id);if(ft&&d.data().batches)ft.batches=d.data().batches;});}
+    if(cfgSnap.exists&&cfgSnap.data().probioStock!==undefined&&G('g-probio'))G('g-probio').value=cfgSnap.data().probioStock;
+  }catch(e){
+    console.error('loadFarmData error:',e);
+    // Continuer avec des données vides plutôt que de bloquer la connexion
+    APP.state.bassins=[];APP.state.suivi=[];
   }
-  if(!sSnap.empty){APP.state.suivi=sSnap.docs.map(d=>({...d.data()}));APP.state.suiviId=Math.max(0,...APP.state.suivi.map(r=>r.id||0))+1;}
-  if(!fSnap.empty){fSnap.docs.forEach(d=>{const ft=FEED_TYPES.find(f=>f.id===d.id);if(ft&&d.data().batches)ft.batches=d.data().batches;});}
-  if(cfgSnap.exists&&cfgSnap.data().probioStock!==undefined&&G('g-probio'))G('g-probio').value=cfgSnap.data().probioStock;
 }
 
 function setupFarmListeners(){
@@ -2212,7 +2250,7 @@ function renderAdminOverview(){
   overview.innerHTML=farms.map(f=>{
     const farmUsers=users.filter(u=>u.farmCode===f.code||u.farmCode===f.id);
     const spProfile=SPECIES_PROFILES.find(s=>s.id===f.speciesId)||null;
-    return `<div class="farm-card" onclick="swAdmin('ta1')">
+    return `<div class="farm-card" style="position:relative">
       <div class="farm-code">${f.code||f.id}</div>
       <div class="farm-name">${f.name||f.id}</div>
       ${spProfile?`<div style="margin:.25rem 0;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:8px;font-size:9px;font-weight:700;background:${spProfile.color}15;color:${spProfile.color};border:1px solid ${spProfile.color}25">${spProfile.icon} ${spProfile.nom}</div>`:''}
@@ -2222,6 +2260,7 @@ function renderAdminOverview(){
       </div>
       ${f.responsable?`<div style="font-size:10px;color:var(--t3);margin-top:.3rem">👤 ${f.responsable}</div>`:''}
       ${f.localisation?`<div style="font-size:10px;color:var(--t3)">📍 ${f.localisation}</div>`:''}
+      <button onclick="adminEnterFarm('${f.code||f.id}')" style="margin-top:.5rem;width:100%;background:var(--acc2);color:#fff;border:none;border-radius:6px;padding:4px 0;font-size:10px;font-weight:700;cursor:pointer">🔑 Accéder à la ferme</button>
     </div>`;
   }).join('');
   // Metrics
@@ -2249,7 +2288,8 @@ function renderFarmsTable(){
       <td>${spBadge}</td>
       <td><span class="badge b-ok">Actif</span></td>
       <td class="cf">${fu}</td>
-      <td><button class="dbtn" onclick="deleteFarm('${fc}')">Supprimer</button></td>
+      <td><button class="dbtn" onclick="deleteFarm('${fc}')">Supprimer</button>
+          <button class="ebtn" onclick="adminEnterFarm('${fc}')" style="margin-left:4px;background:var(--acc2);color:#fff;border:none">🔑 Accéder</button></td>
     </tr>`;
   }).join('') || '<tr><td colspan="8" style="color:var(--t3);padding:.75rem;text-align:center">Aucune ferme</td></tr>';
 }
@@ -2311,6 +2351,43 @@ async function createFarm(){
     await loadAdminDashboard();
     msg.style.color='var(--acc)';msg.textContent=`✅ Ferme "${name}" (${speciesProfile.icon} ${speciesProfile.nom}) créée avec succès !`;
   }catch(e){msg.style.color='var(--dng)';msg.textContent='❌ Erreur : '+e.message;}
+  hideLoader();
+}
+
+// Super Admin accède à une ferme spécifique pour voir ses données
+async function adminEnterFarm(farmCode){
+  if(!confirm(`Accéder à la ferme "${farmCode}" en mode Super Admin ?\nVous aurez un accès complet en lecture et écriture.`))return;
+  showLoader('Chargement de la ferme…');
+  try{
+    const farmSnap=await db.collection('farms').doc(farmCode).get();
+    if(!farmSnap.exists){alert('Ferme introuvable.');hideLoader();return;}
+    const farmData=farmSnap.data();
+    APP.farmCode=farmCode;
+    APP.farmName=farmData.name||farmCode;
+    // Charger l'espèce
+    if(farmData.speciesId){
+      if(farmData.speciesId==='custom'&&farmData.speciesCustom){
+        const idx=SPECIES_PROFILES.findIndex(s=>s.id==='custom');
+        if(idx>=0)SPECIES_PROFILES[idx]={...SPECIES_PROFILES[idx],...farmData.speciesCustom};
+        APP.species=SPECIES_PROFILES[idx>=0?idx:0];
+      } else {
+        APP.species=SPECIES_PROFILES.find(s=>s.id===farmData.speciesId)||SPECIES_PROFILES[0];
+      }
+    }
+    // Garder le rôle Administrateur mais avec accès ferme
+    APP.user.farmCode=farmCode;
+    APP.user.canBackup=true;
+    await loadFarmData();
+    hideLoader();
+    showFarmApp();
+    // Afficher un bandeau indiquant le mode admin
+    setTimeout(()=>{
+      const ub=G('user-badge');
+      if(ub){ub.textContent='👑 Admin — '+farmCode;ub.className='badge b-gold';}
+      const backBtn=G('btn-back-admin');
+      if(backBtn)backBtn.style.display='flex';
+    },200);
+  }catch(e){alert('❌ Erreur : '+e.message);}
   hideLoader();
 }
 
