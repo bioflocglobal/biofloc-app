@@ -3036,6 +3036,7 @@ function onLogoFileSelected(input){
 
 async function uploadFarmLogo(){
   if(!LOGO_PENDING_FILE||!APP.farmCode){return;}
+
   const wrap=G('logo-progress-wrap');
   const bar=G('logo-progress-bar');
   const txt=G('logo-progress-text');
@@ -3043,12 +3044,38 @@ async function uploadFarmLogo(){
   if(wrap)wrap.style.display='block';
   if(saveBtn)saveBtn.disabled=true;
   hideLogoError();
+
+  // Vérifier l'authentification Firebase
+  const currentUser=firebase.auth().currentUser;
+
+  // Si pas d'auth Firebase → fallback base64 dans Firestore
+  if(!currentUser){
+    try{
+      if(txt)txt.textContent='Sauvegarde locale...';
+      if(bar)bar.style.width='50%';
+      const base64=await fileToBase64(LOGO_PENDING_FILE);
+      await db.collection('farms').doc(APP.farmCode).set({logoUrl:base64,logoType:'base64'},{merge:true});
+      APP.state.logoUrl=base64;
+      applyFarmLogo(base64);
+      if(wrap)wrap.style.display='none';
+      if(saveBtn){saveBtn.disabled=false;saveBtn.style.display='none';}
+      const st=G('logo-status-text');if(st)st.textContent='Logo chargé ✅';
+      const db2=G('logo-delete-btn');if(db2)db2.style.display='flex';
+      LOGO_PENDING_FILE=null;
+      alert('✅ Logo enregistré !');
+    }catch(e){
+      showLogoError('Erreur : '+e.message);
+      if(wrap)wrap.style.display='none';
+      if(saveBtn)saveBtn.disabled=false;
+    }
+    return;
+  }
+
+  // Auth OK → Firebase Storage
   try{
-    // Chemin dans Firebase Storage
     const ext=LOGO_PENDING_FILE.name.split('.').pop().toLowerCase();
     const path=`logos/${APP.farmCode}/logo.${ext}`;
     const ref=storage.ref(path);
-    // Upload avec suivi de progression
     const task=ref.put(LOGO_PENDING_FILE);
     task.on('state_changed',
       snap=>{
@@ -3056,30 +3083,36 @@ async function uploadFarmLogo(){
         if(bar)bar.style.width=pct+'%';
         if(txt)txt.textContent=`Envoi en cours... ${pct}%`;
       },
-      err=>{
-        showLogoError('Erreur upload : '+err.message);
-        if(wrap)wrap.style.display='none';
-        if(saveBtn)saveBtn.disabled=false;
+      async err=>{
+        // Storage échoue → fallback base64
+        console.warn('Storage failed, fallback base64:',err.message);
+        try{
+          const base64=await fileToBase64(LOGO_PENDING_FILE);
+          await db.collection('farms').doc(APP.farmCode).set({logoUrl:base64,logoType:'base64'},{merge:true});
+          APP.state.logoUrl=base64;
+          applyFarmLogo(base64);
+          if(wrap)wrap.style.display='none';
+          if(saveBtn){saveBtn.disabled=false;saveBtn.style.display='none';}
+          const st=G('logo-status-text');if(st)st.textContent='Logo chargé ✅';
+          const db2=G('logo-delete-btn');if(db2)db2.style.display='flex';
+          LOGO_PENDING_FILE=null;
+          alert('✅ Logo enregistré !');
+        }catch(e2){
+          showLogoError('Erreur : '+e2.message);
+          if(wrap)wrap.style.display='none';
+          if(saveBtn)saveBtn.disabled=false;
+        }
       },
       async()=>{
-        // Upload terminé — récupérer l'URL
         const url=await ref.getDownloadURL();
-        // Sauvegarder dans Firestore
-        await db.collection('farms').doc(APP.farmCode).set({logoUrl:url},{merge:true});
-        // Mettre à jour l'état local
+        await db.collection('farms').doc(APP.farmCode).set({logoUrl:url,logoType:'url'},{merge:true});
         APP.state.logoUrl=url;
-        // Appliquer partout
         applyFarmLogo(url);
-        // UI
         if(wrap)wrap.style.display='none';
-        if(txt)txt.textContent='Logo enregistré ✅';
         if(saveBtn){saveBtn.disabled=false;saveBtn.style.display='none';}
-        const statusText=G('logo-status-text');
-        if(statusText)statusText.textContent='Logo chargé — visible dans la barre supérieure';
-        const deleteBtn=G('logo-delete-btn');
-        if(deleteBtn)deleteBtn.style.display='flex';
-        const fn=G('logo-filename');
-        if(fn)fn.textContent=`Mis à jour — ${new Date().toLocaleDateString('fr-FR')}`;
+        const st=G('logo-status-text');if(st)st.textContent='Logo chargé ✅';
+        const db2=G('logo-delete-btn');if(db2)db2.style.display='flex';
+        const fn=G('logo-filename');if(fn)fn.textContent=`Mis à jour — ${new Date().toLocaleDateString('fr-FR')}`;
         LOGO_PENDING_FILE=null;
         logAudit('logo_upload',{farmCode:APP.farmCode,user:APP.user?.name});
         alert('✅ Logo enregistré avec succès !');
@@ -3090,6 +3123,17 @@ async function uploadFarmLogo(){
     if(wrap)wrap.style.display='none';
     if(saveBtn)saveBtn.disabled=false;
   }
+}
+
+// Convertir fichier en base64
+function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    if(file.size>200*1024){rej(new Error('Fichier trop volumineux pour le mode local (max 200 Ko). Reconnectez-vous et réessayez.'));return;}
+    const r=new FileReader();
+    r.onload=e=>res(e.target.result);
+    r.onerror=()=>rej(new Error('Lecture fichier impossible'));
+    r.readAsDataURL(file);
+  });
 }
 
 async function deleteFarmLogo(){
