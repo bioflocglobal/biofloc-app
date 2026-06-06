@@ -8,6 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 <style>
 :root{
   --bg:#020b14;--panel:#04111f;--card:#061828;--inp:#05131f;--hov:#0a1e2e;
@@ -251,15 +252,21 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
   <div class="boot-bg-circle bc2"></div>
   <div class="boot-bg-circle bc3"></div>
   <div class="boot-card">
-    <div style="font-size:42px;text-align:center;margin-bottom:.3rem">🐟</div>
-    <div class="boot-logo">BIOFLOC PLATFORM</div>
+    <!-- Logo ferme dynamique (chargé après saisie du code ferme) -->
+    <div id="boot-logo-area" style="text-align:center;margin-bottom:.3rem;min-height:50px;display:flex;align-items:center;justify-content:center;gap:10px">
+      <div style="font-size:42px" id="boot-fish-icon">🐟</div>
+      <img id="boot-logo-img" src="" alt="" style="height:50px;max-width:120px;border-radius:8px;object-fit:contain;display:none;border:1px solid var(--b2)">
+    </div>
+    <div class="boot-logo" id="boot-farm-display">BIOFLOC PLATFORM</div>
     <div class="boot-sub">Système de gestion aquacole</div>
     <div class="boot-platform" id="boot-platform-name">BIOFLOC EXPERT SYSTEM V19</div>
     <div class="boot-clock" id="boot-clock">--:--:--</div>
     <div class="boot-date" id="boot-date">—</div>
     <div class="boot-sep"></div>
     <div class="boot-lbl">Code Ferme</div>
-    <input id="b-farm" class="boot-inp" type="text" placeholder="Ex: FARM01" autocomplete="off" onkeydown="if(event.key==='Enter')document.getElementById('b-user').focus()">
+    <input id="b-farm" class="boot-inp" type="text" placeholder="Ex: FARM01" autocomplete="off"
+      onkeydown="if(event.key==='Enter')document.getElementById('b-user').focus()"
+      onblur="previewBootLogo(this.value.trim().toUpperCase())">
     <div class="boot-lbl">Nom d'utilisateur</div>
     <input id="b-user" class="boot-inp" type="text" placeholder="Votre identifiant" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('b-pass').focus()">
     <div class="boot-lbl">Mot de passe</div>
@@ -528,7 +535,10 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
 ═══════════════════════════════════════ -->
 <div id="screen-farm" class="hidden">
   <div class="topbar">
-    <div class="logo">🐟 <span id="farm-display-name">BIOFLOC</span></div>
+    <div class="logo">
+      <img id="farm-logo-img" src="" alt="" style="height:28px;width:28px;border-radius:6px;object-fit:cover;display:none;margin-right:4px;border:1px solid var(--b2)">
+      🐟 <span id="farm-display-name">BIOFLOC</span>
+    </div>
     <div class="stats">
       <div class="stat"><span>Bassins actifs</span><strong id="s-actifs">—</strong></div>
       <div class="stat"><span>Biomasse</span><strong id="s-bio">—</strong></div>
@@ -1490,8 +1500,63 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
       <!-- Sous-navigation interne -->
       <div style="display:flex;gap:4px;margin-bottom:.9rem;background:var(--panel);border:1px solid var(--b1);border-radius:10px;padding:4px;width:fit-content">
         <button id="rsp-tab-ops" class="rsp-tab active" onclick="swResp('ops')">👥 Opérateurs</button>
+        <button id="rsp-tab-logo" class="rsp-tab" onclick="swResp('logo')">🖼️ Logo ferme</button>
         <button id="rsp-tab-bkp" class="rsp-tab" onclick="swResp('bkp')">💾 Sauvegardes</button>
         <button id="rsp-tab-log" class="rsp-tab" onclick="swResp('log')">📋 Journal</button>
+      </div>
+
+      <!-- SOUS-ONGLET : LOGO FERME -->
+      <div id="rsp-logo" class="rsp-pane hidden">
+        <div class="two">
+          <div class="card" style="border-color:rgba(0,201,167,.2)">
+            <div class="ctitle"><span class="dot" style="background:var(--acc)"></span>Logo de la ferme</div>
+            <p style="font-size:10px;color:var(--t2);line-height:1.7;margin-bottom:.8rem">
+              Le logo s'affiche dans la barre supérieure et sur la page de connexion. Formats acceptés : JPG, PNG, SVG. Taille max : 500 Ko.
+            </p>
+
+            <!-- Aperçu logo actuel -->
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;padding:.75rem;background:var(--panel);border-radius:10px;border:1px solid var(--b1)">
+              <div id="logo-preview-wrap" style="width:80px;height:80px;border-radius:10px;border:2px dashed var(--b2);display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--card)">
+                <img id="logo-preview" src="" alt="" style="width:100%;height:100%;object-fit:contain;display:none">
+                <span id="logo-preview-placeholder" style="font-size:28px">🐟</span>
+              </div>
+              <div style="flex:1">
+                <div id="logo-status-text" style="font-size:11px;color:var(--t2);margin-bottom:.4rem">Aucun logo chargé — logo par défaut affiché</div>
+                <div id="logo-filename" style="font-size:9px;color:var(--t3)"></div>
+              </div>
+            </div>
+
+            <!-- Zone d'upload -->
+            <input type="file" id="logo-file-input" accept="image/jpeg,image/png,image/svg+xml,image/webp" style="display:none" onchange="onLogoFileSelected(this)">
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+              <button class="sbtn" onclick="G('logo-file-input').click()" style="flex:1">📁 Choisir un logo</button>
+              <button id="logo-save-btn" class="sbtn" onclick="uploadFarmLogo()" style="flex:1;display:none;background:var(--acc)">✅ Enregistrer le logo</button>
+              <button id="logo-delete-btn" class="dbtn" onclick="deleteFarmLogo()" style="flex:1;display:none">🗑️ Supprimer</button>
+            </div>
+
+            <!-- Barre de progression -->
+            <div id="logo-progress-wrap" style="display:none;margin-top:.6rem">
+              <div style="height:4px;background:var(--b1);border-radius:4px;overflow:hidden">
+                <div id="logo-progress-bar" style="height:100%;width:0%;background:var(--acc);transition:width .2s;border-radius:4px"></div>
+              </div>
+              <div id="logo-progress-text" style="font-size:9px;color:var(--t3);margin-top:3px;text-align:center">Envoi en cours...</div>
+            </div>
+            <div id="logo-error" style="display:none;margin-top:.5rem;font-size:10px;color:var(--dng);padding:.4rem .6rem;background:rgba(255,61,87,.08);border-radius:6px"></div>
+          </div>
+
+          <div class="card">
+            <div class="ctitle"><span class="dot" style="background:var(--gold)"></span>Conseils</div>
+            <div style="font-size:10px;color:var(--t2);line-height:1.9">
+              <div>📐 <strong style="color:var(--t1)">Format idéal</strong> : carré ou rectangulaire · fond transparent (PNG) ou blanc</div>
+              <div>🎨 <strong style="color:var(--t1)">Résolution</strong> : 200×200 px minimum · 500×500 px recommandé</div>
+              <div>⚖️ <strong style="color:var(--t1)">Taille fichier</strong> : moins de 500 Ko pour un chargement rapide</div>
+              <div>🔄 <strong style="color:var(--t1)">Remplacement</strong> : uploader un nouveau logo écrase l'ancien automatiquement</div>
+              <div style="margin-top:.6rem;padding:.4rem .6rem;background:rgba(251,191,36,.08);border-radius:6px;border:1px solid rgba(251,191,36,.2)">
+                ⚠️ Le logo est visible par tous les utilisateurs de cette ferme. Utilisez le logo officiel de votre structure.
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- SOUS-ONGLET : OPÉRATEURS -->
@@ -1745,6 +1810,7 @@ const firebaseConfig={
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const auth=firebase.auth();
+const storage=firebase.storage(); // Firebase Storage pour logos
 
 // Active la persistance Firestore pour mode offline + évite les erreurs réseau
 db.enablePersistence({synchronizeTabs:true}).catch(err=>{
@@ -1781,7 +1847,7 @@ let APP={
   warnSecs:60,
   whatsapp:'',
   platformName:'BIOFLOC EXPERT SYSTEM V19',
-  state:{bassins:[],suivi:[],suiviId:0},
+  state:{bassins:[],suivi:[],suiviId:0,logoUrl:null},
   unsubs:[],
   bCount:17,
   species:null, // profil espèce actif (voir SPECIES_PROFILES)
@@ -2166,8 +2232,9 @@ async function doLogout(expired=false){
   stopSession();
   APP.unsubs.forEach(u=>u());APP.unsubs=[];
   await auth.signOut();
-  APP.user=null;APP.farmCode=null;APP.farmName=null;
-  APP.state={bassins:[],suivi:[],suiviId:0};
+  APP.user=null;APP.farmCode=null;APP.farmName=null;APP.species=null;
+  APP.state={bassins:[],suivi:[],suiviId:0,logoUrl:null};
+  applyFarmLogo(null);
   FEED_TYPES=JSON.parse(JSON.stringify(FEED_TYPES_DEFAULT));
   FEED_TYPES[0].batches=[{id:1,qty:10,price:1212}];
   FEED_TYPES[1].batches=[{id:1,qty:10,price:1212}];
@@ -2205,6 +2272,8 @@ async function showFarmApp(){
   showScreen('screen-farm');
   startSession();
   loadSuppliersFromFirestore();
+  loadSpeciesFromFirestore();
+  loadFarmLogo();
   const role=APP.user?.role||'Opérateur';
   if(role==='Responsable'||role==='Administrateur'){
     checkNotifications();
@@ -2906,11 +2975,194 @@ function sw(id){
 
 // Sous-onglets Espace Responsable
 function swResp(tab){
-  ['ops','bkp','log'].forEach(t=>{
+  ['ops','logo','bkp','log'].forEach(t=>{
     const p=G('rsp-'+t);if(p){p.classList.toggle('hidden',t!==tab);}
     const b=G('rsp-tab-'+t);if(b){b.classList.toggle('active',t===tab);}
   });
   if(tab==='log')renderJournal();
+  if(tab==='logo')renderLogoTab();
+}
+
+// ═══════════════════════════════════════════════
+// GESTION LOGO FERME — Firebase Storage
+// ═══════════════════════════════════════════════
+
+let LOGO_PENDING_FILE=null; // fichier sélectionné en attente d'upload
+
+function renderLogoTab(){
+  // Charger le logo actuel depuis APP state
+  const logoUrl=APP.state.logoUrl||null;
+  const preview=G('logo-preview');
+  const placeholder=G('logo-preview-placeholder');
+  const statusText=G('logo-status-text');
+  const deleteBtn=G('logo-delete-btn');
+  if(logoUrl){
+    if(preview){preview.src=logoUrl;preview.style.display='block';}
+    if(placeholder)placeholder.style.display='none';
+    if(statusText)statusText.textContent='Logo chargé — visible dans la barre supérieure';
+    if(deleteBtn)deleteBtn.style.display='flex';
+  } else {
+    if(preview)preview.style.display='none';
+    if(placeholder)placeholder.style.display='block';
+    if(statusText)statusText.textContent='Aucun logo chargé — logo par défaut affiché';
+    if(deleteBtn)deleteBtn.style.display='none';
+  }
+}
+
+function onLogoFileSelected(input){
+  const file=input.files[0];
+  if(!file)return;
+  // Vérification taille
+  if(file.size>500*1024){
+    showLogoError('Fichier trop volumineux. Maximum 500 Ko.');
+    return;
+  }
+  LOGO_PENDING_FILE=file;
+  // Aperçu local immédiat
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const preview=G('logo-preview');
+    if(preview){preview.src=e.target.result;preview.style.display='block';}
+    const placeholder=G('logo-preview-placeholder');
+    if(placeholder)placeholder.style.display='none';
+    const fn=G('logo-filename');
+    if(fn)fn.textContent=`${file.name} · ${(file.size/1024).toFixed(0)} Ko`;
+    const saveBtn=G('logo-save-btn');
+    if(saveBtn)saveBtn.style.display='flex';
+    hideLogoError();
+  };
+  reader.readAsDataURL(file);
+}
+
+async function uploadFarmLogo(){
+  if(!LOGO_PENDING_FILE||!APP.farmCode){return;}
+  const wrap=G('logo-progress-wrap');
+  const bar=G('logo-progress-bar');
+  const txt=G('logo-progress-text');
+  const saveBtn=G('logo-save-btn');
+  if(wrap)wrap.style.display='block';
+  if(saveBtn)saveBtn.disabled=true;
+  hideLogoError();
+  try{
+    // Chemin dans Firebase Storage
+    const ext=LOGO_PENDING_FILE.name.split('.').pop().toLowerCase();
+    const path=`logos/${APP.farmCode}/logo.${ext}`;
+    const ref=storage.ref(path);
+    // Upload avec suivi de progression
+    const task=ref.put(LOGO_PENDING_FILE);
+    task.on('state_changed',
+      snap=>{
+        const pct=Math.round(snap.bytesTransferred/snap.totalBytes*100);
+        if(bar)bar.style.width=pct+'%';
+        if(txt)txt.textContent=`Envoi en cours... ${pct}%`;
+      },
+      err=>{
+        showLogoError('Erreur upload : '+err.message);
+        if(wrap)wrap.style.display='none';
+        if(saveBtn)saveBtn.disabled=false;
+      },
+      async()=>{
+        // Upload terminé — récupérer l'URL
+        const url=await ref.getDownloadURL();
+        // Sauvegarder dans Firestore
+        await db.collection('farms').doc(APP.farmCode).set({logoUrl:url},{merge:true});
+        // Mettre à jour l'état local
+        APP.state.logoUrl=url;
+        // Appliquer partout
+        applyFarmLogo(url);
+        // UI
+        if(wrap)wrap.style.display='none';
+        if(txt)txt.textContent='Logo enregistré ✅';
+        if(saveBtn){saveBtn.disabled=false;saveBtn.style.display='none';}
+        const statusText=G('logo-status-text');
+        if(statusText)statusText.textContent='Logo chargé — visible dans la barre supérieure';
+        const deleteBtn=G('logo-delete-btn');
+        if(deleteBtn)deleteBtn.style.display='flex';
+        const fn=G('logo-filename');
+        if(fn)fn.textContent=`Mis à jour — ${new Date().toLocaleDateString('fr-FR')}`;
+        LOGO_PENDING_FILE=null;
+        logAudit('logo_upload',{farmCode:APP.farmCode,user:APP.user?.name});
+        alert('✅ Logo enregistré avec succès !');
+      }
+    );
+  }catch(e){
+    showLogoError('Erreur : '+e.message);
+    if(wrap)wrap.style.display='none';
+    if(saveBtn)saveBtn.disabled=false;
+  }
+}
+
+async function deleteFarmLogo(){
+  if(!confirm('Supprimer le logo de cette ferme ? Le logo par défaut sera affiché.'))return;
+  try{
+    // Supprimer de Storage (essayer les deux extensions courantes)
+    for(const ext of ['png','jpg','jpeg','svg','webp']){
+      try{await storage.ref(`logos/${APP.farmCode}/logo.${ext}`).delete();}catch(e){}
+    }
+    // Supprimer de Firestore
+    await db.collection('farms').doc(APP.farmCode).set({logoUrl:null},{merge:true});
+    APP.state.logoUrl=null;
+    applyFarmLogo(null);
+    renderLogoTab();
+    const input=G('logo-file-input');if(input)input.value='';
+    LOGO_PENDING_FILE=null;
+    logAudit('logo_delete',{farmCode:APP.farmCode,user:APP.user?.name});
+    alert('✅ Logo supprimé.');
+  }catch(e){showLogoError('Erreur suppression : '+e.message);}
+}
+
+function applyFarmLogo(url){
+  // Topbar farm app
+  const topbarImg=G('farm-logo-img');
+  if(topbarImg){
+    if(url){topbarImg.src=url;topbarImg.style.display='block';}
+    else{topbarImg.src='';topbarImg.style.display='none';}
+  }
+  // Page de connexion
+  const bootImg=G('boot-logo-img');
+  const bootFish=G('boot-fish-icon');
+  if(bootImg){
+    if(url){bootImg.src=url;bootImg.style.display='block';if(bootFish)bootFish.style.display='none';}
+    else{bootImg.style.display='none';if(bootFish)bootFish.style.display='block';}
+  }
+}
+
+async function loadFarmLogo(){
+  if(!APP.farmCode)return;
+  try{
+    const snap=await db.collection('farms').doc(APP.farmCode).get();
+    if(snap.exists&&snap.data().logoUrl){
+      APP.state.logoUrl=snap.data().logoUrl;
+      applyFarmLogo(snap.data().logoUrl);
+    }
+  }catch(e){console.warn('Logo load:',e);}
+}
+
+// Also load logo on farm data load — attach to showFarmApp flow
+// (called from showFarmApp after loadFarmData)
+
+function showLogoError(msg){
+  const el=G('logo-error');if(el){el.textContent=msg;el.style.display='block';}
+}
+function hideLogoError(){
+  const el=G('logo-error');if(el)el.style.display='none';
+}
+
+// Prévisualise le logo sur la page de connexion après saisie du code ferme
+async function previewBootLogo(farmCode){
+  if(!farmCode||farmCode.length<3)return;
+  try{
+    const snap=await db.collection('farms').doc(farmCode).get();
+    if(snap.exists&&snap.data().logoUrl){
+      const url=snap.data().logoUrl;
+      const bootImg=G('boot-logo-img');
+      const bootFish=G('boot-fish-icon');
+      const bootName=G('boot-farm-display');
+      if(bootImg){bootImg.src=url;bootImg.style.display='block';}
+      if(bootFish)bootFish.style.display='none';
+      if(bootName)bootName.textContent=snap.data().name||farmCode;
+    }
+  }catch(e){/* ferme non trouvée ou pas de logo */}
 }
 
 // ═══════════════════════════════════════════════
