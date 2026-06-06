@@ -1181,6 +1181,8 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
             <th style="color:var(--warn)">TAN mg/L <small style="color:var(--t3)">(opt.)</small></th>
             <th style="color:#c084fc">Probiot ml <small style="color:var(--t3)" title="Probiotique for Water Administration — quantité utilisée ce jour">(opt.)</small></th>
             <th style="color:var(--gold)">TAC mg/L <small style="color:var(--t3)" title="Titre Alcalimétrique Complet — alcalinité (CaCO₃ éq.)">(opt.)</small></th>
+            <th style="color:var(--acc2)">Basifiant <small style="color:var(--t3)" title="CaCO₃ ou NaHCO₃">(opt.)</small></th>
+            <th style="color:var(--warn)">Carbohydrate <small style="color:var(--t3)" title="Mélasse (mL) · Farine blé/maïs/manioc (g)">(opt.)</small></th>
             <th>Actions</th>
           </tr></thead>
           <tbody id="b-tbody"></tbody>
@@ -2459,16 +2461,20 @@ async function loadFarmData(){
       APP.state.bassins=bSnap.docs.map(d=>{
         const x={...d.data()};delete x._order;
         if(!x.feedId)x.feedId=getRationEntry(x.poids||1)?.id||FEED_TYPES[0]?.id;
-        if(x.TAN===undefined)x.TAN=null; // rétrocompatibilité
-        if(x.probiot===undefined)x.probiot=null; // rétrocompatibilité
-        if(x.TAC===undefined)x.TAC=null; // rétrocompatibilité
+        if(x.TAN===undefined)x.TAN=null;
+        if(x.probiot===undefined)x.probiot=null;
+        if(x.TAC===undefined)x.TAC=null;
+        if(x.basifiant===undefined)x.basifiant=null;
+        if(x.basifiantType===undefined)x.basifiantType=null;
+        if(x.carb===undefined)x.carb=null;
+        if(x.carbType===undefined)x.carbType=null;
         return x;
       });
       APP.bCount=APP.state.bassins.length+1;
     } else {
       APP.state.bassins=Array.from({length:16},(_,i)=>({
         name:`Bassin ${String(i+1).padStart(2,'0')}`,vol:3.8,nbInit:1000,mort:0,poids:5+i*0.3,
-        alimReel:0,temp:null,ph:null,DO:null,NH3:null,TAN:null,probiot:null,TAC:null,statut:'Actif',feedId:FEED_TYPES[0]?.id||'K1',harvestDate:null
+        alimReel:0,temp:null,ph:null,DO:null,NH3:null,TAN:null,probiot:null,TAC:null,basifiant:null,basifiantType:null,carb:null,carbType:null,statut:'Actif',feedId:FEED_TYPES[0]?.id||'K1',harvestDate:null
       }));
       APP.bCount=17;
     }
@@ -3548,10 +3554,14 @@ function buildBTable(){
       <td class="cf" id="br-${i}">—</td>
       <td class="cf" id="bt-${i}">—</td>
       <td><input type="number" class="ci" value="${fmt(b.alimReel,3)}" step="0.001" style="width:65px" onchange="if(!APP_historyDate)APP.state.bassins[${i}].alimReel=+this.value;else APP_historyData[${i}].alimReel=+this.value;upConfigCalcs()"></td>
-      <td><input type="number" id="bT-${i}" class="${optCls(b.temp)}" value="${optVal(b.temp)}" step="0.1" style="width:52px" placeholder="—" onchange="const v=this.value===''?null:+this.value;if(!APP_historyDate)APP.state.bassins[${i}].temp=v;else APP_historyData[${i}].temp=v;upConfigCalcs()"></td>
-      <td><input type="number" id="bP-${i}" class="${optCls(b.ph)}" value="${optVal(b.ph)}" step="0.01" style="width:50px" placeholder="—" onchange="const v=this.value===''?null:+this.value;if(!APP_historyDate)APP.state.bassins[${i}].ph=v;else APP_historyData[${i}].ph=v;upConfigCalcs()"></td>
-      <td><input type="number" id="bD-${i}" class="${optCls(b.DO)}" value="${optVal(b.DO)}" step="0.1" style="width:50px" placeholder="—" onchange="const v=this.value===''?null:+this.value;if(!APP_historyDate)APP.state.bassins[${i}].DO=v;else APP_historyData[${i}].DO=v;upConfigCalcs()"></td>
-      <td><input type="number" id="bN-${i}" class="${optCls(b.NH3)}" value="${optVal(b.NH3)}" step="0.01" style="width:55px" placeholder="—" onchange="const v=this.value===''?null:+this.value;if(!APP_historyDate)APP.state.bassins[${i}].NH3=v;else APP_historyData[${i}].NH3=v;upConfigCalcs()"></td>
+      <td><input type="number" id="bT-${i}" class="${optCls(b.temp)}" value="${optVal(b.temp)}" step="0.1" style="width:52px" placeholder="—" onchange="const v=this.value===''?null:+this.value;if(!APP_historyDate)APP.state.bassins[${i}].temp=v;else APP_historyData[${i}].temp=v;upConfigCalcs()">
+        <div id="bTst-${i}" style="font-size:7.5px;font-weight:700;text-align:center;margin-top:1px;white-space:nowrap"></div></td>
+      <td><input type="number" id="bP-${i}" class="${optCls(b.ph)}" value="${optVal(b.ph)}" step="0.01" style="width:50px" placeholder="—" onchange="const v=this.value===''?null:+this.value;if(!APP_historyDate)APP.state.bassins[${i}].ph=v;else APP_historyData[${i}].ph=v;upConfigCalcs()">
+        <div id="bPst-${i}" style="font-size:7.5px;font-weight:700;text-align:center;margin-top:1px;white-space:nowrap"></div></td>
+      <td><input type="number" id="bD-${i}" class="${optCls(b.DO)}" value="${optVal(b.DO)}" step="0.1" style="width:50px" placeholder="—" onchange="const v=this.value===''?null:+this.value;if(!APP_historyDate)APP.state.bassins[${i}].DO=v;else APP_historyData[${i}].DO=v;upConfigCalcs()">
+        <div id="bDst-${i}" style="font-size:7.5px;font-weight:700;text-align:center;margin-top:1px;white-space:nowrap"></div></td>
+      <td><input type="number" id="bN-${i}" class="${optCls(b.NH3)}" value="${optVal(b.NH3)}" step="0.01" style="width:55px" placeholder="—" onchange="const v=this.value===''?null:+this.value;if(!APP_historyDate)APP.state.bassins[${i}].NH3=v;else APP_historyData[${i}].NH3=v;upConfigCalcs()">
+        <div id="bNst-${i}" style="font-size:7.5px;font-weight:700;text-align:center;margin-top:1px;white-space:nowrap"></div></td>
       <td>
         <input type="number" id="bTAN-${i}" class="${b.TAN!==null&&b.TAN>=1?'ci wi':'ci opt'}" value="${optVal(b.TAN)}" step="0.01" style="width:55px;border-color:${b.TAN!==null&&b.TAN>=1?'var(--warn)':'rgba(245,166,35,.25)'}"
           placeholder="—" title="TAN ≥1 mg/L → Phase 2 mélasse · Saisir pour pré-remplir le calculateur"
@@ -3568,6 +3578,7 @@ function buildBTable(){
             calcRation();
           ">
         <div id="bMel-${i}" style="font-size:9px;font-weight:700;text-align:center;margin-top:1px;color:var(--t3)" title="Mélasse C:N=15:1">—</div>
+        <div id="bTANst-${i}" style="font-size:7.5px;font-weight:700;text-align:center;margin-top:1px;white-space:nowrap"></div>
       </td>
       <td>
         <input type="number" id="bPROBIOT-${i}" class="${(b.probiot!==null&&b.probiot!==undefined)?'ci':'ci opt'}"
@@ -3584,15 +3595,55 @@ function buildBTable(){
             if(!APP_historyDate)APP.state.bassins[${i}].TAC=v;
             else APP_historyData[${i}].TAC=v;
             upConfigCalcs();
-            // Auto-remplir le calculateur TAC
             if(v!==null){
               if(G('tac-val'))G('tac-val').value=v;
               const bx=APP_historyDate?APP_historyData[${i}]:APP.state.bassins[${i}];
               if(G('tac-vol'))G('tac-vol').value=bx.vol||3.8;
               calcTAC();
             }">
-        ${b.TAC!==null&&b.TAC!==undefined?`<div style="font-size:8px;text-align:center;margin-top:1px;color:${b.TAC<50?'var(--dng)':b.TAC<100?'var(--warn)':b.TAC<150?'var(--gold)':'var(--acc)'}">${b.TAC<50?'🚨 URGENT':b.TAC<100?'⚠️ Faible':b.TAC<150?'📊 Vigilance':'✅ OK'}</div>`:''}
+        <div id="bTACst-${i}" style="font-size:7.5px;font-weight:700;text-align:center;margin-top:1px;white-space:nowrap"></div>
       </td>
+
+      <!-- Basifiant : type + quantité -->
+      <td style="min-width:100px">
+        <select id="bBAS-type-${i}" class="si" style="font-size:9px;padding:1px 3px;width:58px;border-color:rgba(61,142,245,.3);color:var(--acc2);margin-bottom:2px"
+          onchange="if(!APP_historyDate)APP.state.bassins[${i}].basifiantType=this.value;else APP_historyData[${i}].basifiantType=this.value;upConfigCalcs()">
+          <option value="">—</option>
+          <option value="CaCO3"${(b.basifiantType==='CaCO3')?' selected':''}>CaCO₃</option>
+          <option value="NaHCO3"${(b.basifiantType==='NaHCO3')?' selected':''}>NaHCO₃</option>
+        </select>
+        <input type="number" id="bBAS-${i}" class="${b.basifiant?'ci':'ci opt'}" value="${b.basifiant??''}"
+          step="0.1" style="width:58px;font-size:10px" placeholder="g"
+          title="Quantité basifiant utilisée (g)"
+          onchange="const v=this.value===''?null:+this.value;if(!APP_historyDate)APP.state.bassins[${i}].basifiant=v;else APP_historyData[${i}].basifiant=v;upConfigCalcs()">
+        ${b.basifiant&&b.basifiantType?`<div style="font-size:8px;color:var(--acc2);text-align:center">${b.basifiant}g ${b.basifiantType}</div>`:''}
+      </td>
+
+      <!-- Carbohydrate : type + quantité -->
+      <td style="min-width:110px">
+        <select id="bCARB-type-${i}" class="si" style="font-size:9px;padding:1px 3px;width:82px;border-color:rgba(245,158,11,.3);color:var(--warn);margin-bottom:2px"
+          onchange="
+            if(!APP_historyDate)APP.state.bassins[${i}].carbType=this.value;
+            else APP_historyData[${i}].carbType=this.value;
+            const unit=G('bCARB-unit-${i}');
+            if(unit)unit.textContent=this.value==='Mélasse'?'mL':'g';
+            upConfigCalcs()">
+          <option value="">—</option>
+          <option value="Mélasse"${(b.carbType==='Mélasse')?' selected':''}>🍯 Mélasse</option>
+          <option value="Farine blé"${(b.carbType==='Farine blé')?' selected':''}>🌾 Farine blé</option>
+          <option value="Farine maïs"${(b.carbType==='Farine maïs')?' selected':''}>🌽 Farine maïs</option>
+          <option value="Farine manioc"${(b.carbType==='Farine manioc')?' selected':''}>🥔 Farine manioc</option>
+        </select>
+        <div style="display:flex;align-items:center;gap:2px">
+          <input type="number" id="bCARB-${i}" class="${b.carb?'ci':'ci opt'}" value="${b.carb??''}"
+            step="1" style="width:52px;font-size:10px" placeholder="qté"
+            title="Quantité de carbohydrate utilisée"
+            onchange="const v=this.value===''?null:+this.value;if(!APP_historyDate)APP.state.bassins[${i}].carb=v;else APP_historyData[${i}].carb=v;upConfigCalcs()">
+          <span id="bCARB-unit-${i}" style="font-size:9px;color:var(--t3)">${b.carbType==='Mélasse'?'mL':'g'}</span>
+        </div>
+        ${b.carb&&b.carbType?`<div style="font-size:8px;color:var(--warn);text-align:center">${b.carb}${b.carbType==='Mélasse'?'mL':'g'} ${b.carbType}</div>`:''}
+      </td>
+
       <td style="white-space:nowrap">
         <button onclick="saveBassinRow(${i})" style="background:var(--acc);color:#04101e;border:none;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;font-weight:700;margin-right:2px" title="Enregistrer">💾</button>
         ${canDelete?`<button class="dbtn" onclick="removeBassin(${i})" title="Supprimer">🗑</button>`:`<button style="background:none;border:1px solid var(--b2);border-radius:4px;padding:3px 6px;font-size:10px;cursor:not-allowed;opacity:.4" title="Suppression réservée au Responsable">🔒</button>`}
@@ -3616,6 +3667,13 @@ function upConfigCalcs(){
     sc(`bD-${i}`,b.DO,false,b.DO!==null&&b.DO<sp().doAlerte);
     sc(`bN-${i}`,b.NH3,false,b.NH3!==null&&b.NH3>sp().nh3Alerte);
     sc(`bTAN-${i}`,b.TAN,false,b.TAN!==null&&b.TAN>=1);
+    // Labels de validation en temps réel sous chaque champ
+    updateParamStatusLabel(`bTst-${i}`,'temp',b.temp);
+    updateParamStatusLabel(`bPst-${i}`,'ph',b.ph);
+    updateParamStatusLabel(`bDst-${i}`,'DO',b.DO);
+    updateParamStatusLabel(`bNst-${i}`,'NH3',b.NH3);
+    updateParamStatusLabel(`bTANst-${i}`,'TAN',b.TAN);
+    updateParamStatusLabel(`bTACst-${i}`,'TAC',b.TAC);
     // Afficher dose mélasse bassin si TAN renseigné
     const melEl=G(`bMel-${i}`);
     if(melEl){
@@ -3656,7 +3714,67 @@ function upConfigCalcs(){
     <div class="met"><div class="mlbl">Alim réel/j</div><div class="mval">${fmt(tReel,3)}<span class="munit">kg</span></div></div>
     ${tMelas>0?`<div class="met warn"><div class="mlbl">Mélasse totale/j</div><div class="mval" style="color:var(--warn)">${Math.round(tMelas)}<span class="munit">ml</span></div></div>`:''}`;
   G('s-actifs').textContent=actifs;G('s-bio').textContent=fmt(tBio,1)+' kg';G('s-alim').textContent=fmt(tTheo,3)+' kg';G('s-recolte').textContent=recoltes;
-  const sp=fv('g-probio');G('s-stock').textContent=(sp/1000).toFixed(1)+' L';G('s-stock').style.color=sp<15000?'var(--dng)':sp<25000?'var(--warn)':'var(--t1)';
+}
+
+// ═══════════════════════════════════════════════
+// VALIDATION EN TEMPS RÉEL — Seuils dossier technique ICHTUS v4.1
+// ═══════════════════════════════════════════════
+function getParamStatus(param, value){
+  if(value===null||value===undefined||value==='')return null;
+  const v=parseFloat(value);if(isNaN(v))return null;
+  switch(param){
+    case 'DO':
+      if(v>=6&&v<=8)return{label:'✅ Optimal 6–8',color:'var(--acc)'};
+      if(v>=5)return{label:'✓ Acceptable',color:'var(--t2)'};
+      if(v>=4)return{label:'⚠️ Vigilance',color:'var(--warn)'};
+      if(v>=3)return{label:'🔴 Alerte',color:'var(--dng)'};
+      if(v>=2)return{label:'🚨 URGENCE',color:'var(--dng)'};
+      return{label:'💀 CRISE <2',color:'var(--dng)'};
+    case 'ph':
+      if(v>=7.0&&v<=7.8)return{label:'✅ Optimal 7–7.8',color:'var(--acc)'};
+      if(v>7.8&&v<=8.5)return{label:'⚠️ NH₃ risque',color:'var(--warn)'};
+      if(v>=6.5&&v<7.0)return{label:'⚠️ Vigilance',color:'var(--warn)'};
+      if(v>=6.0&&v<6.5)return{label:'🔴 Alerte',color:'var(--dng)'};
+      if(v>8.5)return{label:'🚨 URGENCE',color:'var(--dng)'};
+      return{label:'🚨 URGENCE <6',color:'var(--dng)'};
+    case 'temp':
+      if(v>=26&&v<=30)return{label:'✅ Optimal 26–30',color:'var(--acc)'};
+      if(v>30&&v<=32)return{label:'⚠️ Vigilance',color:'var(--warn)'};
+      if(v>=22&&v<26)return{label:'⚠️ Sous-opt.',color:'var(--warn)'};
+      if(v>32&&v<=35)return{label:'🔴 Alerte',color:'var(--dng)'};
+      return{label:'🚨 URGENCE',color:'var(--dng)'};
+    case 'NH3':
+      if(v<0.07)return{label:'✅ <0.07',color:'var(--acc)'};
+      if(v<=0.5)return{label:'⚠️ Vigilance',color:'var(--warn)'};
+      if(v<=1.0)return{label:'🔴 Alerte',color:'var(--dng)'};
+      return{label:'🚨 URGENCE',color:'var(--dng)'};
+    case 'TAN':
+      if(v<0.5)return{label:'✅ Optimal',color:'var(--acc)'};
+      if(v<1.0)return{label:'⚠️ Vigilance',color:'var(--warn)'};
+      if(v<2.0)return{label:'🔴 Alerte',color:'var(--dng)'};
+      if(v<3.0)return{label:'🚨 URGENCE',color:'var(--dng)'};
+      return{label:'💀 CRISE',color:'var(--dng)'};
+    case 'TAC':
+      if(v>=150)return{label:'✅ Excellent',color:'var(--acc)'};
+      if(v>=100)return{label:'✓ Acceptable',color:'var(--t2)'};
+      if(v>=50)return{label:'⚠️ Vigilance',color:'var(--warn)'};
+      if(v>=40)return{label:'🔴 Alerte',color:'var(--dng)'};
+      return{label:'🚨 URGENT',color:'var(--dng)'};
+    case 'imhoff':
+      if(v>=25&&v<=40)return{label:'✅ Optimal',color:'var(--acc)'};
+      if(v>=15&&v<25)return{label:'⚠️ En montée',color:'var(--warn)'};
+      if(v>40&&v<=45)return{label:'⚠️ Dense',color:'var(--warn)'};
+      if(v<10)return{label:'🔴 Insuffisant',color:'var(--dng)'};
+      return{label:'🚨 Excessif',color:'var(--dng)'};
+    default: return null;
+  }
+}
+
+function updateParamStatusLabel(elId, param, value){
+  const el=G(elId);if(!el)return;
+  const st=getParamStatus(param,value);
+  el.textContent=st?st.label:'';
+  el.style.color=st?st.color:'var(--t3)';
 }
 
 // ═══════════════════════════════════════════════
