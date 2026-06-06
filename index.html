@@ -1159,11 +1159,6 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-bottom:.7rem">
         <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
           <div class="gi">
-            <label>🧴 Stock Probio (ml)</label>
-            <input type="number" id="g-probio" value="100000" step="1000" oninput="upAll();saveProbioStock()">
-            <span style="font-size:9px;color:var(--t3)">/ 100 000 ml</span>
-          </div>
-          <div class="gi">
             <label>📅 Date</label>
             <input type="date" id="config-date" class="di2" style="font-size:11px;padding:3px 8px" onchange="loadBassinsByDate(this.value)">
             <button onclick="loadBassinsByDate(document.getElementById('config-date').value)" style="background:var(--acc2);color:#fff;border:none;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer">Voir</button>
@@ -1176,14 +1171,16 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
       <div class="tw">
         <table>
           <thead><tr>
-            <th>Bassin</th><th>Statut</th><th>Vol (m³)</th><th>Nb Init</th><th>Mortalité</th><th>Nb Actuel</th>
+            <th>Bassin <small style="color:var(--t3);cursor:pointer" title="Cliquer sur le nom du bassin pour voir les statistiques">📊</small></th><th>Statut</th><th>Vol (m³)</th><th>Nb Init</th><th>Mortalité</th><th>Nb Actuel</th>
             <th>Poids Moy (g)</th><th>Type Alim</th><th>Biomasse (kg)</th><th>Ration (%)</th>
             <th>Alim Théo (kg)</th><th>Alim Réel (kg)</th>
             <th style="color:#a8d8ff">Temp °C <small style="color:var(--t3)">(opt.)</small></th>
             <th style="color:#a8d8ff">pH <small style="color:var(--t3)">(opt.)</small></th>
             <th style="color:#a8d8ff">DO mg/L <small style="color:var(--t3)">(opt.)</small></th>
             <th style="color:#a8d8ff">NH₃ mg/L <small style="color:var(--t3)">(opt.)</small></th>
-            <th style="color:var(--warn)">TAN mg/L <small style="color:var(--t3)" title="Azote ammoniacal total — détermine Phase 1 ou Phase 2 mélasse">(opt.)</small></th>
+            <th style="color:var(--warn)">TAN mg/L <small style="color:var(--t3)">(opt.)</small></th>
+            <th style="color:#c084fc">Probiot ml <small style="color:var(--t3)" title="Probiotique for Water Administration — quantité utilisée ce jour">(opt.)</small></th>
+            <th style="color:var(--gold)">TAC mg/L <small style="color:var(--t3)" title="Titre Alcalimétrique Complet — alcalinité (CaCO₃ éq.)">(opt.)</small></th>
             <th>Actions</th>
           </tr></thead>
           <tbody id="b-tbody"></tbody>
@@ -1665,6 +1662,54 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
 <div id="access-denied-container"></div>
 
 <!-- Edit operator modal (Responsable) -->
+<!-- Modal Statistiques Bassin -->
+<div id="bassin-stats-modal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:700px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem">
+      <div style="font-size:20px">📊</div>
+      <div>
+        <div id="bstats-title" class="modal-title" style="margin-bottom:0">Statistiques — Bassin</div>
+        <div id="bstats-period" style="font-size:10px;color:var(--t3)">30 derniers jours</div>
+      </div>
+      <button onclick="G('bassin-stats-modal').classList.add('hidden')" style="margin-left:auto;background:none;border:1px solid var(--b2);border-radius:6px;color:var(--t2);padding:4px 10px;cursor:pointer">✕ Fermer</button>
+    </div>
+
+    <!-- Métriques rapides -->
+    <div id="bstats-metrics" class="mgrid" style="margin-bottom:1rem"></div>
+
+    <!-- Graphiques côte à côte -->
+    <div style="display:grid;grid-template-columns:200px 1fr;gap:1rem;margin-bottom:1rem;align-items:start">
+      <!-- Donut chart -->
+      <div class="card" style="padding:.75rem;text-align:center">
+        <div style="font-size:10px;font-weight:700;color:var(--t2);margin-bottom:.5rem">Répartition des mesures</div>
+        <canvas id="bstats-donut" width="180" height="180"></canvas>
+        <div id="bstats-donut-legend" style="margin-top:.5rem;font-size:9px;color:var(--t2);text-align:left"></div>
+      </div>
+      <!-- Évolution temporelle -->
+      <div class="card" style="padding:.75rem">
+        <div style="font-size:10px;font-weight:700;color:var(--t2);margin-bottom:.5rem">Évolution des paramètres clés</div>
+        <canvas id="bstats-line" height="160"></canvas>
+      </div>
+    </div>
+
+    <!-- Tableau des mesures récentes -->
+    <div class="card" style="padding:.75rem">
+      <div style="font-size:10px;font-weight:700;color:var(--t2);margin-bottom:.5rem">📋 Mesures récentes — jusqu'à la veille</div>
+      <div class="tw" style="max-height:220px;overflow-y:auto">
+        <table>
+          <thead><tr>
+            <th>Date</th><th style="color:var(--acc)">DO</th><th>pH</th><th>Temp</th>
+            <th style="color:var(--warn)">TAN</th><th style="color:var(--dng)">NH₃</th>
+            <th style="color:var(--gold)">TAC</th><th style="color:#c084fc">Probiot ml</th>
+            <th>Poids (g)</th><th>Alim réel</th>
+          </tr></thead>
+          <tbody id="bstats-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Thème -->
 <div id="theme-modal" class="modal-overlay hidden">
   <div class="modal-box" style="max-width:480px">
@@ -2415,13 +2460,15 @@ async function loadFarmData(){
         const x={...d.data()};delete x._order;
         if(!x.feedId)x.feedId=getRationEntry(x.poids||1)?.id||FEED_TYPES[0]?.id;
         if(x.TAN===undefined)x.TAN=null; // rétrocompatibilité
+        if(x.probiot===undefined)x.probiot=null; // rétrocompatibilité
+        if(x.TAC===undefined)x.TAC=null; // rétrocompatibilité
         return x;
       });
       APP.bCount=APP.state.bassins.length+1;
     } else {
       APP.state.bassins=Array.from({length:16},(_,i)=>({
         name:`Bassin ${String(i+1).padStart(2,'0')}`,vol:3.8,nbInit:1000,mort:0,poids:5+i*0.3,
-        alimReel:0,temp:null,ph:null,DO:null,NH3:null,TAN:null,statut:'Actif',feedId:FEED_TYPES[0]?.id||'K1',harvestDate:null
+        alimReel:0,temp:null,ph:null,DO:null,NH3:null,TAN:null,probiot:null,TAC:null,statut:'Actif',feedId:FEED_TYPES[0]?.id||'K1',harvestDate:null
       }));
       APP.bCount=17;
     }
@@ -2984,7 +3031,124 @@ function swResp(tab){
 }
 
 // ═══════════════════════════════════════════════
-// GESTION LOGO FERME — Firebase Storage
+// STATISTIQUES PAR BASSIN — Modal avec graphiques
+// ═══════════════════════════════════════════════
+let _bstatsDonut=null, _bstatsLine=null;
+
+async function openBassinStats(bassinName){
+  G('bassin-stats-modal').classList.remove('hidden');
+  G('bstats-title').textContent=`Statistiques — ${bassinName}`;
+
+  // Charger l'historique depuis Firestore (bassins daily)
+  const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
+  const yStr=yesterday.toISOString().slice(0,10);
+  const days30=new Date();days30.setDate(days30.getDate()-30);
+  const dStr=days30.toISOString().slice(0,10);
+  G('bstats-period').textContent=`${dStr} → ${yStr} (30 derniers jours)`;
+
+  let records=[];
+  try{
+    const snap=await farmCol('daily')
+      .where(firebase.firestore.FieldPath.documentId(),'>=',dStr)
+      .where(firebase.firestore.FieldPath.documentId(),'<=',yStr)
+      .orderBy(firebase.firestore.FieldPath.documentId(),'asc')
+      .get();
+    snap.forEach(doc=>{
+      const d=doc.data();
+      const bassins=d.bassins||[];
+      const b=bassins.find(x=>x.name===bassinName);
+      if(b)records.push({date:doc.id,...b});
+    });
+  }catch(e){
+    // Fallback: utiliser le suivi en mémoire
+    records=APP.state.suivi
+      .filter(r=>r.bassin===bassinName&&r.date<=yStr&&r.date>=dStr)
+      .map(r=>({date:r.date,poids:r.poids,alimReel:r.alimReel,DO:r.DO,ph:r.ph,temp:r.temp,NH3:r.NH3,TAN:r.TAN,TAC:r.TAC,Probiot:r.probiot}));
+  }
+
+  // Métriques rapides
+  const avgDO=records.filter(r=>r.DO!=null).map(r=>r.DO);
+  const avgTAN=records.filter(r=>r.TAN!=null).map(r=>r.TAN);
+  const avgPH=records.filter(r=>r.ph!=null).map(r=>r.ph);
+  const totalProbiot=records.reduce((s,r)=>s+(r.probiot||0),0);
+  const lastPoids=records.map(r=>r.poids).filter(Boolean).pop()||null;
+  const avg=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:null;
+  const m=G('bstats-metrics');
+  if(m)m.innerHTML=`
+    <div class="met"><div class="mlbl">Mesures enregistrées</div><div class="mval">${records.length}</div></div>
+    <div class="met${avg(avgDO)!==null&&avg(avgDO)<5?' dng':''}"><div class="mlbl">DO moyen</div><div class="mval">${avg(avgDO)!==null?avg(avgDO).toFixed(1):'—'}<span class="munit">ppm</span></div></div>
+    <div class="met${avg(avgTAN)!==null&&avg(avgTAN)>1?' warn':''}"><div class="mlbl">TAN moyen</div><div class="mval">${avg(avgTAN)!==null?avg(avgTAN).toFixed(2):'—'}<span class="munit">mg/L</span></div></div>
+    <div class="met"><div class="mlbl">pH moyen</div><div class="mval">${avg(avgPH)!==null?avg(avgPH).toFixed(2):'—'}</div></div>
+    <div class="met"><div class="mlbl">Probiot total</div><div class="mval">${totalProbiot}<span class="munit">ml</span></div></div>
+    <div class="met"><div class="mlbl">Dernier poids</div><div class="mval">${lastPoids?lastPoids+' g':'—'}</div></div>`;
+
+  // Donut chart — répartition status paramètres
+  const donutData={
+    doOk:records.filter(r=>r.DO!=null&&r.DO>=5).length,
+    doAlerte:records.filter(r=>r.DO!=null&&r.DO<5).length,
+    tanOk:records.filter(r=>r.TAN!=null&&r.TAN<1).length,
+    tanAlerte:records.filter(r=>r.TAN!=null&&r.TAN>=1).length,
+  };
+  const donutCtx=G('bstats-donut')?.getContext('2d');
+  if(donutCtx){
+    if(_bstatsDonut)_bstatsDonut.destroy();
+    _bstatsDonut=new Chart(donutCtx,{
+      type:'doughnut',
+      data:{
+        labels:['DO OK','DO Alerte','TAN OK','TAN Alerte'],
+        datasets:[{data:[donutData.doOk,donutData.doAlerte,donutData.tanOk,donutData.tanAlerte],
+          backgroundColor:['#00c9a7','#ff4d6d','#3d8ef5','#f59e0b'],
+          borderWidth:0}]
+      },
+      options:{responsive:false,plugins:{legend:{display:false}}}
+    });
+    const leg=G('bstats-donut-legend');
+    if(leg)leg.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px">
+      ${[['#00c9a7','DO OK',donutData.doOk],['#ff4d6d','DO ⚠️',donutData.doAlerte],
+         ['#3d8ef5','TAN OK',donutData.tanOk],['#f59e0b','TAN ⚠️',donutData.tanAlerte]]
+      .map(([c,l,v])=>`<div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c};margin-right:3px"></span>${l}: <strong>${v}</strong></div>`)
+      .join('')}</div>`;
+  }
+
+  // Line chart — DO, TAN, pH sur le temps
+  const labels=records.map(r=>r.date.slice(5)); // MM-DD
+  const lineCtx=G('bstats-line')?.getContext('2d');
+  if(lineCtx){
+    if(_bstatsLine)_bstatsLine.destroy();
+    _bstatsLine=new Chart(lineCtx,{
+      type:'line',
+      data:{
+        labels,
+        datasets:[
+          {label:'DO (ppm)',data:records.map(r=>r.DO??null),borderColor:'#00c9a7',backgroundColor:'rgba(0,201,167,.1)',tension:.3,fill:true,spanGaps:true,pointRadius:3},
+          {label:'TAN (mg/L)',data:records.map(r=>r.TAN??null),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.1)',tension:.3,fill:false,spanGaps:true,pointRadius:3},
+          {label:'pH',data:records.map(r=>r.ph??null),borderColor:'#a78bfa',backgroundColor:'transparent',tension:.3,fill:false,spanGaps:true,pointRadius:3,hidden:true},
+        ]
+      },
+      options:{responsive:true,plugins:{legend:{labels:{font:{size:9},color:'#6a90b8'}}},
+        scales:{x:{ticks:{font:{size:8},color:'#3d6080'}},y:{ticks:{font:{size:8},color:'#3d6080'}}}}
+    });
+  }
+
+  // Tableau récent
+  const tbody=G('bstats-tbody');
+  if(tbody){
+    tbody.innerHTML=records.length===0
+      ?'<tr><td colspan="10" style="text-align:center;color:var(--t3);padding:.75rem">Aucune donnée disponible pour cette période</td></tr>'
+      :[...records].reverse().slice(0,30).map(r=>`<tr>
+        <td style="font-size:9px;color:var(--t3)">${r.date}</td>
+        <td style="color:${r.DO!=null?(r.DO<4?'var(--dng)':r.DO<5?'var(--warn)':'var(--acc)'):'var(--t3)'}">${r.DO??'—'}</td>
+        <td style="color:${r.ph!=null?(r.ph<7||r.ph>7.8?'var(--warn)':'var(--t1)'):'var(--t3)'}">${r.ph??'—'}</td>
+        <td>${r.temp??'—'}</td>
+        <td style="color:${r.TAN!=null?(r.TAN>=1?'var(--dng)':r.TAN>=0.5?'var(--warn)':'var(--acc)'):'var(--t3)'}">${r.TAN??'—'}</td>
+        <td style="color:${r.NH3!=null&&r.NH3>0.5?'var(--dng)':'var(--t3)'}">${r.NH3??'—'}</td>
+        <td style="color:${r.TAC!=null?(r.TAC<50?'var(--dng)':r.TAC<100?'var(--warn)':r.TAC<150?'var(--gold)':'var(--acc)'):'var(--t3)'}">${r.TAC??'—'}</td>
+        <td style="color:#c084fc">${r.probiot??'—'}</td>
+        <td>${r.poids??'—'}</td>
+        <td>${r.alimReel??'—'}</td>
+      </tr>`).join('');
+  }
+}
 // ═══════════════════════════════════════════════
 
 let LOGO_PENDING_FILE=null; // fichier sélectionné en attente d'upload
@@ -3281,7 +3445,7 @@ function saveNotification(bassinIdx,dateStr,b){
     bassinName:b.name,
     dateModified:dateStr,
     dateAction:firebase.firestore.FieldValue.serverTimestamp(),
-    data:{alimReel:b.alimReel,temp:b.temp,ph:b.ph,DO:b.DO,NH3:b.NH3,TAN:b.TAN,poids:b.poids},
+    data:{alimReel:b.alimReel,temp:b.temp,ph:b.ph,DO:b.DO,NH3:b.NH3,TAN:b.TAN,probiot:b.probiot,TAC:b.TAC,poids:b.poids},
     read:false
   };
   farmCol('notifications').add(notif).catch(console.error);
@@ -3341,12 +3505,14 @@ function buildBTable(){
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td class="cn">
-        ${(role==='Responsable'||role==='Administrateur')&&!isHistory
+        ${(role==='Administrateur')&&!isHistory
           ? `<input type="text" value="${b.name}" class="ci" style="width:90px;font-weight:700;color:var(--t1);font-size:11px"
-               title="Cliquez pour renommer ce bassin"
+               title="Super Admin — cliquez pour renommer ce bassin"
                onchange="renameBassin(${i}, this.value.trim())"
                onblur="if(this.value.trim()==='')this.value='${b.name}'">`
-          : `${b.name}${isHistory?'<div style="font-size:8px;color:var(--warn)">📅 historique</div>':''}`
+          : `<button onclick="openBassinStats('${b.name}')" style="background:none;border:none;cursor:pointer;font-weight:700;color:var(--acc);font-size:11px;padding:2px 4px;border-radius:4px;white-space:nowrap" title="Cliquer pour voir les statistiques de ce bassin">
+               ${b.name} 📊
+             </button>${isHistory?'<div style="font-size:8px;color:var(--warn)">📅 historique</div>':''}`
         }
       </td>
       <td><select class="si" style="font-size:10px;padding:2px 5px" onchange="if(!APP_historyDate){APP.state.bassins[${i}].statut=this.value;if(this.value==='Récolté')APP.state.bassins[${i}].harvestDate='${today()}';upAll();}else{APP_historyData[${i}].statut=this.value;}">
@@ -3402,6 +3568,30 @@ function buildBTable(){
             calcRation();
           ">
         <div id="bMel-${i}" style="font-size:9px;font-weight:700;text-align:center;margin-top:1px;color:var(--t3)" title="Mélasse C:N=15:1">—</div>
+      </td>
+      <td>
+        <input type="number" id="bPROBIOT-${i}" class="${(b.probiot!==null&&b.probiot!==undefined)?'ci':'ci opt'}"
+          value="${b.probiot??''}" step="1" style="width:58px;border-color:rgba(192,132,252,.3)"
+          placeholder="—" title="Probiot utilisé ce jour (ml)"
+          onchange="const v=this.value===''?null:+this.value;if(!APP_historyDate)APP.state.bassins[${i}].probiot=v;else APP_historyData[${i}].probiot=v;upConfigCalcs()">
+      </td>
+      <td>
+        <input type="number" id="bTAC-${i}" class="${(b.TAC!==null&&b.TAC!==undefined)?'ci'+(b.TAC<50?' di':b.TAC<100?' wi':''):'ci opt'}"
+          value="${b.TAC??''}" step="1" style="width:58px;border-color:${b.TAC!==null&&b.TAC!==undefined?b.TAC<50?'var(--dng)':b.TAC<100?'var(--warn)':'rgba(251,191,36,.3)':'rgba(251,191,36,.2)'}"
+          placeholder="—" title="TAC mesuré (mg/L CaCO₃) — cible ≥150 mg/L"
+          onchange="
+            const v=this.value===''?null:+this.value;
+            if(!APP_historyDate)APP.state.bassins[${i}].TAC=v;
+            else APP_historyData[${i}].TAC=v;
+            upConfigCalcs();
+            // Auto-remplir le calculateur TAC
+            if(v!==null){
+              if(G('tac-val'))G('tac-val').value=v;
+              const bx=APP_historyDate?APP_historyData[${i}]:APP.state.bassins[${i}];
+              if(G('tac-vol'))G('tac-vol').value=bx.vol||3.8;
+              calcTAC();
+            }">
+        ${b.TAC!==null&&b.TAC!==undefined?`<div style="font-size:8px;text-align:center;margin-top:1px;color:${b.TAC<50?'var(--dng)':b.TAC<100?'var(--warn)':b.TAC<150?'var(--gold)':'var(--acc)'}">${b.TAC<50?'🚨 URGENT':b.TAC<100?'⚠️ Faible':b.TAC<150?'📊 Vigilance':'✅ OK'}</div>`:''}
       </td>
       <td style="white-space:nowrap">
         <button onclick="saveBassinRow(${i})" style="background:var(--acc);color:#04101e;border:none;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;font-weight:700;margin-right:2px" title="Enregistrer">💾</button>
