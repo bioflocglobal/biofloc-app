@@ -4014,16 +4014,29 @@ async function saveBassinRow(i){
   farmCol('daily').doc(dateStr).set({bassins:APP.state.bassins,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).then(()=>{
     if(isHistorical&&role==='Opérateur'){
       saveNotification(i,dateStr,b);
-      logAudit('modification',`Modification historique ${b.name}`,`Date: ${dateStr} — Alim: ${b.alimReel}kg, Temp: ${b.temp}, pH: ${b.ph}`);
+      logAudit('modification',`Modification historique ${b.name}`,`Date: ${dateStr}`);
     } else {
-      logAudit('modification',`Enregistrement ${b.name}`,`Date: ${dateStr} — Alim: ${b.alimReel}kg`);
+      logAudit('modification',`Enregistrement ${b.name}`,`Date: ${dateStr}`);
     }
+    // Flash vert sur la ligne
     const tr=G('b-tbody')?.rows[i];
-    if(tr){tr.style.background='rgba(0,201,167,.15)';setTimeout(()=>{tr.style.background='';},1200);}
-  }).catch(console.error);
+    if(tr){tr.style.background='rgba(0,201,167,.15)';setTimeout(()=>{tr.style.background='';},1500);}
+    // Toast notification visible
+    showToast(`✅ ${b.name} enregistré avec succès`,'acc');
+  }).catch(e=>{
+    showToast(`❌ Erreur enregistrement ${b.name}`,'dng');
+    console.error(e);
+  });
 }
 
-function saveNotification(bassinIdx,dateStr,b){
+function showToast(msg, type='acc'){
+  const toast=document.createElement('div');
+  const color=type==='acc'?'#00d4b4':type==='dng'?'#ff4d6d':type==='warn'?'#ffb347':'#00aaff';
+  toast.style.cssText=`position:fixed;bottom:24px;right:24px;background:${color};color:#fff;padding:10px 18px;border-radius:10px;font-size:12px;font-weight:700;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:opacity .4s;max-width:300px`;
+  toast.textContent=msg;
+  document.body.appendChild(toast);
+  setTimeout(()=>{toast.style.opacity='0';setTimeout(()=>toast.remove(),400);},3000);
+}
   const notif={
     farmCode:APP.farmCode,
     operatorName:APP.user?.name||'Opérateur',
@@ -4094,14 +4107,11 @@ function buildBTable(){
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td class="cn">
-        ${(role==='Administrateur')&&!isHistory
-          ? `<input type="text" value="${b.name}" class="ci" style="width:90px;font-weight:700;color:var(--t1);font-size:11px"
-               title="Super Admin — cliquez pour renommer ce bassin"
-               onchange="renameBassin(${i}, this.value.trim())"
-               onblur="if(this.value.trim()==='')this.value='${b.name}'">`
-          : `<button onclick="openBassinStats('${b.name}')" style="background:none;border:none;cursor:pointer;font-weight:700;color:var(--acc);font-size:11px;padding:2px 4px;border-radius:4px;white-space:nowrap" title="Cliquer pour voir les statistiques de ce bassin">
-               ${b.name} 📊
-             </button>${isHistory?'<div style="font-size:8px;color:var(--warn)">📅 historique</div>':''}`
+        ${!isHistory
+          ? (role==='Administrateur'
+            ? '<input type="text" value="'+b.name+'" class="ci" style="width:90px;font-weight:700;color:var(--acc);font-size:11px" title="Super Admin — renommer ce bassin" onchange="renameBassin('+i+',this.value.trim())" onblur="if(this.value.trim()===\'\')this.value=\''+b.name+'\'">'
+            : '<button onclick="openBassinStats(\''+b.name+'\')" style="background:none;border:none;cursor:pointer;font-weight:700;color:var(--acc);font-size:11px;padding:2px 4px;border-radius:4px" title="Cliquer pour voir les statistiques">'+b.name+' 📊</button>')
+          : '<span style="font-weight:700;color:var(--t2);font-size:11px">'+b.name+'<br><small style="color:var(--warn)">📅 historique</small></span>'
         }
       </td>
       <td><select class="si" style="font-size:10px;padding:2px 5px" onchange="if(!APP_historyDate){APP.state.bassins[${i}].statut=this.value;if(this.value==='Récolté')APP.state.bassins[${i}].harvestDate='${today()}';upAll();}else{APP_historyData[${i}].statut=this.value;}">
