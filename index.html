@@ -280,6 +280,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
     <div class="boot-links">
       <button class="boot-link" onclick="showAdminModal()">🔑 Accès Administrateur</button>
       <button class="boot-link" id="wa-link" onclick="openWhatsApp()">💬 Contacter l'admin</button>
+      <button class="boot-link" onclick="openThemeModal()" style="color:var(--t3)">🎨 Thème</button>
     </div>
   </div>
   <div class="boot-footer">Système protégé — accès réservé au personnel autorisé &nbsp;·&nbsp; <button onclick="openThemeModal()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:10px">🎨 Thème</button></div>
@@ -1203,7 +1204,9 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
           <div class="gi">
             <label>📅 Date</label>
             <input type="date" id="config-date" class="di2" style="font-size:11px;padding:3px 8px" onchange="loadBassinsByDate(this.value)">
-            <button onclick="loadBassinsByDate(document.getElementById('config-date').value)" style="background:var(--acc2);color:#fff;border:none;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer">Voir</button>
+            <button onclick="loadBassinsByDate(document.getElementById('config-date').value)" style="background:var(--acc2);color:#fff;border:none;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer">📅 Voir</button>
+            <button onclick="openHistoriqueMensuel()" style="background:var(--purp);color:#fff;border:none;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer" title="Voir les données cumulées sur le mois">📊 Mois</button>
+            <button onclick="resetToToday()" style="background:var(--warn);color:#fff;border:none;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer" title="Revenir à aujourd'hui">🔄 Aujourd'hui</button>
             <button onclick="resetToToday()" style="background:none;border:1px solid var(--b2);border-radius:4px;color:var(--t2);font-size:10px;padding:3px 8px;cursor:pointer">Aujourd'hui</button>
           </div>
           <div id="date-mode-badge" style="display:none;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;background:rgba(245,166,35,.15);color:var(--warn);border:1px solid rgba(245,166,35,.3)">📅 Mode historique</div>
@@ -1211,20 +1214,22 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
         <button class="abtn" onclick="addBassin()" id="btn-add-bassin">➕ Ajouter bassin</button>
       </div>
 
-      <!-- Bouton ANALYSE centré et bien visible -->
-      <div style="text-align:center;margin-bottom:.75rem">
-        <button onclick="openAnalyse()" style="
-          background:linear-gradient(135deg,var(--acc2),var(--purp));
-          color:#fff;border:none;border-radius:12px;
-          padding:10px 32px;font-size:13px;font-weight:800;
-          cursor:pointer;letter-spacing:.5px;
-          box-shadow:0 4px 20px rgba(61,142,245,.35);
-          transition:transform .15s,box-shadow .15s"
-          onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 28px rgba(61,142,245,.5)'"
-          onmouseout="this.style.transform='';this.style.boxShadow='0 4px 20px rgba(61,142,245,.35)'">
-          🔬 Analyse des paramètres
-        </button>
-        <div style="font-size:9px;color:var(--t3);margin-top:4px">Interprétation et mesures correctives selon le dossier technique ICHTUS</div>
+      <!-- Sélection bassins + Bouton ANALYSE -->
+      <div style="background:var(--card);border:1px solid var(--b2);border-radius:10px;padding:.6rem 1rem;margin-bottom:.75rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.5rem">
+          <div style="font-size:10px;font-weight:700;color:var(--t2)">📋 Sélectionnez les bassins à analyser :</div>
+          <div style="display:flex;gap:.4rem">
+            <button onclick="selectAllBassins(true)" style="font-size:9px;background:rgba(0,201,167,.15);color:var(--acc);border:1px solid rgba(0,201,167,.3);border-radius:4px;padding:2px 8px;cursor:pointer">Tout sélectionner</button>
+            <button onclick="selectAllBassins(false)" style="font-size:9px;background:rgba(255,61,87,.1);color:var(--dng);border:1px solid rgba(255,61,87,.2);border-radius:4px;padding:2px 8px;cursor:pointer">Tout désélectionner</button>
+          </div>
+        </div>
+        <div id="bassin-checkboxes" style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.6rem"></div>
+        <div style="text-align:center">
+          <button onclick="openAnalyse()" style="background:linear-gradient(135deg,var(--acc2),var(--purp));color:#fff;border:none;border-radius:12px;padding:10px 32px;font-size:13px;font-weight:800;cursor:pointer;letter-spacing:.5px;box-shadow:0 4px 20px rgba(61,142,245,.35)">
+            🔬 Analyser les paramètres sélectionnés
+          </button>
+          <div style="font-size:9px;color:var(--t3);margin-top:4px">Interprétation et mesures correctives selon le dossier technique ICHTUS</div>
+        </div>
       </div>
       <div class="tw">
         <table>
@@ -1773,6 +1778,22 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
   </div>
 </div>
 
+<!-- Modal Historique Mensuel -->
+<div id="histo-mensuel-modal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:900px;max-height:92vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;position:sticky;top:0;background:var(--panel);padding:.5rem 0;z-index:1">
+      <span style="font-size:22px">📅</span>
+      <div style="flex:1">
+        <div class="modal-title" style="margin-bottom:0">Historique mensuel — <span id="histo-mois-titre"></span></div>
+        <div style="font-size:10px;color:var(--t3)">Données cumulées sur le mois sélectionné</div>
+      </div>
+      <input type="month" id="histo-month-picker" class="di2" style="font-size:11px" onchange="loadHistoriqueMensuel(this.value)">
+      <button onclick="G('histo-mensuel-modal').classList.add('hidden')" style="background:none;border:1px solid var(--b2);border-radius:6px;color:var(--t2);padding:4px 12px;cursor:pointer">✕</button>
+    </div>
+    <div id="histo-mensuel-content" style="font-size:11px;color:var(--t2);text-align:center;padding:2rem">Sélectionnez un mois ci-dessus</div>
+  </div>
+</div>
+
 <!-- Modal Analyse des paramètres -->
 <div id="analyse-modal" class="modal-overlay hidden">
   <div class="modal-box" style="max-width:780px;max-height:92vh;overflow-y:auto">
@@ -1783,6 +1804,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
         <div style="font-size:10px;color:var(--t3)">Source : Mémo paramètres eau v4.1 · Dossier technique ICHTUS v8.9</div>
       </div>
       <button onclick="G('analyse-modal').classList.add('hidden')" style="background:none;border:1px solid var(--b2);border-radius:6px;color:var(--t2);padding:4px 12px;cursor:pointer">✕ Fermer</button>
+      <button onclick="exportAnalysePDF()" style="background:var(--dng);color:#fff;border:none;border-radius:6px;padding:4px 12px;cursor:pointer;font-size:11px;font-weight:700">📄 Export PDF</button>
     </div>
 
     <!-- Résumé global -->
@@ -3456,116 +3478,155 @@ function getAlertForParam(param, value){
   return null;
 }
 
+// Gérer les checkboxes de sélection des bassins
+function renderBassinCheckboxes(){
+  const container=G('bassin-checkboxes');
+  if(!container)return;
+  const bassins=APP.state.bassins.filter(b=>b.statut==='Actif');
+  container.innerHTML=bassins.map((b,i)=>`
+    <label style="display:flex;align-items:center;gap:4px;background:var(--inp);border:1px solid var(--b2);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-weight:700">
+      <input type="checkbox" class="bassin-check" data-name="${b.name}" style="accent-color:var(--acc2)" checked>
+      ${b.name}
+    </label>`).join('');
+}
+
+function selectAllBassins(checked){
+  document.querySelectorAll('.bassin-check').forEach(cb=>cb.checked=checked);
+}
+
+function getSelectedBassins(){
+  const selected=new Set();
+  document.querySelectorAll('.bassin-check:checked').forEach(cb=>selected.add(cb.dataset.name));
+  return APP.state.bassins.filter(b=>selected.has(b.name)&&b.statut==='Actif');
+}
+
 function openAnalyse(){
+  const selected=getSelectedBassins();
+  if(selected.length===0){showToast('⚠️ Sélectionnez au moins un bassin','warn');return;}
   const modal=G('analyse-modal');
   modal.classList.remove('hidden');
   const dateEl=G('analyse-date');
   if(dateEl)dateEl.textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 
-  const bassins=APP.state.bassins.filter(b=>b.statut==='Actif');
-  let totalAlertes=0,totalUrgences=0,totalOk=0;
+  let totalAlertes=0,totalUrgences=0;
   const results=[];
 
-  bassins.forEach(b=>{
+  selected.forEach(b=>{
     const alerts=[];
     ['DO','ph','temp','NH3','NO2','TAN','TAC','imhoff'].forEach(p=>{
       const alert=getAlertForParam(p,b[p]);
       if(alert)alerts.push(alert);
     });
-
     const ok=['DO','ph','temp','NH3','NO2','TAN','TAC','imhoff'].filter(p=>{
       const v=b[p];if(v===null||v===undefined)return false;
       return !getAlertForParam(p,v);
     });
-
     const paramSaisis=['DO','ph','temp','NH3','NO2','TAN','TAC','imhoff'].filter(p=>b[p]!==null&&b[p]!==undefined).length;
-    if(paramSaisis===0)return; // Ignorer bassins sans données
-
+    if(paramSaisis===0)return;
     const urgCount=alerts.filter(a=>['URGENCE','CRISE'].includes(a.level)).length;
     const warnCount=alerts.filter(a=>['ALERTE','VIGILANCE','INSUFFISANT'].includes(a.level)).length;
     totalAlertes+=warnCount;totalUrgences+=urgCount;
-    if(alerts.length===0)totalOk++;
-
     results.push({bassin:b,alerts,ok,paramSaisis,urgCount,warnCount});
   });
 
-  // Résumé global
   const summary=G('analyse-summary');
   if(summary){
-    const totalBassins=results.length;
     const badBassins=results.filter(r=>r.alerts.length>0).length;
     summary.innerHTML=`
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.5rem;margin-bottom:.75rem">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.5rem;margin-bottom:.75rem">
         <div style="background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.2);border-radius:10px;padding:.6rem;text-align:center">
-          <div style="font-size:22px">✅</div>
-          <div style="font-size:18px;font-weight:800;color:var(--acc)">${totalBassins-badBassins}</div>
+          <div style="font-size:20px">✅</div><div style="font-size:18px;font-weight:800;color:var(--acc)">${results.length-badBassins}</div>
           <div style="font-size:10px;color:var(--t2)">Bassins normaux</div>
         </div>
         <div style="background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2);border-radius:10px;padding:.6rem;text-align:center">
-          <div style="font-size:22px">⚠️</div>
-          <div style="font-size:18px;font-weight:800;color:var(--warn)">${totalAlertes}</div>
-          <div style="font-size:10px;color:var(--t2)">Alertes vigilance</div>
+          <div style="font-size:20px">⚠️</div><div style="font-size:18px;font-weight:800;color:var(--warn)">${totalAlertes}</div>
+          <div style="font-size:10px;color:var(--t2)">Alertes</div>
         </div>
         <div style="background:rgba(255,61,87,.08);border:1px solid rgba(255,61,87,.2);border-radius:10px;padding:.6rem;text-align:center">
-          <div style="font-size:22px">🚨</div>
-          <div style="font-size:18px;font-weight:800;color:var(--dng)">${totalUrgences}</div>
-          <div style="font-size:10px;color:var(--t2)">Urgences critiques</div>
+          <div style="font-size:20px">🚨</div><div style="font-size:18px;font-weight:800;color:var(--dng)">${totalUrgences}</div>
+          <div style="font-size:10px;color:var(--t2)">Urgences</div>
         </div>
         <div style="background:rgba(61,142,245,.08);border:1px solid rgba(61,142,245,.2);border-radius:10px;padding:.6rem;text-align:center">
-          <div style="font-size:22px">📊</div>
-          <div style="font-size:18px;font-weight:800;color:var(--acc2)">${totalBassins}</div>
-          <div style="font-size:10px;color:var(--t2)">Bassins analysés</div>
+          <div style="font-size:20px">📊</div><div style="font-size:18px;font-weight:800;color:var(--acc2)">${results.length}</div>
+          <div style="font-size:10px;color:var(--t2)">Analysés</div>
         </div>
-      </div>
-      ${totalBassins===0?'<div style="text-align:center;color:var(--t3);padding:1rem">Aucun bassin actif avec des données saisies aujourd\'hui.</div>':''}`;
+      </div>`;
   }
 
-  // Résultats par bassin
   const container=G('analyse-results');
   if(!container)return;
-  container.innerHTML=results.length===0
-    ?'<div style="text-align:center;color:var(--t3);padding:2rem;font-size:12px">Aucune donnée saisie pour aujourd\'hui. Renseignez les paramètres dans Config Bassins puis relancez l\'analyse.</div>'
-    :results.sort((a,b2)=>b2.urgCount-a.urgCount||b2.warnCount-a.warnCount)
-    .map(({bassin,alerts,ok,paramSaisis,urgCount,warnCount})=>{
+  if(results.length===0){
+    container.innerHTML='<div style="text-align:center;color:var(--t3);padding:2rem">Aucune donnée saisie pour les bassins sélectionnés.</div>';
+    return;
+  }
+  container.innerHTML=results.sort((a,b2)=>b2.urgCount-a.urgCount||b2.warnCount-a.warnCount)
+    .map(({bassin,alerts,ok,urgCount,warnCount})=>{
       const borderColor=urgCount>0?'var(--dng)':warnCount>0?'var(--warn)':'var(--acc)';
-      const statusLabel=urgCount>0?'🚨 URGENCES ACTIVES':warnCount>0?'⚠️ Alertes détectées':'✅ Paramètres normaux';
-      const statusColor=urgCount>0?'var(--dng)':warnCount>0?'var(--warn)':'var(--acc)';
+      const statusLabel=urgCount>0?'🚨 URGENCES':warnCount>0?'⚠️ Alertes':'✅ Normal';
       return `
       <div style="margin-bottom:.9rem;border:2px solid ${borderColor};border-radius:12px;overflow:hidden">
-        <!-- En-tête bassin -->
-        <div style="background:${urgCount>0?'rgba(255,61,87,.12)':warnCount>0?'rgba(245,166,35,.12)':'rgba(0,201,167,.08)'};padding:.6rem 1rem;display:flex;align-items:center;gap:.75rem">
-          <div style="font-size:18px">${urgCount>0?'🚨':warnCount>0?'⚠️':'✅'}</div>
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:800;color:${borderColor}">${bassin.name}</div>
-            <div style="font-size:9px;color:var(--t3)">${paramSaisis} paramètre(s) analysé(s) · Biomasse ${(bassin.nbInit*bassin.poids/1000-bassin.mort*bassin.poids/1000).toFixed(1)} kg</div>
-          </div>
-          <div style="font-size:10px;font-weight:700;color:${statusColor};padding:3px 10px;background:${urgCount>0?'rgba(255,61,87,.15)':warnCount>0?'rgba(245,166,35,.15)':'rgba(0,201,167,.1)'};border-radius:8px">${statusLabel}</div>
+        <div style="background:${urgCount>0?'rgba(255,61,87,.1)':warnCount>0?'rgba(245,166,35,.1)':'rgba(0,201,167,.06)'};padding:.6rem 1rem;display:flex;align-items:center;gap:.75rem">
+          <div style="font-size:16px">${urgCount>0?'🚨':warnCount>0?'⚠️':'✅'}</div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:800;color:${borderColor}">${bassin.name}</div></div>
+          <div style="font-size:10px;font-weight:700;color:${borderColor};padding:3px 10px;background:rgba(0,0,0,.1);border-radius:8px">${statusLabel}</div>
         </div>
-
         ${alerts.length===0
-          ?`<div style="padding:.75rem 1rem;font-size:11px;color:var(--acc)">✅ Tous les paramètres saisis sont dans les normes. Continuez le régime nominal.</div>`
-          :`<div style="padding:.75rem 1rem">
-            ${alerts.map(a=>`
-              <div style="margin-bottom:.6rem;padding:.5rem .7rem;background:${a.color==='#ff1744'?'rgba(255,23,68,.06)':a.color==='var(--dng)'?'rgba(255,61,87,.06)':a.color==='var(--warn)'?'rgba(245,166,35,.06)':'rgba(0,0,0,.03)'};border-left:3px solid ${a.color};border-radius:0 8px 8px 0">
-                <div style="display:flex;align-items:center;gap:6px;margin-bottom:.35rem">
-                  <span style="font-size:14px">${a.icon}</span>
-                  <strong style="font-size:11px;color:${a.color}">${a.level}</strong>
-                  <span style="font-size:11px;color:var(--t1)">${a.label}</span>
-                  <span style="font-size:11px;font-family:var(--mono);font-weight:700;color:${a.color}">${a.value} ${a.unit}</span>
-                </div>
-                <div style="font-size:10px;color:var(--t2);font-style:italic;margin-bottom:.35rem">${a.interpretation}</div>
-                <div style="font-size:9px;color:var(--t1)">
-                  <strong style="color:var(--t2)">Actions à mener :</strong><br>
-                  ${a.actions.map((act,i)=>`<span style="display:inline-block;margin-top:2px">→ ${act}</span>`).join('<br>')}
-                </div>
-              </div>`).join('')}
-            </div>`
-        }
-
-        ${ok.length>0&&alerts.length>0?`<div style="padding:.3rem 1rem .6rem;font-size:9px;color:var(--t3)">✓ Paramètres normaux : ${ok.map(p=>ANALYSE_RULES[p]?.label||p).join(' · ')}</div>`:''}
+          ?'<div style="padding:.75rem 1rem;font-size:11px;color:var(--acc)">✅ Tous les paramètres saisis sont dans les normes.</div>'
+          :`<div style="padding:.75rem 1rem">${alerts.map(a=>`
+            <div style="margin-bottom:.6rem;padding:.5rem .7rem;background:rgba(0,0,0,.04);border-left:3px solid ${a.color};border-radius:0 8px 8px 0">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:.3rem">
+                <span style="font-size:13px">${a.icon}</span>
+                <strong style="font-size:11px;color:${a.color}">${a.level}</strong>
+                <span style="font-size:11px;color:var(--t1)">${a.label}</span>
+                <span style="font-size:11px;font-weight:700;color:${a.color}">${a.value} ${a.unit}</span>
+              </div>
+              <div style="font-size:10px;color:var(--t2);font-style:italic;margin-bottom:.3rem">${a.interpretation}</div>
+              <div style="font-size:9px;color:var(--t1)"><strong>Actions :</strong><br>${a.actions.map(act=>'→ '+act).join('<br>')}</div>
+            </div>`).join('')}
+          </div>`}
+        ${ok.length>0&&alerts.length>0?`<div style="padding:.3rem 1rem .5rem;font-size:9px;color:var(--t3)">✓ Normaux : ${ok.map(p=>ANALYSE_RULES[p]?.label||p).join(' · ')}</div>`:''}
       </div>`;
     }).join('');
 }
+
+// Export PDF de l'analyse
+function exportAnalysePDF(){
+  const farmName=APP.farmName||APP.farmCode||'Ferme';
+  const date=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const content=G('analyse-results')?.innerHTML||'';
+  const printWin=window.open('','_blank','width=800,height=600');
+  printWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>Analyse Paramètres — ${farmName}</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:20px;color:#1a1a1a;font-size:12px}
+      h1{font-size:18px;color:#004466;border-bottom:2px solid #004466;padding-bottom:8px}
+      .header{background:#f0f8ff;padding:12px;border-radius:8px;margin-bottom:16px}
+      .header p{margin:2px 0;font-size:11px}
+      .bassin{margin-bottom:12px;border:2px solid #ccc;border-radius:8px;overflow:hidden}
+      .bassin-head{padding:8px 12px;font-weight:700;font-size:13px}
+      .bassin-body{padding:8px 12px}
+      .alert-item{margin-bottom:8px;padding:6px 10px;border-left:3px solid #cc0000;background:#fff8f8;border-radius:0 4px 4px 0}
+      .ok{color:#006644;font-size:11px;padding:8px 12px}
+      @media print{body{margin:0}}
+    </style></head><body>
+    <div class="header">
+      <h1>🔬 Rapport d'Analyse des Paramètres</h1>
+      <p><strong>Ferme :</strong> ${farmName}</p>
+      <p><strong>Date :</strong> ${date}</p>
+      <p><strong>Généré par :</strong> Bio Aqua Tech — Système de Gestion Aquacole</p>
+    </div>
+    <div id="pdf-content">${content}</div>
+    <script>
+      // Nettoyer les styles inline pour l'impression
+      document.querySelectorAll('[style]').forEach(el=>{
+        const bg=el.style.background||el.style.backgroundColor;
+        if(bg&&bg.includes('rgba'))el.style.background='';
+      });
+      window.onload=()=>{window.print();window.close();}
+    <\/script></body></html>`);
+  printWin.document.close();
+}
+
 // ═══════════════════════════════════════════════
 // MOT DE PASSE OUBLIÉ — Réinitialisation
 // ═══════════════════════════════════════════════
@@ -3944,6 +4005,102 @@ function resetToToday(){
   buildBTable();upAll();
 }
 
+// ═══ HISTORIQUE MENSUEL ═══
+function openHistoriqueMensuel(){
+  G('histo-mensuel-modal').classList.remove('hidden');
+  const now=new Date();
+  const monthStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  G('histo-month-picker').value=monthStr;
+  loadHistoriqueMensuel(monthStr);
+}
+
+async function loadHistoriqueMensuel(monthStr){
+  if(!monthStr)return;
+  const [year,month]=monthStr.split('-').map(Number);
+  const titre=new Date(year,month-1,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  G('histo-mois-titre').textContent=titre;
+  G('histo-mensuel-content').innerHTML='<div style="text-align:center;padding:1rem;color:var(--t3)">⏳ Chargement…</div>';
+
+  // Générer toutes les dates du mois
+  const daysInMonth=new Date(year,month,0).getDate();
+  const dates=[];
+  for(let d=1;d<=daysInMonth;d++){
+    dates.push(`${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+  }
+
+  // Charger toutes les données du mois
+  const allData={};
+  await Promise.all(dates.map(async date=>{
+    try{
+      const snap=await withTimeout(farmCol('daily').doc(date).get(),5000);
+      if(snap.exists)allData[date]=snap.data().bassins||[];
+    }catch(e){}
+  }));
+
+  const datesWithData=Object.keys(allData).sort();
+  if(datesWithData.length===0){
+    G('histo-mensuel-content').innerHTML='<div style="text-align:center;padding:2rem;color:var(--t3)">Aucune donnée enregistrée pour ce mois.</div>';
+    return;
+  }
+
+  // Calculer statistiques par bassin
+  const bassinNames=[...new Set(datesWithData.flatMap(d=>allData[d].map(b=>b.name)))];
+  const stats={};
+  bassinNames.forEach(name=>{
+    const records=datesWithData.map(d=>(allData[d]||[]).find(b=>b.name===name)).filter(Boolean);
+    if(!records.length)return;
+    const vals=p=>records.map(r=>r[p]).filter(v=>v!==null&&v!==undefined&&!isNaN(v));
+    const avg=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:null;
+    stats[name]={
+      jours:records.length,
+      alimTotal:vals('alimReel').reduce((a,b)=>a+b,0).toFixed(2),
+      tempMoy:avg(vals('temp'))?.toFixed(1),
+      phMoy:avg(vals('ph'))?.toFixed(2),
+      doMoy:avg(vals('DO'))?.toFixed(1),
+      mortTotal:vals('mort').length?(vals('mort')[vals('mort').length-1]-vals('mort')[0]).toFixed(0):0,
+      poidsMoy:avg(vals('poids'))?.toFixed(1),
+      imhoffMoy:avg(vals('imhoff'))?.toFixed(1),
+      tanMoy:avg(vals('TAN'))?.toFixed(2),
+    };
+  });
+
+  G('histo-mensuel-content').innerHTML=`
+    <div style="margin-bottom:.75rem;font-size:10px;color:var(--t3)">${datesWithData.length} jour(s) de données sur ${daysInMonth} jours du mois</div>
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:10px">
+      <thead>
+        <tr style="background:var(--inp)">
+          <th style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--b2)">Bassin</th>
+          <th style="padding:6px 10px;border-bottom:1px solid var(--b2)">Jours</th>
+          <th style="padding:6px 10px;border-bottom:1px solid var(--b2)">Alim total (kg)</th>
+          <th style="padding:6px 10px;border-bottom:1px solid var(--b2)">Temp moy (°C)</th>
+          <th style="padding:6px 10px;border-bottom:1px solid var(--b2)">pH moy</th>
+          <th style="padding:6px 10px;border-bottom:1px solid var(--b2)">DO moy</th>
+          <th style="padding:6px 10px;border-bottom:1px solid var(--b2)">TAN moy</th>
+          <th style="padding:6px 10px;border-bottom:1px solid var(--b2)">Imhoff moy</th>
+          <th style="padding:6px 10px;border-bottom:1px solid var(--b2)">Poids moy (g)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${bassinNames.map(name=>{
+          const s=stats[name];if(!s)return'';
+          return `<tr style="border-bottom:1px solid var(--b1)">
+            <td style="padding:6px 10px;font-weight:700;color:var(--acc)">${name}</td>
+            <td style="padding:6px 10px;text-align:center">${s.jours}</td>
+            <td style="padding:6px 10px;text-align:center;font-weight:700;color:var(--acc2)">${s.alimTotal}</td>
+            <td style="padding:6px 10px;text-align:center">${s.tempMoy||'—'}</td>
+            <td style="padding:6px 10px;text-align:center">${s.phMoy||'—'}</td>
+            <td style="padding:6px 10px;text-align:center">${s.doMoy||'—'}</td>
+            <td style="padding:6px 10px;text-align:center">${s.tanMoy||'—'}</td>
+            <td style="padding:6px 10px;text-align:center">${s.imhoffMoy||'—'}</td>
+            <td style="padding:6px 10px;text-align:center">${s.poidsMoy||'—'}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table></div>
+    <div style="margin-top:.75rem;font-size:9px;color:var(--t3)">* Moyennes calculées sur les jours avec données enregistrées</div>`;
+}
+
 function getDisplayBassins(){
   return APP_historyDate&&APP_historyData?APP_historyData:APP.state.bassins;
 }
@@ -4253,8 +4410,58 @@ function buildBTable(){
       </td>`;
     tb.appendChild(tr);
   });
+  renderBassinCheckboxes();
 }
+  let tBio=0,tTheo=0,tReel=0,actifs=0,sumPh=0,sumT=0,phCnt=0,tCnt=0,recoltes=0;
+  APP.state.bassins.forEach((b,i)=>{
+    const c=calcBassin(b);
+    if(G(`bn-${i}`))G(`bn-${i}`).textContent=c.nbActuel;
+    if(G(`bb-${i}`))G(`bb-${i}`).textContent=fmt(c.biomasse,3);
+    if(G(`br-${i}`))G(`br-${i}`).textContent=pct(c.rat);
+    if(G(`bt-${i}`))G(`bt-${i}`).textContent=fmt(c.alimTheo,3);
+    // Optional field alerts
+    const sc=(id,v,warn,danger)=>{const e=G(id);if(!e)return;e.className=v===null?'ci opt':danger?'ci di':warn?'ci wi':'ci';};
+    sc(`bT-${i}`,b.temp,b.temp!==null&&b.temp<24,false);
+    sc(`bP-${i}`,b.ph,b.ph!==null&&(b.ph>8.2||b.ph<6.5),false);
+    sc(`bD-${i}`,b.DO,false,b.DO!==null&&b.DO<sp().doAlerte);
+    sc(`bN-${i}`,b.NH3,false,b.NH3!==null&&b.NH3>sp().nh3Alerte);
+    sc(`bNO2-${i}`,b.NO2,b.NO2!==null&&b.NO2>=0.2,b.NO2!==null&&b.NO2>=0.5);
+    sc(`bTAN-${i}`,b.TAN,false,b.TAN!==null&&b.TAN>=1);
+    // Labels de validation en temps réel sous chaque champ
+    updateParamStatusLabel(`bTst-${i}`,'temp',b.temp);
+    updateParamStatusLabel(`bPst-${i}`,'ph',b.ph);
+    updateParamStatusLabel(`bDst-${i}`,'DO',b.DO);
+    updateParamStatusLabel(`bNst-${i}`,'NH3',b.NH3);
+    updateParamStatusLabel(`bNO2st-${i}`,'NO2',b.NO2);
+    updateParamStatusLabel(`bTANst-${i}`,'TAN',b.TAN);
+    updateParamStatusLabel(`bTACst-${i}`,'TAC',b.TAC);
+    updateParamStatusLabel(`bIMHst-${i}`,'imhoff',b.imhoff);
+    // Afficher dose mélasse bassin si TAN renseigné
+    const melEl=G(`bMel-${i}`);
+    if(melEl){
+      if(b.TAN!==null&&b.TAN>=0){
+        const isP2=b.TAN>=1;
+        const ft=getRationEntry(b.poids||1);
+        const prot=ft.protein/100||0.32;
+        let mel;
+        if(isP2){mel=calcMolassePhase2(b.TAN,b.vol*1000);}
+        else{mel=calcMolassePhase1(c.alimTheo,prot);}
+        melEl.textContent=Math.round(mel)+' ml';
+        melEl.style.color=isP2?'var(--warn)':'var(--acc)';
+        melEl.title=(isP2?'Phase 2':'Phase 1')+' — C:N=15:1';
+      } else {
+        melEl.textContent='—';melEl.style.color='var(--t3)';
+      }
+    }
+    tBio+=c.biomasse;tTheo+=c.alimTheo;tReel+=b.alimReel;
+    if(b.statut==='Actif'){actifs++;if(b.ph!==null){sumPh+=b.ph;phCnt++;}if(b.temp!==null){sumT+=b.temp;tCnt++;}}
+    if(b.statut==='Récolté')recoltes++;
+  });
 
+
+// ═══════════════════════════════════════════════
+// VALIDATION EN TEMPS RÉEL — Seuils dossier technique ICHTUS v4.1
+// ═══════════════════════════════════════════════
 function upConfigCalcs(){
   let tBio=0,tTheo=0,tReel=0,actifs=0,sumPh=0,sumT=0,phCnt=0,tCnt=0,recoltes=0;
   APP.state.bassins.forEach((b,i)=>{
@@ -4327,9 +4534,6 @@ function upConfigCalcs(){
   G('s-actifs').textContent=actifs;G('s-bio').textContent=fmt(tBio,1)+' kg';G('s-alim').textContent=fmt(tTheo,3)+' kg';G('s-recolte').textContent=recoltes;
 }
 
-// ═══════════════════════════════════════════════
-// VALIDATION EN TEMPS RÉEL — Seuils dossier technique ICHTUS v4.1
-// ═══════════════════════════════════════════════
 function getParamStatus(param, value){
   if(value===null||value===undefined||value==='')return null;
   const v=parseFloat(value);if(isNaN(v))return null;
@@ -6050,6 +6254,46 @@ const THEMES={
       '--bg':'#020918','--panel':'#041020','--card':'#061428','--inp':'#030c1c','--hov':'#0a1a30',
       '--t1':'#a0d8f8','--t2':'#4090c0','--t3':'#205880','--b1':'#0c2040','--b2':'#0e2848',
       '--acc':'#20a0e0','--acc2':'#4040ff','--warn':'#40d0a0','--dng':'#ff2060','--purp':'#8060c0','--gold':'#40e0d0'
+    }
+  },
+  blanc:{
+    id:'blanc', nom:'Blanc Pur', icon:'☁️', desc:'Interface claire et épurée',
+    vars:{
+      '--bg':'#ffffff','--panel':'#f8f9fa','--card':'#ffffff','--inp':'#f1f3f5','--hov':'#e9ecef',
+      '--t1':'#212529','--t2':'#495057','--t3':'#868e96','--b1':'#dee2e6','--b2':'#ced4da',
+      '--acc':'#099268','--acc2':'#1971c2','--warn':'#e67700','--dng':'#c92a2a','--purp':'#6741d9','--gold':'#f59f00'
+    }
+  },
+  ciel:{
+    id:'ciel', nom:'Ciel d\'Aqua', icon:'🌤️', desc:'Bleu ciel doux et lumineux',
+    vars:{
+      '--bg':'#e8f4fd','--panel':'#ffffff','--card':'#ffffff','--inp':'#ddeeff','--hov':'#cce4ff',
+      '--t1':'#003a5c','--t2':'#1a5276','--t3':'#5499c7','--b1':'#a8d4f0','--b2':'#85c1e9',
+      '--acc':'#0077a8','--acc2':'#0055cc','--warn':'#d35400','--dng':'#c0392b','--purp':'#6c3483','--gold':'#b7770d'
+    }
+  },
+  menthe:{
+    id:'menthe', nom:'Menthe Fraîche', icon:'🌱', desc:'Vert menthe apaisant',
+    vars:{
+      '--bg':'#f0fdf4','--panel':'#ffffff','--card':'#ffffff','--inp':'#dcfce7','--hov':'#bbf7d0',
+      '--t1':'#14532d','--t2':'#166534','--t3':'#4ade80','--b1':'#86efac','--b2':'#6ee7b7',
+      '--acc':'#16a34a','--acc2':'#0891b2','--warn':'#ca8a04','--dng':'#dc2626','--purp':'#7c3aed','--gold':'#a16207'
+    }
+  },
+  sable:{
+    id:'sable', nom:'Sable Doré', icon:'🏖️', desc:'Tons chaleureux sable et terre',
+    vars:{
+      '--bg':'#fefce8','--panel':'#ffffff','--card':'#fffbeb','--inp':'#fef9c3','--hov':'#fde68a',
+      '--t1':'#422006','--t2':'#713f12','--t3':'#a16207','--b1':'#fcd34d','--b2':'#fbbf24',
+      '--acc':'#d97706','--acc2':'#ea580c','--warn':'#dc2626','--dng':'#be123c','--purp':'#7c3aed','--gold':'#92400e'
+    }
+  },
+  lavande:{
+    id:'lavande', nom:'Lavande', icon:'💜', desc:'Violet clair et doux',
+    vars:{
+      '--bg':'#faf5ff','--panel':'#ffffff','--card':'#ffffff','--inp':'#f3e8ff','--hov':'#e9d5ff',
+      '--t1':'#2e1065','--t2':'#4c1d95','--t3':'#7c3aed','--b1':'#c4b5fd','--b2':'#a78bfa',
+      '--acc':'#7c3aed','--acc2':'#2563eb','--warn':'#d97706','--dng':'#dc2626','--purp':'#6d28d9','--gold':'#b45309'
     }
   }
 };
