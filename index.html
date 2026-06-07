@@ -2358,7 +2358,8 @@ async function doAdminLogin(){
     logAudit('CONNEXION','Connexion Super Administrateur');
   }catch(e){
     hideLoader();
-    errEl.textContent='❌ Email ou mot de passe incorrect';
+    console.error('Erreur connexion admin:', e);
+    errEl.textContent = '❌ Connexion admin impossible : ' + (e && e.message ? e.message : e);
     errEl.classList.add('show');
     G('adm-pass').value='';
   }
