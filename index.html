@@ -2394,15 +2394,20 @@ async function doLogout(expired=false){
 async function showFarmApp(){
   const farmNameEl=G('farm-display-name');
   if(farmNameEl)farmNameEl.textContent=APP.farmName||APP.farmCode;
-  // Load user profile to get canBackup
-  try{
-    const uSnap=await db.collection('users').doc(APP.user.uid).get();
-    if(uSnap.exists){
-      const ud=uSnap.data();
-      APP.user.canBackup=ud.canBackup||false;
-      APP.user.role=ud.role||APP.user.role||'Opérateur';
-    }
-  }catch(e){console.warn('User profile load:',e);}
+  // Load user profile to get canBackup, sauf Super Admin.
+  // Correction: l'accès Super Admin ne doit pas dépendre d'un document users/{uid}.
+  if(APP.user?.role !== 'Administrateur'){
+    try{
+      const uSnap=await db.collection('users').doc(APP.user.uid).get();
+      if(uSnap.exists){
+        const ud=uSnap.data();
+        APP.user.canBackup=ud.canBackup||false;
+        APP.user.role=ud.role||APP.user.role||'Opérateur';
+      }
+    }catch(e){console.warn('User profile load:',e);}
+  } else {
+    APP.user.canBackup=true;
+  }
   try{G('sc-date').value=today();}catch(e){}
   try{G('cons-d').value=today();}catch(e){}
   try{updateSpeciesBadge();}catch(e){}
@@ -2781,14 +2786,30 @@ async function createFarm(){
 // Super Admin accède à une ferme spécifique pour voir ses données
 async function adminEnterFarm(farmCode){
   if(!confirm(`Accéder à la ferme "${farmCode}" en mode Super Admin ?\nVous aurez un accès complet en lecture et écriture.`))return;
+  let step='initialisation';
   showLoader('Chargement de la ferme…');
   try{
+    if(!auth.currentUser){throw new Error('Aucun utilisateur Firebase connecté. Reconnectez-vous en Super Admin.');}
+
+    step='lecture du document farms/'+farmCode;
     const farmSnap=await db.collection('farms').doc(farmCode).get();
-    if(!farmSnap.exists){alert('Ferme introuvable.');hideLoader();return;}
-    const farmData=farmSnap.data();
+    if(!farmSnap.exists){throw new Error('Ferme introuvable dans Firestore : farms/'+farmCode);}
+    const farmData=farmSnap.data()||{};
+    if(farmData.active===false){throw new Error('Cette ferme est désactivée : active=false. Réactivez-la dans le tableau Admin.');}
+
+    step='préparation du profil Super Admin';
     APP.farmCode=farmCode;
     APP.farmName=farmData.name||farmCode;
-    // Charger l'espèce
+    APP.user={
+      uid:auth.currentUser.uid,
+      email:auth.currentUser.email,
+      name:'Super Administrateur',
+      role:'Administrateur',
+      farmCode:farmCode,
+      canBackup:true
+    };
+
+    step='chargement du profil espèce';
     if(farmData.speciesId){
       if(farmData.speciesId==='custom'&&farmData.speciesCustom){
         const idx=SPECIES_PROFILES.findIndex(s=>s.id==='custom');
@@ -2797,22 +2818,28 @@ async function adminEnterFarm(farmCode){
       } else {
         APP.species=SPECIES_PROFILES.find(s=>s.id===farmData.speciesId)||SPECIES_PROFILES[0];
       }
+    } else {
+      APP.species=SPECIES_PROFILES[0];
     }
-    // Garder le rôle Administrateur mais avec accès ferme
-    APP.user.farmCode=farmCode;
-    APP.user.canBackup=true;
+
+    step='lecture des sous-collections de la ferme';
     await loadFarmData();
+
+    step='affichage de la ferme';
+    await showFarmApp();
     hideLoader();
-    showFarmApp();
-    // Afficher un bandeau indiquant le mode admin
+
     setTimeout(()=>{
       const ub=G('user-badge');
       if(ub){ub.textContent='👑 Admin — '+farmCode;ub.className='badge b-gold';}
       const backBtn=G('btn-back-admin');
       if(backBtn)backBtn.style.display='flex';
     },200);
-  }catch(e){alert('❌ Erreur : '+e.message);}
-  hideLoader();
+  }catch(e){
+    hideLoader();
+    console.error('adminEnterFarm error at step:', step, e);
+    alert('❌ Accès ferme impossible\n\nÉtape bloquée : '+step+'\n\nErreur : '+(e && e.message ? e.message : e));
+  }
 }
 
 async function deleteFarm(code){
