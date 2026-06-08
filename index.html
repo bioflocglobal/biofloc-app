@@ -3,13 +3,143 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Bio Aqua Tech — Système de gestion aquacole</title>
+<title>ICHTUS ERP — Production, Logistique & Comptabilité</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐟</text></svg>">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js">
+
+// ═══════════════════════════════════════════════
+// ANALYSE ERP — résumé direction
+// ═══════════════════════════════════════════════
+function refreshAnalyseERP(){
+  try{
+    const d=G('ana-date'); if(d && !d.value) d.value=todayISO();
+    let stockVal=0, cumpCount=0, stockLines=[];
+    const intrants=(APP.intrants||[]).filter(x=>x.actif!==false);
+    intrants.forEach(it=>{
+      const qty=Number(it.stock||it.qte||0);
+      const cump=Number(it.cump||it.prix||0);
+      if(cump>0)cumpCount++;
+      const val=qty*cump; stockVal+=val;
+      if(qty||cump) stockLines.push(`${it.nom||it.name||'Intrant'} : ${qty.toFixed?qty.toFixed(2):qty} ${it.unite||''} · ${Math.round(val).toLocaleString('fr-FR')} XOF`);
+    });
+    const set=(id,v)=>{const el=G(id);if(el)el.textContent=v;};
+    set('ana-val-stock',Math.round(stockVal).toLocaleString('fr-FR'));
+    set('ana-cump',String(cumpCount));
+    set('ana-val-cons','—'); set('ana-charges','—');
+    const det=G('ana-stock-detail'); if(det) det.innerHTML=stockLines.length?stockLines.slice(0,12).join('<br>'):'Aucune valeur de stock calculable pour le moment. Les valeurs apparaîtront après validation des prix et CUMP.';
+    const cd=G('ana-charges-detail'); if(cd) cd.innerHTML='Les charges d'exploitation sont centralisées dans Comptabilité → Charges exploitation. Les statistiques par période seront calculées à partir des saisies quotidiennes ou mensuelles.';
+  }catch(e){console.warn('Analyse ERP',e);}
+}
+
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js">
+
+// ═══════════════════════════════════════════════
+// ANALYSE ERP — résumé direction
+// ═══════════════════════════════════════════════
+function refreshAnalyseERP(){
+  try{
+    const d=G('ana-date'); if(d && !d.value) d.value=todayISO();
+    let stockVal=0, cumpCount=0, stockLines=[];
+    const intrants=(APP.intrants||[]).filter(x=>x.actif!==false);
+    intrants.forEach(it=>{
+      const qty=Number(it.stock||it.qte||0);
+      const cump=Number(it.cump||it.prix||0);
+      if(cump>0)cumpCount++;
+      const val=qty*cump; stockVal+=val;
+      if(qty||cump) stockLines.push(`${it.nom||it.name||'Intrant'} : ${qty.toFixed?qty.toFixed(2):qty} ${it.unite||''} · ${Math.round(val).toLocaleString('fr-FR')} XOF`);
+    });
+    const set=(id,v)=>{const el=G(id);if(el)el.textContent=v;};
+    set('ana-val-stock',Math.round(stockVal).toLocaleString('fr-FR'));
+    set('ana-cump',String(cumpCount));
+    set('ana-val-cons','—'); set('ana-charges','—');
+    const det=G('ana-stock-detail'); if(det) det.innerHTML=stockLines.length?stockLines.slice(0,12).join('<br>'):'Aucune valeur de stock calculable pour le moment. Les valeurs apparaîtront après validation des prix et CUMP.';
+    const cd=G('ana-charges-detail'); if(cd) cd.innerHTML='Les charges d'exploitation sont centralisées dans Comptabilité → Charges exploitation. Les statistiques par période seront calculées à partir des saisies quotidiennes ou mensuelles.';
+  }catch(e){console.warn('Analyse ERP',e);}
+}
+
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js">
+
+// ═══════════════════════════════════════════════
+// ANALYSE ERP — résumé direction
+// ═══════════════════════════════════════════════
+function refreshAnalyseERP(){
+  try{
+    const d=G('ana-date'); if(d && !d.value) d.value=todayISO();
+    let stockVal=0, cumpCount=0, stockLines=[];
+    const intrants=(APP.intrants||[]).filter(x=>x.actif!==false);
+    intrants.forEach(it=>{
+      const qty=Number(it.stock||it.qte||0);
+      const cump=Number(it.cump||it.prix||0);
+      if(cump>0)cumpCount++;
+      const val=qty*cump; stockVal+=val;
+      if(qty||cump) stockLines.push(`${it.nom||it.name||'Intrant'} : ${qty.toFixed?qty.toFixed(2):qty} ${it.unite||''} · ${Math.round(val).toLocaleString('fr-FR')} XOF`);
+    });
+    const set=(id,v)=>{const el=G(id);if(el)el.textContent=v;};
+    set('ana-val-stock',Math.round(stockVal).toLocaleString('fr-FR'));
+    set('ana-cump',String(cumpCount));
+    set('ana-val-cons','—'); set('ana-charges','—');
+    const det=G('ana-stock-detail'); if(det) det.innerHTML=stockLines.length?stockLines.slice(0,12).join('<br>'):'Aucune valeur de stock calculable pour le moment. Les valeurs apparaîtront après validation des prix et CUMP.';
+    const cd=G('ana-charges-detail'); if(cd) cd.innerHTML='Les charges d'exploitation sont centralisées dans Comptabilité → Charges exploitation. Les statistiques par période seront calculées à partir des saisies quotidiennes ou mensuelles.';
+  }catch(e){console.warn('Analyse ERP',e);}
+}
+
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js">
+
+// ═══════════════════════════════════════════════
+// ANALYSE ERP — résumé direction
+// ═══════════════════════════════════════════════
+function refreshAnalyseERP(){
+  try{
+    const d=G('ana-date'); if(d && !d.value) d.value=todayISO();
+    let stockVal=0, cumpCount=0, stockLines=[];
+    const intrants=(APP.intrants||[]).filter(x=>x.actif!==false);
+    intrants.forEach(it=>{
+      const qty=Number(it.stock||it.qte||0);
+      const cump=Number(it.cump||it.prix||0);
+      if(cump>0)cumpCount++;
+      const val=qty*cump; stockVal+=val;
+      if(qty||cump) stockLines.push(`${it.nom||it.name||'Intrant'} : ${qty.toFixed?qty.toFixed(2):qty} ${it.unite||''} · ${Math.round(val).toLocaleString('fr-FR')} XOF`);
+    });
+    const set=(id,v)=>{const el=G(id);if(el)el.textContent=v;};
+    set('ana-val-stock',Math.round(stockVal).toLocaleString('fr-FR'));
+    set('ana-cump',String(cumpCount));
+    set('ana-val-cons','—'); set('ana-charges','—');
+    const det=G('ana-stock-detail'); if(det) det.innerHTML=stockLines.length?stockLines.slice(0,12).join('<br>'):'Aucune valeur de stock calculable pour le moment. Les valeurs apparaîtront après validation des prix et CUMP.';
+    const cd=G('ana-charges-detail'); if(cd) cd.innerHTML='Les charges d'exploitation sont centralisées dans Comptabilité → Charges exploitation. Les statistiques par période seront calculées à partir des saisies quotidiennes ou mensuelles.';
+  }catch(e){console.warn('Analyse ERP',e);}
+}
+
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js">
+
+// ═══════════════════════════════════════════════
+// ANALYSE ERP — résumé direction
+// ═══════════════════════════════════════════════
+function refreshAnalyseERP(){
+  try{
+    const d=G('ana-date'); if(d && !d.value) d.value=todayISO();
+    let stockVal=0, cumpCount=0, stockLines=[];
+    const intrants=(APP.intrants||[]).filter(x=>x.actif!==false);
+    intrants.forEach(it=>{
+      const qty=Number(it.stock||it.qte||0);
+      const cump=Number(it.cump||it.prix||0);
+      if(cump>0)cumpCount++;
+      const val=qty*cump; stockVal+=val;
+      if(qty||cump) stockLines.push(`${it.nom||it.name||'Intrant'} : ${qty.toFixed?qty.toFixed(2):qty} ${it.unite||''} · ${Math.round(val).toLocaleString('fr-FR')} XOF`);
+    });
+    const set=(id,v)=>{const el=G(id);if(el)el.textContent=v;};
+    set('ana-val-stock',Math.round(stockVal).toLocaleString('fr-FR'));
+    set('ana-cump',String(cumpCount));
+    set('ana-val-cons','—'); set('ana-charges','—');
+    const det=G('ana-stock-detail'); if(det) det.innerHTML=stockLines.length?stockLines.slice(0,12).join('<br>'):'Aucune valeur de stock calculable pour le moment. Les valeurs apparaîtront après validation des prix et CUMP.';
+    const cd=G('ana-charges-detail'); if(cd) cd.innerHTML='Les charges d'exploitation sont centralisées dans Comptabilité → Charges exploitation. Les statistiques par période seront calculées à partir des saisies quotidiennes ou mensuelles.';
+  }catch(e){console.warn('Analyse ERP',e);}
+}
+
+</script>
 <style>
 :root{
   --bg:#020b14;--panel:#04111f;--card:#061828;--inp:#05131f;--hov:#0a1e2e;
@@ -424,6 +554,16 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
 
     <!-- TA3: PARAMÈTRES -->
     <div id="ta3" class="pane">
+      <div class="card" style="border-color:rgba(0,212,180,.25);background:linear-gradient(135deg,rgba(0,212,180,.05),rgba(0,170,255,.04));margin-bottom:.75rem">
+        <div class="ctitle"><span class="dot"></span>Architecture ICHTUS ERP — version 1.0</div>
+        <div class="mgrid" style="margin-bottom:0">
+          <div class="met"><div class="mlbl">Production</div><div style="font-size:11px;color:var(--t2);line-height:1.7">Bassins, biomasse, croissance, FCR, mortalité, alimentation, récoltes, qualité d'eau.</div></div>
+          <div class="met"><div class="mlbl">Logistique</div><div style="font-size:11px;color:var(--t2);line-height:1.7">Catalogue intrants, réceptions, consommations, inventaires, stock et alertes.</div></div>
+          <div class="met"><div class="mlbl">Comptabilité</div><div style="font-size:11px;color:var(--t2);line-height:1.7">Validation achats, CUMP, charges d'exploitation et tableau financier.</div></div>
+          <div class="met"><div class="mlbl">Analyse</div><div style="font-size:11px;color:var(--t2);line-height:1.7">Valeur de stock, consommations, charges, CUMP, coût de production et KPI.</div></div>
+        </div>
+      </div>
+
       <div class="two">
         <div>
           <div class="card">
@@ -581,17 +721,14 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
     </div>
   </div>
   <div class="tabnav">
-    <button class="tb active" onclick="sw('t0')">📋 Mode d'emploi</button>
-    <button class="tb" onclick="sw('t1')">⚙️ Config Bassins</button>
-    <button class="tb" onclick="sw('t3')">📈 Suivi Croissance</button>
+    <button class="tb active" onclick="sw('t0')">📊 Tableau de bord</button>
+    <button class="tb" onclick="sw('t1')">🐟 Production</button>
     <button class="tb" onclick="sw('t4')">📦 Logistique</button>
     <button class="tb" onclick="sw('t5')">💰 Comptabilité</button>
-    <button class="tb" onclick="sw('t6')">🔍 Consultation</button>
-    <button class="tb" onclick="sw('t7')">🏆 Récoltes</button>
-    <button class="tb" onclick="sw('t8')">🖨️ Fiche Collecte</button>
+    <button class="tb" onclick="sw('t13')">📈 Analyse</button>
+    <button class="tb" onclick="sw('t8')">🧾 Rapports</button>
     <button class="tb" onclick="sw('t9')" style="border-color:rgba(167,139,250,.4);color:var(--purp)" title="Module IoT — en préparation">📡 Capteurs IoT</button>
-    <button class="tb" id="tab-t10" onclick="sw('t10')" style="display:none;border-color:rgba(61,142,245,.4);color:var(--acc2)">🛠️ Espace Responsable</button>
-    <button class="tb" onclick="sw('t12')" style="border-color:rgba(251,191,36,.4);color:var(--gold)">🍽️ Rationnement</button>
+    <button class="tb" id="tab-t10" onclick="sw('t10')" style="display:none;border-color:rgba(61,142,245,.4);color:var(--acc2)">🛠️ Administration</button>
   </div>
   <div class="main">
 
@@ -616,7 +753,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
           <div class="card">
             <div class="ctitle"><span class="dot"></span>Présentation du système</div>
             <p style="font-size:12px;color:var(--t2);line-height:2;margin-bottom:.7rem">
-              Ce système est un outil de <strong style="color:var(--t1)">pilotage complet</strong> de votre exploitation aquacole Biofloc. Il centralise en un seul endroit la gestion <strong style="color:var(--acc)">biologique</strong> (qualité d'eau, croissance des poissons), la gestion <strong style="color:var(--acc2)">logistique</strong> (stocks de probiotiques) et la gestion <strong style="color:var(--warn)">financière</strong> (comptabilité en Franc CFA).
+              Ce système est un outil de <strong style="color:var(--t1)">pilotage complet</strong> de votre exploitation aquacole Biofloc. Il centralise en un seul endroit la gestion <strong style="color:var(--acc)">biologique</strong> (qualité d'eau, croissance des poissons), la gestion <strong style="color:var(--acc)">production</strong> (bassins, biomasse, croissance, FCR), la gestion <strong style="color:var(--acc2)">logistique</strong> (intrants, réceptions, consommations, inventaires, stocks) et la gestion <strong style="color:var(--warn)">financière</strong> (validation achats, charges, CUMP, analyses).
             </p>
             <p style="font-size:12px;color:var(--t2);line-height:2">
               Chaque bassin est suivi <strong style="color:var(--acc)">individuellement</strong>. Les mesures de terrain (Température, pH, Oxygène dissous, Ammoniaque) sont <strong style="color:var(--warn)">optionnelles</strong> — saisissez uniquement ce que vous mesurez ce jour-là. La cible de croissance est définie par le <strong style="color:var(--acc)" id="t0-species-gmq">profil d'espèce actif</strong>.
@@ -973,6 +1110,15 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
 
     <!-- T1 CONFIG BASSINS -->
     <div id="t1" class="pane">
+      <div class="card" style="padding:.65rem .8rem;margin-bottom:.75rem">
+        <div class="ctitle"><span class="dot"></span>Production piscicole</div>
+        <div style="display:flex;gap:.35rem;flex-wrap:wrap">
+          <button class="tb active" onclick="sw('t1')" style="font-size:11px">⚙️ Bassins & qualité d'eau</button>
+          <button class="tb" onclick="sw('t3')" style="font-size:11px">📈 Croissance & FCR</button>
+          <button class="tb" onclick="sw('t12')" style="font-size:11px">🍽️ Rationnement</button>
+          <button class="tb" onclick="sw('t7')" style="font-size:11px">🏆 Récoltes</button>
+        </div>
+      </div>
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-bottom:.7rem">
         <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
           <div class="gi">
@@ -1106,11 +1252,12 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
     <div id="t4" class="pane">
       <!-- Sous-navigation Logistique -->
       <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:1rem;border-bottom:1px solid var(--b2);padding-bottom:.5rem">
-        <button class="tb active" id="lt-intrants" onclick="swLog('intrants')" style="font-size:11px">📦 Intrants</button>
-        <button class="tb" id="lt-stock" onclick="swLog('stock')" style="font-size:11px">📥 Entrées Stock</button>
-        <button class="tb" id="lt-inventaire" onclick="swLog('inventaire')" style="font-size:11px">📋 Inventaire</button>
-        <button class="tb" id="lt-seuils" onclick="swLog('seuils')" style="font-size:11px">🔔 Seuils d'alerte</button>
-        <button class="tb" id="lt-analyse" onclick="swLog('analyse')" style="font-size:11px">📊 Analyse</button>
+        <button class="tb active" id="lt-intrants" onclick="swLog('intrants')" style="font-size:11px">📦 Catalogue intrants</button>
+        <button class="tb" id="lt-stock" onclick="swLog('stock')" style="font-size:11px">📥 Réceptions</button>
+        <button class="tb" id="lt-consommations" onclick="swLog('consommations')" style="font-size:11px">📤 Consommations</button>
+        <button class="tb" id="lt-inventaire" onclick="swLog('inventaire')" style="font-size:11px">📋 Inventaires</button>
+        <button class="tb" id="lt-seuils" onclick="swLog('seuils')" style="font-size:11px">🔔 Stock & alertes</button>
+        <button class="tb" id="lt-analyse" onclick="swLog('analyse')" style="font-size:11px">📊 Tableau stock</button>
         <button class="tb" id="lt-probio" onclick="swLog('probio')" style="font-size:11px">🧫 Probiotiques</button>
       </div>
 
@@ -1190,6 +1337,27 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
         </div>
       </div>
 
+      <!-- Panneau Consommations -->
+      <div id="lp-consommations" class="log-pane" style="display:none">
+        <div class="card">
+          <div class="ctitle"><span class="dot"></span>📤 Consommations / sorties de stock</div>
+          <div style="font-size:11px;color:var(--t2);line-height:1.8">
+            Ce sous-onglet centralise les sorties physiques d'intrants : aliment servi, PWA/PFA utilisé, sel, mélasse, basifiants, matériel consommable, pertes et ajustements.
+            Les consommations issues des modules Production sont conservées dans l'historique et alimentent l'analyse financière.
+          </div>
+        </div>
+        <div class="mgrid">
+          <div class="met"><div class="mlbl">Flux concerné</div><div class="mval" style="font-size:14px">Stock → Production</div></div>
+          <div class="met"><div class="mlbl">Valorisation</div><div class="mval" style="font-size:14px">CUMP validé</div></div>
+          <div class="met"><div class="mlbl">Destination</div><div class="mval" style="font-size:14px">Bassin / labo / maintenance</div></div>
+        </div>
+        <div class="card">
+          <div class="ctitle"><span class="dot" style="background:var(--warn)"></span>À prévoir en saisie détaillée</div>
+          <div style="font-size:11px;color:var(--t2);line-height:1.8">Date · Intrant · Quantité · Unité · Destination · Motif · Responsable · commentaire.
+          La valeur consommée sera calculée automatiquement avec le CUMP validé à la date du mouvement.</div>
+        </div>
+      </div>
+
       <!-- Panneau Inventaire -->
       <div id="lp-inventaire" class="log-pane" style="display:none">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem">
@@ -1264,15 +1432,15 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
     <div id="t5" class="pane">
       <!-- Sous-nav Comptabilité -->
       <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:1rem;border-bottom:1px solid var(--b2);padding-bottom:.5rem" class="no-print">
-        <button class="tb active" id="ct-tab-saisie" onclick="swCompta('saisie')" style="font-size:11px">💰 Prix & CUMP</button>
-        <button class="tb" id="ct-tab-charges" onclick="swCompta('charges')" style="font-size:11px">📋 Charges</button>
-        <button class="tb" id="ct-tab-synthese" onclick="swCompta('synthese')" style="font-size:11px">📊 Synthèse</button>
+        <button class="tb active" id="ct-tab-saisie" onclick="swCompta('saisie')" style="font-size:11px">✅ Validation achats</button>
+        <button class="tb" id="ct-tab-charges" onclick="swCompta('charges')" style="font-size:11px">📋 Charges exploitation</button>
+        <button class="tb" id="ct-tab-synthese" onclick="swCompta('synthese')" style="font-size:11px">📊 Tableau financier</button>
       </div>
 
       <!-- Sous-onglet 1 : Prix & CUMP -->
       <div id="ct-saisie">
         <div class="card">
-          <div class="ctitle"><span class="dot"></span>Prix des intrants validés — saisie par lot</div>
+          <div class="ctitle"><span class="dot"></span>Validation des factures d’achat — prix & CUMP</div>
           <div style="font-size:10px;color:var(--t3);margin-bottom:.6rem">Renseignez le prix d'achat pour chaque entrée de stock validée. Le CUMP est recalculé automatiquement.</div>
           <div id="compta-prix-list" style="max-height:400px;overflow-y:auto"></div>
         </div>
@@ -1658,6 +1826,54 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
 
     <!-- T11 — désactivé, contenu fusionné dans T10 -->
     <div id="t11" class="pane" style="display:none"></div>
+
+    <!-- T13 ANALYSE FINANCIÈRE -->
+    <div id="t13" class="pane">
+      <div class="card" style="border-color:rgba(251,191,36,.25)">
+        <div class="ctitle"><span class="dot" style="background:var(--gold)"></span>Analyse — pilotage économique et technique</div>
+        <div style="font-size:11px;color:var(--t2);line-height:1.8">
+          Cet onglet rassemble les statistiques de direction : valeur du stock disponible, valeur consommée, historique CUMP, charges d'exploitation et indicateurs de coût de production.
+        </div>
+      </div>
+      <div class="mgrid">
+        <div class="met ok"><div class="mlbl">Valeur stock</div><div class="mval" id="ana-val-stock">—</div><div class="munit">à date choisie</div></div>
+        <div class="met warn"><div class="mlbl">Consommé</div><div class="mval" id="ana-val-cons">—</div><div class="munit">période</div></div>
+        <div class="met"><div class="mlbl">Charges</div><div class="mval" id="ana-charges">—</div><div class="munit">période</div></div>
+        <div class="met"><div class="mlbl">CUMP</div><div class="mval" id="ana-cump">—</div><div class="munit">intrants</div></div>
+      </div>
+      <div class="two">
+        <div class="card">
+          <div class="ctitle"><span class="dot"></span>Valeur du stock</div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.6rem">
+            <input type="date" id="ana-date" class="di2">
+            <button class="sbtn" onclick="refreshAnalyseERP()">Actualiser</button>
+          </div>
+          <div id="ana-stock-detail" style="font-size:11px;color:var(--t2);line-height:1.8">Stock actuel, stock à date rétrospective et valeur par intrant.</div>
+        </div>
+        <div class="card">
+          <div class="ctitle"><span class="dot" style="background:var(--warn)"></span>Charges et coûts</div>
+          <div id="ana-charges-detail" style="font-size:11px;color:var(--t2);line-height:1.8">Analyse par catégorie : aliment, énergie, eau, main-d'œuvre, maintenance, transport, administratif et divers.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ctitle"><span class="dot" style="background:var(--purp)"></span>KPI de production</div>
+        <div class="mgrid" style="margin-bottom:0">
+          <div class="met"><div class="mlbl">Coût/kg produit</div><div class="mval" id="ana-cout-kg">—</div></div>
+          <div class="met"><div class="mlbl">Coût aliment/kg</div><div class="mval" id="ana-alim-kg">—</div></div>
+          <div class="met"><div class="mlbl">Énergie/kg</div><div class="mval" id="ana-energie-kg">—</div></div>
+          <div class="met"><div class="mlbl">Eau/kg</div><div class="mval" id="ana-eau-kg">—</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ctitle"><span class="dot"></span>Accès rapide</div>
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+          <button class="sbtn" onclick="sw('t4');swLog('analyse')">📊 Tableau stock</button>
+          <button class="sbtn" onclick="sw('t5');swCompta('saisie')">✅ Validation achats / CUMP</button>
+          <button class="sbtn" onclick="sw('t5');swCompta('charges')">📋 Charges exploitation</button>
+          <button class="sbtn" onclick="sw('t5');swCompta('synthese')">📊 Tableau financier</button>
+        </div>
+      </div>
+    </div>
 
   </div>
 </div>
@@ -3243,6 +3459,7 @@ function sw(id){
   if(id==='t8')renderFiche();if(id==='t9')renderIoT();
   if(id==='t10'){if(typeof renderRespAdmin==='function')renderRespAdmin();const fc=G('rsp-bkp-farmcode');if(fc)fc.textContent=APP.farmCode||'';}
   if(id==='t12'){initRatSelect();renderRationnement();}
+  if(id==='t13'){refreshAnalyseERP();}
 }
 
 // Sous-onglets Espace Responsable
@@ -7590,6 +7807,32 @@ function updateFarmMsgBanner(farmMessages){
 
 
 showScreen('screen-boot');
+
+
+// ═══════════════════════════════════════════════
+// ANALYSE ERP — résumé direction
+// ═══════════════════════════════════════════════
+function refreshAnalyseERP(){
+  try{
+    const d=G('ana-date'); if(d && !d.value) d.value=todayISO();
+    let stockVal=0, cumpCount=0, stockLines=[];
+    const intrants=(APP.intrants||[]).filter(x=>x.actif!==false);
+    intrants.forEach(it=>{
+      const qty=Number(it.stock||it.qte||0);
+      const cump=Number(it.cump||it.prix||0);
+      if(cump>0)cumpCount++;
+      const val=qty*cump; stockVal+=val;
+      if(qty||cump) stockLines.push(`${it.nom||it.name||'Intrant'} : ${qty.toFixed?qty.toFixed(2):qty} ${it.unite||''} · ${Math.round(val).toLocaleString('fr-FR')} XOF`);
+    });
+    const set=(id,v)=>{const el=G(id);if(el)el.textContent=v;};
+    set('ana-val-stock',Math.round(stockVal).toLocaleString('fr-FR'));
+    set('ana-cump',String(cumpCount));
+    set('ana-val-cons','—'); set('ana-charges','—');
+    const det=G('ana-stock-detail'); if(det) det.innerHTML=stockLines.length?stockLines.slice(0,12).join('<br>'):'Aucune valeur de stock calculable pour le moment. Les valeurs apparaîtront après validation des prix et CUMP.';
+    const cd=G('ana-charges-detail'); if(cd) cd.innerHTML='Les charges d'exploitation sont centralisées dans Comptabilité → Charges exploitation. Les statistiques par période seront calculées à partir des saisies quotidiennes ou mensuelles.';
+  }catch(e){console.warn('Analyse ERP',e);}
+}
+
 </script>
 
 <script id="ichtus-login-fix-v3">
@@ -7609,6 +7852,32 @@ showScreen('screen-boot');
   window.COMPTA_PRIX_VALIDATIONS=window.COMPTA_PRIX_VALIDATIONS||{};
   window.validateComptaPrice=async function(entryId){if(!roleCanValidate()){if(window.showToast)showToast('❌ Validation des prix réservée au Responsable ferme / SuperAdmin','dng');return;}COMPTA_PRIX_VALIDATIONS[entryId]={validated:true,by:(APP.user&&APP.user.name)||'Responsable',at:new Date().toISOString()};try{if(window.farmCol)await farmCol('config').doc('compta').set({prixValidations:COMPTA_PRIX_VALIDATIONS},{merge:true});}catch(e){console.warn(e);}if(typeof swCompta==='function')swCompta('saisie');};
 })();
+
+
+// ═══════════════════════════════════════════════
+// ANALYSE ERP — résumé direction
+// ═══════════════════════════════════════════════
+function refreshAnalyseERP(){
+  try{
+    const d=G('ana-date'); if(d && !d.value) d.value=todayISO();
+    let stockVal=0, cumpCount=0, stockLines=[];
+    const intrants=(APP.intrants||[]).filter(x=>x.actif!==false);
+    intrants.forEach(it=>{
+      const qty=Number(it.stock||it.qte||0);
+      const cump=Number(it.cump||it.prix||0);
+      if(cump>0)cumpCount++;
+      const val=qty*cump; stockVal+=val;
+      if(qty||cump) stockLines.push(`${it.nom||it.name||'Intrant'} : ${qty.toFixed?qty.toFixed(2):qty} ${it.unite||''} · ${Math.round(val).toLocaleString('fr-FR')} XOF`);
+    });
+    const set=(id,v)=>{const el=G(id);if(el)el.textContent=v;};
+    set('ana-val-stock',Math.round(stockVal).toLocaleString('fr-FR'));
+    set('ana-cump',String(cumpCount));
+    set('ana-val-cons','—'); set('ana-charges','—');
+    const det=G('ana-stock-detail'); if(det) det.innerHTML=stockLines.length?stockLines.slice(0,12).join('<br>'):'Aucune valeur de stock calculable pour le moment. Les valeurs apparaîtront après validation des prix et CUMP.';
+    const cd=G('ana-charges-detail'); if(cd) cd.innerHTML='Les charges d'exploitation sont centralisées dans Comptabilité → Charges exploitation. Les statistiques par période seront calculées à partir des saisies quotidiennes ou mensuelles.';
+  }catch(e){console.warn('Analyse ERP',e);}
+}
+
 </script>
 
 
@@ -7743,6 +8012,32 @@ const oldSwCompta=window.swCompta; window.swCompta=function(tab){ if(typeof oldS
 const oldLoadIntrants=window.loadIntrants; if(typeof oldLoadIntrants==='function')window.loadIntrants=async function(){const r=await oldLoadIntrants.apply(this,arguments); await reloadComptaConfig(); await loadCharges(); ensureIntrantHelp(); return r;};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{ensureIntrantHelp();reloadComptaConfig();loadCharges();});else{ensureIntrantHelp();reloadComptaConfig();loadCharges();}
 })();
+
+
+// ═══════════════════════════════════════════════
+// ANALYSE ERP — résumé direction
+// ═══════════════════════════════════════════════
+function refreshAnalyseERP(){
+  try{
+    const d=G('ana-date'); if(d && !d.value) d.value=todayISO();
+    let stockVal=0, cumpCount=0, stockLines=[];
+    const intrants=(APP.intrants||[]).filter(x=>x.actif!==false);
+    intrants.forEach(it=>{
+      const qty=Number(it.stock||it.qte||0);
+      const cump=Number(it.cump||it.prix||0);
+      if(cump>0)cumpCount++;
+      const val=qty*cump; stockVal+=val;
+      if(qty||cump) stockLines.push(`${it.nom||it.name||'Intrant'} : ${qty.toFixed?qty.toFixed(2):qty} ${it.unite||''} · ${Math.round(val).toLocaleString('fr-FR')} XOF`);
+    });
+    const set=(id,v)=>{const el=G(id);if(el)el.textContent=v;};
+    set('ana-val-stock',Math.round(stockVal).toLocaleString('fr-FR'));
+    set('ana-cump',String(cumpCount));
+    set('ana-val-cons','—'); set('ana-charges','—');
+    const det=G('ana-stock-detail'); if(det) det.innerHTML=stockLines.length?stockLines.slice(0,12).join('<br>'):'Aucune valeur de stock calculable pour le moment. Les valeurs apparaîtront après validation des prix et CUMP.';
+    const cd=G('ana-charges-detail'); if(cd) cd.innerHTML='Les charges d'exploitation sont centralisées dans Comptabilité → Charges exploitation. Les statistiques par période seront calculées à partir des saisies quotidiennes ou mensuelles.';
+  }catch(e){console.warn('Analyse ERP',e);}
+}
+
 </script>
 
 
@@ -7908,6 +8203,32 @@ const oldSwCompta=window.swCompta;
 window.swCompta=function(tab){const r=typeof oldSwCompta==='function'?oldSwCompta.apply(this,arguments):undefined; if(tab==='saisie')reloadFinanceQuality().then(()=>{if(window.renderComptaPrix)renderComptaPrix();}); return r;};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',reloadFinanceQuality);else reloadFinanceQuality();
 })();
+
+
+// ═══════════════════════════════════════════════
+// ANALYSE ERP — résumé direction
+// ═══════════════════════════════════════════════
+function refreshAnalyseERP(){
+  try{
+    const d=G('ana-date'); if(d && !d.value) d.value=todayISO();
+    let stockVal=0, cumpCount=0, stockLines=[];
+    const intrants=(APP.intrants||[]).filter(x=>x.actif!==false);
+    intrants.forEach(it=>{
+      const qty=Number(it.stock||it.qte||0);
+      const cump=Number(it.cump||it.prix||0);
+      if(cump>0)cumpCount++;
+      const val=qty*cump; stockVal+=val;
+      if(qty||cump) stockLines.push(`${it.nom||it.name||'Intrant'} : ${qty.toFixed?qty.toFixed(2):qty} ${it.unite||''} · ${Math.round(val).toLocaleString('fr-FR')} XOF`);
+    });
+    const set=(id,v)=>{const el=G(id);if(el)el.textContent=v;};
+    set('ana-val-stock',Math.round(stockVal).toLocaleString('fr-FR'));
+    set('ana-cump',String(cumpCount));
+    set('ana-val-cons','—'); set('ana-charges','—');
+    const det=G('ana-stock-detail'); if(det) det.innerHTML=stockLines.length?stockLines.slice(0,12).join('<br>'):'Aucune valeur de stock calculable pour le moment. Les valeurs apparaîtront après validation des prix et CUMP.';
+    const cd=G('ana-charges-detail'); if(cd) cd.innerHTML='Les charges d'exploitation sont centralisées dans Comptabilité → Charges exploitation. Les statistiques par période seront calculées à partir des saisies quotidiennes ou mensuelles.';
+  }catch(e){console.warn('Analyse ERP',e);}
+}
+
 </script>
 
 </body>
