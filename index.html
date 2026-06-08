@@ -3998,7 +3998,7 @@ async function validateSeuilsChanges(){
   }
   SEUILS_PENDING={};
   if(btn)btn.disabled=false;
-  if(errors===0)showToast('✅ '+success+' seuil'+(success>1?'s':'')+' validé'+(success>1?'s')+' et enregistré'+(success>1?'s'),'acc');
+  if(errors===0)showToast('✅ '+success+' seuil'+(success>1?'s':'')+' validé'+(success>1?'s':'')+' et enregistré'+(success>1?'s':''),'acc');
   else showToast('⚠️ '+success+' OK · '+errors+' erreur(s)','warn');
   renderSeuilsPanel();
   if(typeof updateLactoStatus==='function')updateLactoStatus();
