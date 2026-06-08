@@ -31,7 +31,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);min-height:100
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 .boot-logo{font-size:20px;font-weight:800;color:var(--acc);text-align:center;letter-spacing:1px;margin-bottom:.2rem}
 .boot-sub{font-size:10px;color:var(--t2);text-align:center;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.3rem}
-.boot-platform{font-size:12px;font-weight:700;color:var(--t1);text-align:center;padding:.35rem 1rem;background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.18);border-radius:20px;margin-bottom:1.4rem}
+.boot-platform{font-size:12px;font-weight:700;color:var(--t1);text-align:center;padding:.45rem 1rem;background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.18);border-radius:20px;margin-bottom:1.4rem;min-height:30px;overflow:hidden;position:relative}
+.boot-platform.light-msg{font-weight:600;letter-spacing:.2px;color:var(--acc);white-space:nowrap}
+.boot-platform.light-msg::before{content:'📢 ';opacity:.8}
 .boot-clock{font-size:26px;font-weight:800;font-family:var(--mono);color:var(--acc);text-align:center;letter-spacing:3px}
 .boot-date{font-size:10px;color:var(--t2);text-align:center;margin-bottom:1.4rem;margin-top:.2rem}
 .boot-sep{height:1px;background:var(--b1);margin-bottom:1.3rem}
@@ -261,7 +263,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
     </div>
     <div class="boot-logo" id="boot-farm-display" style="font-size:22px;letter-spacing:2px;background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Bio Aqua Tech</div>
     <div class="boot-sub" style="font-size:11px;letter-spacing:2px;color:var(--t2)">Système de gestion aquacole</div>
-    <div class="boot-platform" id="boot-platform-name">BIOFLOC EXPERT SYSTEM V19</div>
+    <div class="boot-platform light-msg" id="boot-platform-name">Bienvenue sur la plateforme ICHTUS</div>
     <div class="boot-clock" id="boot-clock">--:--:--</div>
     <div class="boot-date" id="boot-date">—</div>
     <div class="boot-sep"></div>
@@ -454,50 +456,14 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
             <div id="pass-msg" style="font-size:11px;margin-top:.5rem"></div>
           </div>
           <div class="card">
-            <div class="ctitle"><span class="dot"></span>Nom de la plateforme</div>
+            <div class="ctitle"><span class="dot"></span>Messages landing page</div>
+            <p style="font-size:10px;color:var(--t2);line-height:1.7;margin-bottom:.55rem">Ces messages défilent sur la page d'accueil à l'attention des utilisateurs. Écrire un message par ligne.</p>
             <div class="form-group" style="margin-bottom:.75rem">
-              <div class="form-lbl">Nom affiché sur la page d'accueil</div>
-              <input id="set-platname" class="form-inp" placeholder="Ex: Biofloc Expert System">
+              <div class="form-lbl">Messages utilisateurs</div>
+              <textarea id="set-platform-messages" class="form-inp" rows="5" placeholder="Ex: Bienvenue sur la plateforme ICHTUS&#10;Pensez à mesurer le DO avant le premier repas"></textarea>
             </div>
             <button class="sbtn" onclick="saveSettings()">Enregistrer</button>
           </div>
-        <div>
-          <div class="card">
-            <div class="ctitle"><span class="dot" style="background:var(--acc2)"></span>🧪 Listes déroulantes — Config Bassins</div>
-            <p style="font-size:10px;color:var(--t2);line-height:1.7;margin-bottom:.75rem">Gérez les options disponibles dans les sélecteurs de la table Config Bassins. Ces listes sont partagées par toutes les fermes.</p>
-
-            <!-- Basifiants -->
-            <div style="margin-bottom:1rem">
-              <div style="font-size:11px;font-weight:700;color:var(--acc2);margin-bottom:.4rem">Basifiants</div>
-              <div id="admin-bas-list" style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.4rem"></div>
-              <div style="display:flex;gap:.4rem">
-                <input id="admin-bas-input" class="form-inp" placeholder="Ex: Chaux vive" style="flex:1;font-size:11px">
-                <select id="admin-bas-unit" class="si" style="font-size:11px">
-                  <option value="g">g</option>
-                  <option value="kg">kg</option>
-                  <option value="mL">mL</option>
-                </select>
-                <button class="sbtn" style="padding:5px 12px" onclick="addParamItem('basifiant')">➕</button>
-              </div>
-            </div>
-
-            <!-- Carbohydrates -->
-            <div>
-              <div style="font-size:11px;font-weight:700;color:var(--warn);margin-bottom:.4rem">Carbohydrates</div>
-              <div id="admin-carb-list" style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.4rem"></div>
-              <div style="display:flex;gap:.4rem">
-                <input id="admin-carb-input" class="form-inp" placeholder="Ex: Farine de soja" style="flex:1;font-size:11px">
-                <select id="admin-carb-unit" class="si" style="font-size:11px">
-                  <option value="g">g</option>
-                  <option value="mL">mL</option>
-                  <option value="kg">kg</option>
-                </select>
-                <button class="sbtn" style="padding:5px 12px;background:var(--warn)" onclick="addParamItem('carbohydrate')">➕</button>
-              </div>
-            </div>
-            <div id="admin-params-msg" style="font-size:10px;margin-top:.5rem;color:var(--acc)"></div>
-          </div>
-        </div>
       </div>
     </div>
     <div id="ta4" class="pane">
@@ -635,7 +601,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
               Ce système est un outil de <strong style="color:var(--t1)">pilotage complet</strong> de votre exploitation aquacole Biofloc. Il centralise en un seul endroit la gestion <strong style="color:var(--acc)">biologique</strong> (qualité d'eau, croissance des poissons), la gestion <strong style="color:var(--acc2)">logistique</strong> (stocks de probiotiques) et la gestion <strong style="color:var(--warn)">financière</strong> (comptabilité en Franc CFA).
             </p>
             <p style="font-size:12px;color:var(--t2);line-height:2">
-              Chaque bassin est suivi <strong style="color:var(--acc)">individuellement</strong>. Les mesures de terrain (Température, pH, Oxygène dissous, Ammoniaque) sont <strong style="color:var(--warn)">optionnelles</strong> — saisissez uniquement ce que vous mesurez ce jour-là. La cible de croissance est définie par le <strong style="color:var(--acc)" id="t0-species-gmq">profil d'espèce actif</strong>. Le fût de probiotiques est de <strong style="color:var(--acc2)">100 litres</strong>.
+              Chaque bassin est suivi <strong style="color:var(--acc)">individuellement</strong>. Les mesures de terrain (Température, pH, Oxygène dissous, Ammoniaque) sont <strong style="color:var(--warn)">optionnelles</strong> — saisissez uniquement ce que vous mesurez ce jour-là. La cible de croissance est définie par le <strong style="color:var(--acc)" id="t0-species-gmq">profil d'espèce actif</strong>.
             </p>
           </div>
           <div class="card">
@@ -1209,20 +1175,14 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
           <div>
             <div class="card">
               <div class="ctitle"><span class="dot" style="background:var(--acc)"></span>💧 Préparation PWA (bihebdomadaire)</div>
-              <p style="font-size:10px;color:var(--t3);line-height:1.6;margin-bottom:.75rem">Validité : 48–72h · Fréquence : 2×/semaine · Calcul basé sur biomasse et activité prévue</p>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.6rem">
-                <div><div class="form-lbl">Biomasse totale (kg)</div><input type="number" id="pwa-biomasse" class="form-inp" value="0" step="0.1" oninput="calcPWA()"></div>
-                <div><div class="form-lbl">Nb bassins actifs</div><input type="number" id="pwa-bassins" class="form-inp" value="1" min="1" oninput="calcPWA()"></div>
+              <p style="font-size:10px;color:var(--t3);line-height:1.6;margin-bottom:.75rem">Planification prospective S+1 · Sélection cumulative des activités · Majorée de 4% pour couvrir la PFA (30 ml/kg d'aliment).</p>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.6rem">
+                <div><div class="form-lbl">Activité PWA</div><select id="pwa-add-activity" class="si" style="width:100%;font-size:11px"><option value="primo">Primo inoculation J1</option><option value="entretien">Entretien J3/J5/J7/J8/J10</option><option value="rotation">Rotation croisière jeudi+lundi</option><option value="postintro">Post-introduction alevins</option></select></div>
+                <div><div class="form-lbl">Nb bassins</div><input type="number" id="pwa-add-bassins" class="form-inp" value="1" min="1"></div>
+                <div><div class="form-lbl">Volume / bassin</div><select id="pwa-add-volume" class="si" style="width:100%;font-size:11px"><option value="1.75">1,75 m³ (50 cm)</option><option value="3.8">3,80 m³ (110 cm)</option></select></div>
               </div>
-              <div style="margin-bottom:.6rem">
-                <div class="form-lbl">Activité prévue</div>
-                <select id="pwa-activite" class="si" style="width:100%;font-size:11px" onchange="calcPWA()">
-                  <option value="maintenance">Maintenance (entretien floc)</option>
-                  <option value="primoinoculation">Primo-inoculation (nouveau bassin)</option>
-                  <option value="reinoculation">Ré-inoculation (post-vidange)</option>
-                  <option value="choc">Dose choc (TAN élevé)</option>
-                </select>
-              </div>
+              <button class="sbtn" onclick="addPWAActivity()" style="font-size:11px;margin-bottom:.5rem">➕ Ajouter l'activité prévue</button>
+              <div id="pwa-plan-list" style="margin-bottom:.6rem"></div>
               <div id="pwa-result" style="background:var(--inp);border-radius:8px;padding:.6rem;font-size:11px"></div>
             </div>
             <div class="card">
@@ -1249,16 +1209,6 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
                 <input type="date" id="lacto-nextbatch" class="form-inp" oninput="updateLactoStatus()">
               </div>
               <button class="sbtn" style="margin-top:.5rem;width:100%" onclick="saveLactoData()">💾 Enregistrer</button>
-            </div>
-            <div class="card">
-              <div class="ctitle"><span class="dot" style="background:var(--acc2)"></span>Fût probiotiques (100 L)</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-                <div class="gi" style="flex-direction:column;align-items:flex-start;gap:3px"><label>Stock actuel (ml)</label><input type="number" id="p-stock" value="100000" class="ci" style="width:100%" oninput="upLog()"></div>
-                <div class="gi" style="flex-direction:column;align-items:flex-start;gap:3px"><label>Seuil alerte (ml)</label><input type="number" id="p-seuil" value="15000" class="ci" style="width:100%" oninput="upLog()"></div>
-                <div class="gi" style="flex-direction:column;align-items:flex-start;gap:3px"><label>Dose FOOD (ml/kg)</label><input type="number" id="p-food" value="30" class="ci" style="width:100%" oninput="upLog()"></div>
-                <div class="gi" style="flex-direction:column;align-items:flex-start;gap:3px"><label>Dose WATER auto</label><div id="dw-disp" style="font-size:14px;font-weight:700;font-family:var(--mono);color:var(--acc);padding:.2rem 0"></div></div>
-              </div>
-              <div class="card" style="margin-top:.5rem"><div id="stock-disp"></div></div>
             </div>
           </div>
         </div>
@@ -2056,7 +2006,7 @@ let APP={
   warnCountdown:null,
   warnSecs:60,
   whatsapp:'',
-  platformName:'BIOFLOC EXPERT SYSTEM V19',
+  platformName:'' , platformMessages:['Bienvenue sur la plateforme ICHTUS'],
   state:{bassins:[],suivi:[],suiviId:0,logoUrl:null},
   unsubs:[],
   bCount:17,
@@ -2349,7 +2299,7 @@ async function loadPlatformSettings(){
       const d=snap.data();
       APP.whatsapp=d.whatsapp||'';
       APP.sessionMin=d.sessionTimeout||10;
-      APP.platformName=d.platformName||'BIOFLOC EXPERT SYSTEM V19';
+      APP.platformName=d.platformName||'';
     }
     const pn=G('boot-platform-name');if(pn)pn.textContent=APP.platformName;
   }catch(e){console.warn('Settings load error:',e);}
@@ -2715,6 +2665,15 @@ function setupFarmListeners(){
   }).catch(e=>console.warn('Feed load:',e));
 }
 
+
+function updateBootMessage(){
+  const el=G('boot-platform-name');if(!el)return;
+  const msgs=(APP.platformMessages&&APP.platformMessages.length?APP.platformMessages:['Bienvenue sur la plateforme ICHTUS']);
+  let i=0;el.textContent=msgs[0];
+  if(window._bootMsgTimer)clearInterval(window._bootMsgTimer);
+  if(msgs.length>1){window._bootMsgTimer=setInterval(()=>{i=(i+1)%msgs.length;el.textContent=msgs[i];},4500);}
+}
+
 // ═══════════════════════════════════════════════
 // ADMIN DASHBOARD
 // ═══════════════════════════════════════════════
@@ -2726,10 +2685,10 @@ async function loadAdminDashboard(){
     const settSnap=await db.collection('superadmin').doc('settings').get();
     if(settSnap.exists){
       const d=settSnap.data();
-      APP.whatsapp=d.whatsapp||'';APP.sessionMin=d.sessionTimeout||10;APP.platformName=d.platformName||'BIOFLOC EXPERT SYSTEM V19';
+      APP.whatsapp=d.whatsapp||'';APP.sessionMin=d.sessionTimeout||10;APP.platformName=d.platformName||'';APP.platformMessages=d.platformMessages||APP.platformMessages||['Bienvenue sur la plateforme ICHTUS'];updateBootMessage();
       if(G('set-wa'))G('set-wa').value=APP.whatsapp;
       if(G('set-timeout'))G('set-timeout').value=APP.sessionMin;
-      if(G('set-platname'))G('set-platname').value=APP.platformName;
+      if(G('set-platform-messages'))G('set-platform-messages').value=(d.platformMessages||APP.platformMessages||['Bienvenue sur la plateforme ICHTUS']).join('\n');
     }
     // Load farms
     const farmsSnap=await db.collection('farms').get();
@@ -2998,9 +2957,10 @@ async function saveSettings(){
   try{
     const wa=G('set-wa').value.trim();
     const timeout=parseInt(G('set-timeout').value)||10;
-    const platName=G('set-platname').value.trim()||'BIOFLOC EXPERT SYSTEM V19';
-    await db.collection('superadmin').doc('settings').set({whatsapp:wa,sessionTimeout:timeout,platformName:platName},{merge:true});
-    APP.whatsapp=wa;APP.sessionMin=timeout;APP.platformName=platName;
+    const messages=(G('set-platform-messages')?.value||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);
+    const platName='';
+    await db.collection('superadmin').doc('settings').set({whatsapp:wa,sessionTimeout:timeout,platformName:platName,platformMessages:messages},{merge:true});
+    APP.whatsapp=wa;APP.sessionMin=timeout;APP.platformName=platName;APP.platformMessages=messages;updateBootMessage();
     updateSessionBadge();
     alert('✅ Paramètres enregistrés avec succès !');
   }catch(e){alert('❌ Erreur : '+e.message);}
@@ -3840,6 +3800,7 @@ async function loadIntrants(){
     const snap=await withTimeout(farmCol('stock_entries').get(),6000);
     if(snap&&!snap.empty)APP_STOCK_ENTRIES=snap.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   }catch(e){console.warn('Stock:',e);}
+  try{const cs=await withTimeout(farmCol('config').doc('compta').get(),6000);if(cs.exists&&cs.data().prix)COMPTA_PRIX=cs.data().prix;}catch(e){console.warn('Compta prix:',e);}
   checkStockAlerts();
 }
 
@@ -3990,6 +3951,7 @@ function renderStockEntries(){
               +'<span style="font-size:9px;color:var(--warn);font-weight:700">⏳ En attente</span>')
             :'<span style="font-size:9px;color:var(--warn);font-weight:700">⏳ Attente validation</span>')
           :'<span style="font-size:9px;color:var(--acc)">✅ '+(e.validatedBy||'OK')+'</span>';
+        const editBtn=canValidate?'<button data-edit="'+e.id+'" style="font-size:9px;background:var(--acc2);color:#fff;border:none;border-radius:4px;padding:2px 8px;cursor:pointer">✏️ Modifier</button>':'';
         const deletBtn=(pending&&e.createdBy===APP.user?.name)
           ?'<button data-delete="'+e.id+'" style="font-size:9px;background:var(--dng);color:#fff;border:none;border-radius:4px;padding:2px 8px;cursor:pointer">🗑</button>':'';
         return '<div style="background:var(--card);border:1px solid '+borderCol+';border-radius:8px;padding:.5rem .7rem;margin-bottom:.3rem">'
@@ -4003,15 +3965,30 @@ function renderStockEntries(){
           +(e.supplier?'Fourn: '+e.supplier+' · ':'')
           +(e.expiryDate?'<span style="color:'+expCol+'">⏱ '+(isExpired?'⚠️PÉRIMÉ ':'')+e.expiryDate+'</span> · ':'')
           +'Par: '+(e.createdBy||'?')+'</div></div>'
-          +'<div style="display:flex;gap:.3rem;align-items:center;flex-wrap:wrap">'+validBtns+deletBtn+'</div>'
+          +'<div style="display:flex;gap:.3rem;align-items:center;flex-wrap:wrap">'+validBtns+editBtn+deletBtn+'</div>'
           +'</div></div>';
       }).join('')+'</div>';
   }).join('');
   // Event delegation for validate/delete buttons
   container.onclick=function(ev){
     const vb=ev.target.closest('[data-validate]');if(vb)validateStockEntry(vb.dataset.validate);
+    const eb=ev.target.closest('[data-edit]');if(eb)editStockEntry(eb.dataset.edit);
     const db=ev.target.closest('[data-delete]');if(db)deleteStockEntry(db.dataset.delete);
   };
+}
+
+async function editStockEntry(id){
+  const entry=APP_STOCK_ENTRIES.find(e=>e.id===id);if(!entry)return;
+  const role=APP.user?.role||'Opérateur';
+  if(!(role==='Administrateur'||role==='Responsable')){showToast('❌ Réservé Responsable/Super Admin','dng');return;}
+  const item=APP_INTRANTS.find(i=>i.id===entry.intrantId);
+  const q=prompt('Quantité '+(item?.unit||'')+' :', entry.quantity); if(q===null)return;
+  const d=prompt('Date (AAAA-MM-JJ) :', entry.date||today()); if(d===null)return;
+  const supplier=prompt('Fournisseur :', entry.supplier||''); if(supplier===null)return;
+  const lot=prompt('Lot :', entry.lot||''); if(lot===null)return;
+  const upd={quantity:+q,date:d,supplier,lot,validated:true,validatedBy:APP.user?.name||'?',validatedAt:new Date().toISOString(),modifiedAt:new Date().toISOString(),modifiedBy:APP.user?.name||'?'};
+  try{await withTimeout(farmCol('stock_entries').doc(id).update(upd),6000);Object.assign(entry,upd);renderStockEntries();if(APP_LOG_PANEL==='stock')renderStockEntries();renderComptaPrix();showToast('✅ Entrée modifiée et revalidée','acc');}
+  catch(e){showToast('❌ '+e.message,'dng');}
 }
 
 async function validateStockEntry(id){
@@ -4152,39 +4129,48 @@ async function loadAnalyseStock(){
     +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:var(--inp)"><th style="padding:6px;text-align:left">Intrant</th><th style="padding:6px">Catégorie</th><th style="padding:6px">Stock actuel</th><th style="padding:6px">Entrées ('+days+'j)</th><th style="padding:6px">Monitoring</th><th style="padding:6px">Statut</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 
+let PWA_PLAN=[];
+const PWA_RATES={
+  primo:{label:'Primo inoculation J1 mardi',moment:'Soirée · après bullage 24h',dose:4.7},
+  entretien:{label:'Entretien J3 · J5 · J7 · J8 · J10',moment:'Soirée · après bullage 24h',dose:0.2},
+  rotation:{label:'Rotation croisière jeudi + lundi',moment:'Soirée · rotation continue',dose:0.2,vol380Fixed:0.38},
+  postintro:{label:'Post-introduction alevins J14–J21',moment:'Hebdomadaire',dose:0.1}
+};
+function addPWAActivity(){
+  const a=G('pwa-add-activity')?.value||'entretien';
+  const nb=Math.max(1,parseInt(G('pwa-add-bassins')?.value||'1'));
+  const vol=+(G('pwa-add-volume')?.value||1.75);
+  PWA_PLAN.push({id:Date.now()+Math.random(),activity:a,nb,vol});
+  calcPWA();
+}
+function removePWAActivity(id){PWA_PLAN=PWA_PLAN.filter(x=>String(x.id)!==String(id));calcPWA();}
+function pwaDoseLitres(row){
+  const r=PWA_RATES[row.activity]||PWA_RATES.entretien;
+  if(row.activity==='rotation'&&Math.abs(row.vol-3.8)<0.01)return 0.38*row.nb; // dossier technique : 380 ml à hauteur 110 cm
+  return r.dose*row.vol*row.nb;
+}
 function calcPWA(){
-  // Synchroniser biomasse et volume depuis Config Bassins
-  const bassinsActifs=APP.state.bassins.filter(b=>b.statut==='Actif');
-  const biomasseAuto=bassinsActifs.reduce((s,b)=>{const c=calcBassin(b);return s+c.biomasse;},0);
-  const volTotalAuto=bassinsActifs.reduce((s,b)=>s+(b.vol||3.8),0);
-  const nbBassinsAuto=bassinsActifs.length;
-
-  // Utiliser valeur saisie ou auto
-  let biomasse=+(G('pwa-biomasse')?.value||0);
-  let nbBassins=+(G('pwa-bassins')?.value||1);
-  if(biomasse===0&&biomasseAuto>0){
-    biomasse=biomasseAuto;
-    if(G('pwa-biomasse'))G('pwa-biomasse').value=biomasseAuto.toFixed(2);
+  const list=G('pwa-plan-list'),res=G('pwa-result');if(!res)return;
+  if(!PWA_PLAN.length){
+    PWA_PLAN=[{id:'def1',activity:'rotation',nb:1,vol:1.75}];
   }
-  if(nbBassins===1&&nbBassinsAuto>0){
-    nbBassins=nbBassinsAuto;
-    if(G('pwa-bassins'))G('pwa-bassins').value=nbBassinsAuto;
-  }
-
-  const activite=G('pwa-activite')?.value||'maintenance';
-  const result=G('pwa-result');if(!result)return;
-  const doses={maintenance:{food:30,water:10,extra:0},primoinoculation:{food:50,water:20,extra:10},reinoculation:{food:40,water:15,extra:5},choc:{food:80,water:30,extra:15}};
-  const d=doses[activite]||doses.maintenance;
-  const volFOOD=biomasse*(d.food/1000);const volWATER=nbBassins*(d.water/1000);const volExtra=d.extra>0?nbBassins*(d.extra/1000):0;
-  const total=volFOOD+volWATER+volExtra;
-
-  // Volume total eau bassins (synchronisé)
-  const volEauTotal=volTotalAuto>0?volTotalAuto.toFixed(2)+'m³ ('+nbBassinsAuto+' bassins)':'Non renseigné';
-
-  result.innerHTML='<div style="font-size:10px;color:var(--t3);margin-bottom:.3rem">📊 Données Config Bassins: Biomasse <strong>'+biomasseAuto.toFixed(2)+'kg</strong> · Volume eau total <strong>'+volEauTotal+'</strong></div>'
-    +'<div style="font-weight:700;color:var(--acc);margin-bottom:.4rem;font-size:13px">Volume total à préparer : '+total.toFixed(2)+' L</div>'
-    +'<div style="font-size:10px;color:var(--t2);line-height:1.8">• Dose FOOD ('+d.food+' mL/kg) : <strong>'+volFOOD.toFixed(2)+' L</strong><br>• Dose WATER ('+d.water+' mL/bassin × '+nbBassins+') : <strong>'+volWATER.toFixed(2)+' L</strong><br>'+(volExtra>0?'• Extra activité ('+d.extra+' mL/bassin) : <strong>'+volExtra.toFixed(2)+' L</strong><br>':'')+'• Fréquence : <strong>2×/semaine (bihebdomadaire)</strong> · Validité : <strong>48–72h</strong></div>'
-    +'<div style="font-size:9px;color:var(--warn);margin-top:.3rem">⏱ Attendre ≥2h entre PWA et mélasse · Ne jamais préparer plus de 72h à l\'avance</div>';
+  if(list)list.innerHTML=PWA_PLAN.map(row=>{
+    const r=PWA_RATES[row.activity]||PWA_RATES.entretien;
+    const q=pwaDoseLitres(row);
+    return '<div style="display:flex;align-items:center;gap:.4rem;background:var(--panel);border:1px solid var(--b1);border-radius:6px;padding:.35rem .5rem;margin-bottom:.3rem">'
+      +'<div style="flex:1"><strong style="color:var(--t1);font-size:11px">'+r.label+'</strong><div style="font-size:9px;color:var(--t3)">'+r.moment+' · '+row.nb+' bassin(s) × '+row.vol.toFixed(2).replace('.',',')+' m³</div></div>'
+      +'<div style="font-family:var(--mono);font-weight:800;color:var(--acc)">'+q.toFixed(2).replace('.',',')+' L</div>'
+      +'<button class="dbtn" onclick="removePWAActivity(\''+row.id+'\')">×</button></div>';
+  }).join('');
+  const base=PWA_PLAN.reduce((s,row)=>s+pwaDoseLitres(row),0);
+  const pfa=base*0.04;
+  const total=base+pfa;
+  res.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-bottom:.5rem">'
+    +'<div><div style="font-size:9px;color:var(--t3)">PWA activités</div><div style="font-size:18px;font-weight:800;color:var(--acc);font-family:var(--mono)">'+base.toFixed(2).replace('.',',')+' L</div></div>'
+    +'<div><div style="font-size:9px;color:var(--t3)">Majoration PFA 4%</div><div style="font-size:18px;font-weight:800;color:var(--warn);font-family:var(--mono)">'+pfa.toFixed(2).replace('.',',')+' L</div></div>'
+    +'<div><div style="font-size:9px;color:var(--t3)">Total à préparer</div><div style="font-size:18px;font-weight:800;color:var(--gold);font-family:var(--mono)">'+total.toFixed(2).replace('.',',')+' L</div></div></div>'
+    +'<div style="font-size:10px;color:var(--t2);line-height:1.6">Référence dossier : primo ≈4,7 L/m³ ; entretien 200 ml/m³ ; rotation croisière 200 ml/m³ avec cas 3,80 m³ = 380 ml ; post-introduction 100 ml/m³. PFA : préparation administrée à 30 ml/kg d’aliments, provisionnée ici par +4%.</div>'
+    +'<div style="font-size:9px;color:var(--warn);margin-top:.3rem">⏱ Bullage 24h avant usage · Préparation prospective pour la semaine S+1 · Validité 48–72h</div>';
 }
 
 function updateLactoStatus(){
@@ -5521,7 +5507,8 @@ function upLog(){
 // COMPTABILITÉ — Système complet
 // ═══════════════════════════════════════════════
 
-let COMPTA_PRIX={}; // {entryId: prixUnitaire}
+let COMPTA_PRIX={}; // {entryId: prix total XOF}
+function saveComptaPrixDebounced(){debounce('compta_prix',()=>farmCol('config').doc('compta').set({prix:COMPTA_PRIX},{merge:true}).catch(console.error),600);}
 
 function swCompta(tab){
   ['saisie','charges','synthese'].forEach(t=>{
@@ -5651,7 +5638,7 @@ function upComptaSynthese(){
   APP.state.bassins.forEach(b=>{
     const c=calcBassin(b);
     // Coût aliment via CUMP
-    const feedItem=APP_INTRANTS.find(i=>i.category==='Aliments'&&(i.id===c.ft||i.feedId===c.ft||i.name?.includes(c.ft)));
+    const feedItem=APP_INTRANTS.find(i=>i.category==='aliment'&&(i.id===c.ft||i.feedId===c.ft||i.name?.includes(c.ft)));
     const cumpAlim=feedItem?getCUMP(feedItem.id):0;
     const cAlim=c.alimReel>0?c.alimReel*cumpAlim:c.alimTheo*(duree/7)*cumpAlim;
     // Probio via CUMP
