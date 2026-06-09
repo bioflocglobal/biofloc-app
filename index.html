@@ -8650,5 +8650,305 @@ setTimeout(function(){if(G('t5')){renderSalePricesPanel();renderSalesBoxERP()}co
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
 })();
 </script>
+
+<!-- ═══════════════════════════════════════
+  PATCH ICHTUS v25 — Prix de vente éditable + Paramètres ERP unique
+  Appliqué sur le fichier utilisateur.
+════════════════════════════════════════ -->
+<style id="ichtus-v25-prix-edit-param-unique-styles">
+.price-edit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.45rem;align-items:center}
+.price-edit-grid input,.price-edit-grid select{width:100%}
+.price-action-row{display:flex;gap:.35rem;justify-content:center;flex-wrap:wrap}
+</style>
+<script id="ichtus-v25-prix-edit-param-unique">
+(function(){
+'use strict';
+
+function G(id){return document.getElementById(id)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function n(v){var x=parseFloat(String(v==null?'':v).replace(',','.'));return isNaN(x)?0:x}
+function today(){return new Date().toISOString().slice(0,10)}
+function load(k,d){try{return JSON.parse(localStorage.getItem('ichtus_'+k)||JSON.stringify(d))}catch(e){return d}}
+function save(k,v){localStorage.setItem('ichtus_'+k,JSON.stringify(v))}
+function money(v){return n(v).toLocaleString('fr-FR')+' XOF'}
+function toast(msg,type){if(window.showToast)showToast(msg,type||'ok');else alert(msg)}
+function role(){
+  try{return String((window.APP&&APP.user&&(APP.user.role||APP.user.type||APP.user.profile))||'Opérateur')}catch(e){return 'Opérateur'}
+}
+function canManageSalePricesV25(){
+  var r=role().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  return r==='superadmin'||r==='super admin'||r==='responsable ferme'||r==='responsable'||r==='administrateur'||r==='admin';
+}
+function salePrices(){
+  var a=load('sale_prices',[]);
+  if(!a.length){
+    a=[{id:'PV-'+Date.now(),fishType:'Tilapia GIFT',calibre:'Standard',min:1500,conseille:1800,premium:2000,currency:'XOF',start:today(),statut:'Actif'}];
+    save('sale_prices',a);
+  }
+  return a;
+}
+function saveSalePrices(a){save('sale_prices',a)}
+function sales(){return load('sales',[])}
+function activeSalePrices(){return salePrices().filter(function(p){return (p.statut||'Actif')==='Actif'})}
+function priceLabel(p){return (p.fishType||'Poisson')+' · '+(p.calibre||'Calibre')+' · conseillé '+money(p.conseille||0)}
+
+window.canManageSalePrices=canManageSalePricesV25;
+
+function renderActionCell(p,can){
+  if(!can)return '—';
+  return '<div class="price-action-row">'+
+    '<button class="ebtn" onclick="editSalePriceRuleERP(\''+esc(p.id)+'\')">Modifier</button>'+
+    '<button class="ebtn" onclick="toggleSalePriceRuleERP(\''+esc(p.id)+'\')">'+((p.statut||'Actif')==='Actif'?'Archiver':'Activer')+'</button>'+
+    '<button class="dbtn" onclick="deleteSalePriceRuleERP(\''+esc(p.id)+'\')">Supprimer</button>'+
+  '</div>';
+}
+
+window.renderSalePricesPanel=function(){
+  var pane=G('t5'); if(!pane)return;
+  var old=G('erp-sale-price-box'); if(old)old.remove();
+  var box=document.createElement('div'); box.id='erp-sale-price-box'; box.className='card';
+  var can=canManageSalePricesV25();
+  var rows=salePrices();
+  var editing=window.__ichtusEditingSalePriceId||'';
+
+  var form='';
+  if(can){
+    var editObj=rows.find(function(x){return x.id===editing});
+    if(editObj){
+      form='<div class="erp-note" style="border-color:rgba(255,179,71,.35);color:var(--warn)">Modification du barème : <b>'+esc(editObj.fishType)+'</b> — les anciennes ventes restent inchangées. Le nouveau prix s’appliquera aux prochaines ventes.</div>'+
+      '<div class="admin-form">'+
+      '<input id="pv-type" class="form-inp" placeholder="Type poisson" value="'+esc(editObj.fishType||'')+'">'+
+      '<input id="pv-calibre" class="form-inp" placeholder="Calibre" value="'+esc(editObj.calibre||'')+'">'+
+      '<input id="pv-min" type="number" class="form-inp" placeholder="Prix minimum/kg" value="'+esc(editObj.min||'')+'">'+
+      '<input id="pv-conseille" type="number" class="form-inp" placeholder="Prix conseillé/kg" value="'+esc(editObj.conseille||'')+'">'+
+      '<input id="pv-premium" type="number" class="form-inp" placeholder="Prix premium/kg" value="'+esc(editObj.premium||'')+'">'+
+      '<select id="pv-currency" class="form-inp"><option '+((editObj.currency||'XOF')==='XOF'?'selected':'')+'>XOF</option><option '+((editObj.currency||'')==='EUR'?'selected':'')+'>EUR</option><option '+((editObj.currency||'')==='USD'?'selected':'')+'>USD</option><option '+((editObj.currency||'')==='GHS'?'selected':'')+'>GHS</option><option '+((editObj.currency||'')==='CNY'?'selected':'')+'>CNY</option><option '+((editObj.currency||'')==='RMB'?'selected':'')+'>RMB</option></select>'+
+      '<input id="pv-start" type="date" class="form-inp" value="'+esc(editObj.start||today())+'">'+
+      '<select id="pv-statut" class="form-inp"><option '+((editObj.statut||'Actif')==='Actif'?'selected':'')+'>Actif</option><option '+((editObj.statut||'')==='Archivé'?'selected':'')+'>Archivé</option></select>'+
+      '</div><div class="price-action-row" style="justify-content:flex-start"><button class="sbtn" onclick="updateSalePriceRuleERP(\''+esc(editObj.id)+'\')">Enregistrer la modification</button><button class="dbtn" onclick="cancelSalePriceEditERP()">Annuler</button></div>';
+    }else{
+      form='<div class="admin-form">'+
+      '<input id="pv-type" class="form-inp" placeholder="Type poisson ex: Tilapia GIFT">'+
+      '<input id="pv-calibre" class="form-inp" placeholder="Calibre ex: 300-500 g">'+
+      '<input id="pv-min" type="number" class="form-inp" placeholder="Prix minimum/kg">'+
+      '<input id="pv-conseille" type="number" class="form-inp" placeholder="Prix conseillé/kg">'+
+      '<input id="pv-premium" type="number" class="form-inp" placeholder="Prix premium/kg">'+
+      '<select id="pv-currency" class="form-inp"><option>XOF</option><option>EUR</option><option>USD</option><option>GHS</option><option>CNY</option><option>RMB</option></select>'+
+      '<input id="pv-start" type="date" class="form-inp" value="'+today()+'">'+
+      '<select id="pv-statut" class="form-inp"><option>Actif</option><option>Archivé</option></select>'+
+      '</div><button class="sbtn" onclick="addSalePriceRuleERP()">Ajouter barème</button>';
+    }
+  }else{
+    form='<div class="price-warn">Lecture seule : modification réservée au SuperAdmin / Responsable ferme.</div>';
+  }
+
+  box.innerHTML='<div class="ctitle"><span class="dot"></span>Prix de vente poisson</div>'+
+  '<div class="erp-note">Barèmes définis uniquement par le <b>SuperAdmin</b> ou le <b>Responsable ferme</b>. Ils alimentent automatiquement le formulaire Vente : prix conseillé, prix minimum et alerte si le prix réel est trop bas.</div>'+
+  form+
+  '<div class="tw" style="margin-top:.75rem"><table><thead><tr><th>Type</th><th>Calibre</th><th>Minimum/kg</th><th>Conseillé/kg</th><th>Premium/kg</th><th>Début validité</th><th>Statut</th><th>Action</th></tr></thead><tbody>'+
+  rows.map(function(p){
+    return '<tr class="'+((p.statut||'Actif')==='Actif'?'price-rule-active':'')+'">'+
+    '<td class="cn">'+esc(p.fishType)+'</td><td>'+esc(p.calibre)+'</td><td>'+money(p.min)+'</td><td>'+money(p.conseille)+'</td><td>'+money(p.premium)+'</td><td>'+esc(p.start||'')+'</td>'+
+    '<td><span class="badge '+((p.statut||'Actif')==='Actif'?'b-ok':'b-warn')+'">'+esc(p.statut||'Actif')+'</span></td>'+
+    '<td>'+renderActionCell(p,can)+'</td></tr>';
+  }).join('')+'</tbody></table></div>';
+
+  var salesBox=G('erp-sales-box');
+  if(salesBox&&salesBox.parentNode)salesBox.parentNode.insertBefore(box,salesBox);
+  else pane.appendChild(box);
+};
+
+window.editSalePriceRuleERP=function(id){
+  if(!canManageSalePricesV25())return alert('Réservé au SuperAdmin / Responsable ferme.');
+  window.__ichtusEditingSalePriceId=id;
+  window.renderSalePricesPanel();
+};
+window.cancelSalePriceEditERP=function(){
+  window.__ichtusEditingSalePriceId='';
+  window.renderSalePricesPanel();
+};
+window.updateSalePriceRuleERP=function(id){
+  if(!canManageSalePricesV25())return alert('Réservé au SuperAdmin / Responsable ferme.');
+  var a=salePrices(), p=a.find(function(x){return x.id===id});
+  if(!p)return alert('Barème introuvable.');
+  var min=n(G('pv-min')&&G('pv-min').value), cons=n(G('pv-conseille')&&G('pv-conseille').value), prem=n(G('pv-premium')&&G('pv-premium').value);
+  var type=(G('pv-type')&&G('pv-type').value.trim())||'', calibre=(G('pv-calibre')&&G('pv-calibre').value.trim())||'';
+  if(!type||!calibre||min<=0||cons<=0)return alert('Type, calibre, prix minimum et prix conseillé obligatoires.');
+  if(cons<min)return alert('Le prix conseillé ne peut pas être inférieur au prix minimum.');
+  var old={min:p.min,conseille:p.conseille,premium:p.premium,fishType:p.fishType,calibre:p.calibre};
+  p.fishType=type; p.calibre=calibre; p.min=min; p.conseille=cons; p.premium=prem||cons;
+  p.currency=(G('pv-currency')&&G('pv-currency').value)||'XOF';
+  p.start=(G('pv-start')&&G('pv-start').value)||today();
+  p.statut=(G('pv-statut')&&G('pv-statut').value)||'Actif';
+  p.updatedAt=new Date().toISOString();
+  p.updatedBy=(window.APP&&APP.user&&APP.user.name)||'Utilisateur';
+  p.history=p.history||[];
+  p.history.push({at:p.updatedAt,by:p.updatedBy,old:old,new:{min:p.min,conseille:p.conseille,premium:p.premium,fishType:p.fishType,calibre:p.calibre}});
+  saveSalePrices(a);
+  window.__ichtusEditingSalePriceId='';
+  if(window.renderSalePricesPanel)window.renderSalePricesPanel();
+  if(window.renderSalesBoxERP)window.renderSalesBoxERP();
+  toast('✅ Prix de vente modifié. Les prochaines ventes utiliseront ce nouveau barème.','ok');
+};
+
+window.addSalePriceRuleERP=function(){
+  if(!canManageSalePricesV25())return alert('Réservé au SuperAdmin / Responsable ferme.');
+  var min=n(G('pv-min')&&G('pv-min').value), cons=n(G('pv-conseille')&&G('pv-conseille').value), prem=n(G('pv-premium')&&G('pv-premium').value);
+  var type=(G('pv-type')&&G('pv-type').value.trim())||'', calibre=(G('pv-calibre')&&G('pv-calibre').value.trim())||'';
+  if(!type||!calibre||min<=0||cons<=0)return alert('Type, calibre, prix minimum et prix conseillé obligatoires.');
+  if(cons<min)return alert('Le prix conseillé ne peut pas être inférieur au prix minimum.');
+  var a=salePrices();
+  a.push({id:'PV-'+Date.now(),fishType:type,calibre:calibre,min:min,conseille:cons,premium:prem||cons,currency:(G('pv-currency')&&G('pv-currency').value)||'XOF',start:(G('pv-start')&&G('pv-start').value)||today(),statut:(G('pv-statut')&&G('pv-statut').value)||'Actif',createdAt:new Date().toISOString(),createdBy:(window.APP&&APP.user&&APP.user.name)||'Utilisateur'});
+  saveSalePrices(a);
+  if(window.renderSalePricesPanel)window.renderSalePricesPanel();
+  if(window.renderSalesBoxERP)window.renderSalesBoxERP();
+  toast('✅ Barème de prix enregistré','ok');
+};
+
+window.toggleSalePriceRuleERP=function(id){
+  if(!canManageSalePricesV25())return alert('Réservé au SuperAdmin / Responsable ferme.');
+  var a=salePrices(); var p=a.find(function(x){return x.id===id});
+  if(p){p.statut=(p.statut||'Actif')==='Actif'?'Archivé':'Actif';p.updatedAt=new Date().toISOString();saveSalePrices(a);}
+  if(window.renderSalePricesPanel)window.renderSalePricesPanel();
+  if(window.renderSalesBoxERP)window.renderSalesBoxERP();
+};
+window.deleteSalePriceRuleERP=function(id){
+  if(!canManageSalePricesV25())return alert('Réservé au SuperAdmin / Responsable ferme.');
+  var used=sales().some(function(s){return s.priceRuleId===id});
+  if(used)return alert('Barème déjà utilisé dans une vente : archivez-le au lieu de le supprimer.');
+  if(!confirm('Supprimer définitivement ce barème ?'))return;
+  saveSalePrices(salePrices().filter(function(x){return x.id!==id}));
+  if(window.renderSalePricesPanel)window.renderSalePricesPanel();
+  if(window.renderSalesBoxERP)window.renderSalesBoxERP();
+};
+
+window.applySalePriceRule=function(){
+  var sel=G('sale-price-rule'), inp=G('sale-price'), msg=G('sale-price-msg'); if(!sel||!inp)return;
+  var p=salePrices().find(function(x){return x.id===sel.value});
+  if(p){inp.value=n(p.conseille); if(msg)msg.innerHTML='<span class="price-ok">Prix conseillé appliqué. Prix minimum : <b>'+money(p.min)+'</b>.</span>'}
+  else if(msg)msg.innerHTML='<span class="price-warn">Aucun barème sélectionné : le prix réel reste manuel.</span>';
+};
+
+function dedupeParamERP(){
+  try{
+    var tabs=[].slice.call(document.querySelectorAll('#screen-farm .tabnav .tb'));
+    var params=tabs.filter(function(b){return (b.textContent||'').toLowerCase().indexOf('paramètres erp')>=0 || (b.textContent||'').toLowerCase().indexOf('parametres erp')>=0});
+    if(params.length>1){
+      params.slice(1).forEach(function(b){
+        var id=(b.id||'').replace('tab-','');
+        b.remove();
+        if(id){var pane=G(id); if(pane)pane.remove();}
+      });
+    }
+  }catch(e){console.warn('Dédoublonnage Paramètres ERP:',e)}
+}
+
+function refreshV25(){
+  dedupeParamERP();
+  if(G('t5')){
+    try{window.renderSalePricesPanel&&window.renderSalePricesPanel();}catch(e){console.warn('Prix vente panel:',e)}
+    try{window.renderSalesBoxERP&&window.renderSalesBoxERP();}catch(e){}
+  }
+}
+
+var oldSw=window.sw;
+if(!window.__ichtus_v25_price_param_hooked){
+  window.__ichtus_v25_price_param_hooked=true;
+  window.sw=function(id){
+    if(oldSw)oldSw.apply(this,arguments);
+    setTimeout(function(){dedupeParamERP(); if(id==='t5')refreshV25();},0);
+  };
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(refreshV25,600)});
+else setTimeout(refreshV25,600);
+
+console.log('ICHTUS v25 prix de vente éditable + Paramètres ERP unique chargé');
+})();
+</script>
+
+
+
+<script id="ichtus-v26-healthfix">
+/* ICHTUS ERP v26 — stabilisation navigation / paramètres / stock poisson
+   - conserve un seul bouton Paramètres ERP
+   - force l'écran Paramètres ERP moderne (sans Lots)
+   - force Récoltes vers le modèle Stock poisson
+   - préserve Prix de vente poisson éditable
+*/
+(function(){
+  'use strict';
+  function G(id){return document.getElementById(id)}
+  function nav(){return document.querySelector('#screen-farm .tabnav')}
+  function main(){return document.querySelector('#screen-farm .main')}
+  function safe(fn,label){try{return fn()}catch(e){console.warn('ICHTUS v26 '+label+':',e)}}
+
+  function ensureUniqueParamERP(){
+    var n=nav(); if(!n)return;
+    var buttons=[].slice.call(n.querySelectorAll('.tb')).filter(function(b){
+      var t=(b.textContent||'').toLowerCase();
+      return t.indexOf('paramètres erp')>=0 || t.indexOf('parametres erp')>=0;
+    });
+    var keeper=G('tab-param-erp')||buttons[0];
+    if(!keeper){
+      keeper=document.createElement('button');
+      keeper.className='tb';
+      keeper.id='tab-param-erp';
+      keeper.textContent='⚙️ Paramètres ERP';
+      n.appendChild(keeper);
+    }
+    keeper.id='tab-param-erp';
+    keeper.textContent='⚙️ Paramètres ERP';
+    keeper.onclick=function(){
+      if(typeof window.sw==='function')window.sw('t15');
+      setTimeout(function(){safe(function(){window.renderParamERP&&window.renderParamERP('bassins')},'renderParamERP')},0);
+    };
+    buttons.forEach(function(b){if(b!==keeper)b.remove()});
+    var m=main(); if(m&&!G('t15')){var p=document.createElement('div');p.id='t15';p.className='pane';m.appendChild(p)}
+  }
+
+  function forceModernParam(){
+    var root=G('t15');
+    if(!root)return;
+    if(typeof window.renderParamERP==='function')window.renderParamERP('bassins');
+    var lotsBtn=G('p-lots');
+    if(lotsBtn)lotsBtn.remove();
+    var oldContent=G('param-content');
+    if(oldContent && !G('erp-param-content'))oldContent.remove();
+  }
+
+  function forceHarvestStockFish(){
+    if(typeof window.renderHarvestModule==='function')window.renderHarvestModule();
+  }
+
+  function forcePricePanel(){
+    if(typeof window.renderSalePricesPanel==='function')window.renderSalePricesPanel();
+    if(typeof window.renderSalesBoxERP==='function')window.renderSalesBoxERP();
+  }
+
+  var previousSw=window.sw;
+  if(!window.__ichtus_v26_sw_guard){
+    window.__ichtus_v26_sw_guard=true;
+    window.sw=function(id){
+      if(typeof previousSw==='function')previousSw.apply(this,arguments);
+      setTimeout(function(){
+        ensureUniqueParamERP();
+        if(id==='t15')safe(forceModernParam,'Paramètres ERP');
+        if(id==='t7')safe(forceHarvestStockFish,'Stock poisson');
+        if(id==='t5')safe(forcePricePanel,'Prix de vente');
+      },0);
+    };
+  }
+
+  function init(){
+    safe(ensureUniqueParamERP,'nav unique');
+    var active=document.querySelector('.pane.active');
+    if(active&&active.id==='t15')safe(forceModernParam,'init paramètres');
+    if(G('t5'))safe(forcePricePanel,'init prix');
+    console.log('ICHTUS v26 vérification/stabilisation chargée');
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(init,300)});
+  else setTimeout(init,300);
+})();
+</script>
 </body>
 </html>
