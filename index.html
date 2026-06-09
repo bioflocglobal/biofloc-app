@@ -4254,7 +4254,7 @@ function exportAnalysePDF(){
   document.addEventListener('DOMContentLoaded', function(){
     try{ if(typeof window.renderFCRModule === 'function') window.renderFCRModule(); }catch(e){}
   });
-  console.log('ICHTUS v21 console FCR nettoyé');
+  console.log('ICHTUS v22 console fréquence nettoyée');
 })();
 </script>
 
@@ -5269,7 +5269,7 @@ function printInventairePDF(){
   document.addEventListener('DOMContentLoaded', function(){
     try{ if(typeof window.renderFCRModule === 'function') window.renderFCRModule(); }catch(e){}
   });
-  console.log('ICHTUS v21 console FCR nettoyé');
+  console.log('ICHTUS v22 console fréquence nettoyée');
 })();
 </script>
 
@@ -7963,7 +7963,7 @@ function exportJournalPDF(){
   document.addEventListener('DOMContentLoaded', function(){
     try{ if(typeof window.renderFCRModule === 'function') window.renderFCRModule(); }catch(e){}
   });
-  console.log('ICHTUS v21 console FCR nettoyé');
+  console.log('ICHTUS v22 console fréquence nettoyée');
 })();
 </script>
 
@@ -8673,7 +8673,7 @@ function exportAdminJournalPDF(){
   document.addEventListener('DOMContentLoaded', function(){
     try{ if(typeof window.renderFCRModule === 'function') window.renderFCRModule(); }catch(e){}
   });
-  console.log('ICHTUS v21 console FCR nettoyé');
+  console.log('ICHTUS v22 console fréquence nettoyée');
 })();
 </script>
 
@@ -8997,7 +8997,7 @@ function renderSupplierTypes(){
         oninput="EDITING_SUP_TYPES[${i}].maxPoids=+this.value" title="Poids max poisson (g)">
       <input type="number" class="ci" style="font-size:10px;border:none;background:transparent;width:100%" placeholder="Prix/kg" value="${t.prix||''}"
         oninput="EDITING_SUP_TYPES[${i}].prix=+this.value" title="Prix XOF/kg">
-      <input type="number" class="ci" style="font-size:10px;border:none;background:transparent;width:100%" min="1" max="8" placeholder="Freq" value="${t.freq||2}"
+      <input type="number" class="ci" style="font-size:10px;border:none;background:transparent;width:100%" min="1" max="8" placeholder="Freq" value="2"
         oninput="EDITING_SUP_TYPES[${i}].freq=+this.value" title="Repas/jour">
       <button class="dbtn" style="padding:2px 6px;font-size:10px" onclick="EDITING_SUP_TYPES.splice(${i},1);renderSupplierTypes()">✕</button>`;
     el.appendChild(row);
@@ -10735,7 +10735,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   document.addEventListener('DOMContentLoaded', function(){
     try{ if(typeof window.renderFCRModule === 'function') window.renderFCRModule(); }catch(e){}
   });
-  console.log('ICHTUS v21 console FCR nettoyé');
+  console.log('ICHTUS v22 console fréquence nettoyée');
 })();
 </script>
 
