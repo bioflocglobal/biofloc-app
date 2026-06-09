@@ -2336,22 +2336,28 @@ function sp(){return getSpecies();}
 // ═══════════════════════════════════════════════
 // FOURNISSEUR & TYPES D'ALIMENT — Koudijs AKF par défaut
 // ═══════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
+// TABLE DE RATIONNEMENT — Koudijs AKF · Biofloc Tilapia GIFT · Lomé 28–30°C
+// Source : Dossier technique ICHTUS v8 + Amendements v8.7 (Juin 2026)
+// Fréquences amendées : 6·5·5·6·5·4·4·3·3 (séquence K1→K6b)
+// Réduction Biofloc −20% sur ration Koudijs (floc optimal 25–40 ml/L Imhoff)
+// Note : au-delà de 600 g de poids individuel, réduire à 2 repas par jour.
+// ─────────────────────────────────────────────────────────────────────────────
 const KOUDIJS_PROFILE={
   id:'koudijs',
   nom:'Koudijs AKF',
   types:[
-    {id:'K1',name:'9004 Poudre 0',   granule:'<0.5mm',    protein:40,maxPoids:1,   rate:0.080,freq:6,color:'#a78bfa',stage:'0.01–1 g'},
-    {id:'K2',name:'9004 Crumble 1',  granule:'0.5-0.8mm', protein:40,maxPoids:2.5, rate:0.048,freq:5,color:'#c084fc',stage:'1–2.5 g'},
-    {id:'K3',name:'9004 Crumble 2',  granule:'0.8-1.2mm', protein:40,maxPoids:5,   rate:0.044,freq:5,color:'#34d399',stage:'2.5–5 g'},
-    {id:'K1',name:'9004 Poudre 0',   granule:'<0.5mm',    protein:40,maxPoids:1,   rate:0.080,freq:6,color:'#a78bfa',stage:'0.01–1 g'},
-    {id:'K2',name:'9004 Crumble 1',  granule:'0.5-0.8mm', protein:40,maxPoids:2.5, rate:0.048,freq:5,color:'#c084fc',stage:'1–2.5 g'},
-    {id:'K3',name:'9004 Crumble 2',  granule:'0.8-1.2mm', protein:40,maxPoids:5,   rate:0.044,freq:5,color:'#34d399',stage:'2.5–5 g'},
-    {id:'K4',name:'9008 Floating 2.0mm', granule:'2.0mm', protein:32,maxPoids:25,  rate:0.034, freq:6,color:'#60a5fa',stage:'5–25 g'},
-    {id:'K4b',name:'9008 Floating 2.0mm',granule:'2.0mm', protein:32,maxPoids:50,  rate:0.032, freq:5,color:'#38bdf8',stage:'25–50 g'},
-    {id:'K5',name:'9008 Floating 3.0mm', granule:'3.0mm', protein:32,maxPoids:100, rate:0.023, freq:4,color:'#f59e0b',stage:'50–100 g'},
-    {id:'K5b',name:'9008 Floating 3.0mm',granule:'3.0mm', protein:32,maxPoids:200, rate:0.020, freq:4,color:'#fbbf24',stage:'100–200 g'},
-    {id:'K6',name:'9008 Floating 4.5mm', granule:'4.5mm', protein:32,maxPoids:400, rate:0.016, freq:3,color:'#f87171',stage:'200–400 g'},
-    {id:'K6b',name:'9008 Floating 4.5mm',granule:'4.5mm', protein:32,maxPoids:9999,rate:0.014, freq:3,color:'#fca5a5',stage:'>400 g · note: >600g → 2×/j'},
+    // K1–K3 : Starter 9004 (40% CP) — phase pré-grossissement
+    {id:'K1', name:'9004 Poudre 0',    granule:'<0.5mm',    protein:40, maxPoids:1,    rate:0.080, freq:6, color:'#a78bfa', stage:'0.01–1 g'},
+    {id:'K2', name:'9004 Crumble 1',   granule:'0.5-0.8mm', protein:40, maxPoids:2.5,  rate:0.048, freq:5, color:'#c084fc', stage:'1–2.5 g'},
+    {id:'K3', name:'9004 Crumble 2',   granule:'0.8-1.2mm', protein:40, maxPoids:5,    rate:0.044, freq:5, color:'#34d399', stage:'2.5–5 g'},
+    // K4–K6b : Grower 9008 (32% CP) — phase grossissement + finition
+    {id:'K4', name:'9008 Floating 2.0mm', granule:'2.0mm',  protein:32, maxPoids:25,   rate:0.036, freq:6, color:'#60a5fa', stage:'5–25 g'},
+    {id:'K4b',name:'9008 Floating 2.0mm', granule:'2.0mm',  protein:32, maxPoids:50,   rate:0.032, freq:5, color:'#38bdf8', stage:'25–50 g'},
+    {id:'K5', name:'9008 Floating 3.0mm', granule:'3.0mm',  protein:32, maxPoids:100,  rate:0.023, freq:4, color:'#f59e0b', stage:'50–100 g'},
+    {id:'K5b',name:'9008 Floating 3.0mm', granule:'3.0mm',  protein:32, maxPoids:200,  rate:0.020, freq:4, color:'#fbbf24', stage:'100–200 g'},
+    {id:'K6', name:'9008 Floating 4.5mm', granule:'4.5mm',  protein:32, maxPoids:400,  rate:0.016, freq:3, color:'#f87171', stage:'200–400 g'},
+    {id:'K6b',name:'9008 Floating 4.5mm', granule:'4.5mm',  protein:32, maxPoids:9999, rate:0.014, freq:3, color:'#fca5a5', stage:'>400 g — au-delà de 600 g : 2 repas/j'},
   ]
 };
 
@@ -2372,12 +2378,20 @@ let FEED_TYPES=JSON.parse(JSON.stringify(FEED_TYPES_DEFAULT));
 // K4 Grower 2mm       : 271 GHS/20kg =   705 XOF/kg — sac 20kg
 // K5 Grower 3mm       : 241 GHS/20kg =   627 XOF/kg — sac 20kg
 // K6 Grower 4mm→4.5mm : 219 GHS/20kg =   569 XOF/kg — sac 20kg
-FEED_TYPES[0].batches=[{id:1,qty:10,price:1212}];   // K1 — sac 10kg
-FEED_TYPES[1].batches=[{id:1,qty:10,price:1212}];   // K2 — sac 10kg
-FEED_TYPES[2].batches=[{id:1,qty:10,price:1212}];   // K3 — sac 10kg
-FEED_TYPES[3].batches=[{id:1,qty:20,price:705}];    // K4 — sac 20kg
-FEED_TYPES[4].batches=[{id:1,qty:20,price:627}];    // K5 — sac 20kg
-FEED_TYPES[5].batches=[{id:1,qty:20,price:569}];    // K6 — sac 20kg
+// Tarifs Koudijs AKF (Ghana – taux 52 XOF/GHS – Janvier 2026)
+// K1–K3 Starter 40%CP : 233 GHS/10kg → 1 212 XOF/kg · sac 10kg
+// K4–K4b Grower 32%CP 2mm : 271 GHS/20kg → 705 XOF/kg · sac 20kg
+// K5–K5b Grower 32%CP 3mm : 241 GHS/20kg → 627 XOF/kg · sac 20kg
+// K6–K6b Grower 32%CP 4.5mm : 219 GHS/20kg → 569 XOF/kg · sac 20kg
+FEED_TYPES[0].batches=[{id:1,qty:10,price:1212}];   // K1 Poudre 0  — sac 10kg
+FEED_TYPES[1].batches=[{id:1,qty:10,price:1212}];   // K2 Crumble 1 — sac 10kg
+FEED_TYPES[2].batches=[{id:1,qty:10,price:1212}];   // K3 Crumble 2 — sac 10kg
+FEED_TYPES[3].batches=[{id:1,qty:20,price:705}];    // K4  Floating 2mm — sac 20kg
+FEED_TYPES[4].batches=[{id:1,qty:20,price:705}];    // K4b Floating 2mm — sac 20kg
+FEED_TYPES[5].batches=[{id:1,qty:20,price:627}];    // K5  Floating 3mm — sac 20kg
+FEED_TYPES[6].batches=[{id:1,qty:20,price:627}];    // K5b Floating 3mm — sac 20kg
+FEED_TYPES[7].batches=[{id:1,qty:20,price:569}];    // K6  Floating 4.5mm — sac 20kg
+FEED_TYPES[8].batches=[{id:1,qty:20,price:569}];    // K6b Floating 4.5mm — sac 20kg
 let batchId=10;
 
 // ═══════════════════════════════════════════════
@@ -2602,12 +2616,15 @@ async function doLogout(expired=false){
   APP.state={bassins:[],suivi:[],suiviId:0,logoUrl:null};
   applyFarmLogo(null);
   FEED_TYPES=JSON.parse(JSON.stringify(FEED_TYPES_DEFAULT));
-  FEED_TYPES[0].batches=[{id:1,qty:10,price:1212}];
-  FEED_TYPES[1].batches=[{id:1,qty:10,price:1212}];
-  FEED_TYPES[2].batches=[{id:1,qty:10,price:1212}];
-  FEED_TYPES[3].batches=[{id:1,qty:20,price:705}];
-  FEED_TYPES[4].batches=[{id:1,qty:20,price:627}];
-  FEED_TYPES[5].batches=[{id:1,qty:20,price:569}];
+  FEED_TYPES[0].batches=[{id:1,qty:10,price:1212}]; // K1
+  FEED_TYPES[1].batches=[{id:1,qty:10,price:1212}]; // K2
+  FEED_TYPES[2].batches=[{id:1,qty:10,price:1212}]; // K3
+  FEED_TYPES[3].batches=[{id:1,qty:20,price:705}];  // K4
+  FEED_TYPES[4].batches=[{id:1,qty:20,price:705}];  // K4b
+  FEED_TYPES[5].batches=[{id:1,qty:20,price:627}];  // K5
+  FEED_TYPES[6].batches=[{id:1,qty:20,price:627}];  // K5b
+  FEED_TYPES[7].batches=[{id:1,qty:20,price:569}];  // K6
+  FEED_TYPES[8].batches=[{id:1,qty:20,price:569}];  // K6b
   G('b-farm').value='';G('b-user').value='';G('b-pass').value='';
   if(expired)alert('⏱ Session expirée — veuillez vous reconnecter.');
   showScreen('screen-boot');
@@ -2661,10 +2678,11 @@ async function showFarmApp(){
 function applyRoleRestrictions(){
   const role=APP.user?.role||'Opérateur';
   const canBackup=APP.user?.canBackup||false;
+  // Rôles reconnus — 'Responsable ferme' est un alias de 'Responsable' dans certaines fermes
   const isOp=role==='Opérateur';
-  const isResp=role==='Responsable';
-  const isAdmin=role==='Administrateur';
-  const hasBackupRight=isResp||canBackup;
+  const isResp=role==='Responsable'||role==='Responsable ferme';
+  const isAdmin=role==='Administrateur'||role==='SuperAdmin'||role==='superadmin';
+  const hasBackupRight=isResp||isAdmin||canBackup;
 
   // ── Réinitialiser TOUS les boutons d'abord (évite les états figés) ──
   document.querySelectorAll('#screen-farm .tb').forEach(btn=>{
@@ -7732,31 +7750,7 @@ function updateFarmMsgBanner(farmMessages){
 
 showScreen('screen-boot');
 
-
-// ═══════════════════════════════════════════════
-// ANALYSE ERP — résumé direction
-// ═══════════════════════════════════════════════
-function refreshAnalyseERP(){
-  try{
-    const d=G('ana-date'); if(d && !d.value) d.value=todayISO();
-    let stockVal=0, cumpCount=0, stockLines=[];
-    const intrants=(APP.intrants||[]).filter(x=>x.actif!==false);
-    intrants.forEach(it=>{
-      const qty=Number(it.stock||it.qte||0);
-      const cump=Number(it.cump||it.prix||0);
-      if(cump>0)cumpCount++;
-      const val=qty*cump; stockVal+=val;
-      if(qty||cump) stockLines.push(`${it.nom||it.name||'Intrant'} : ${qty.toFixed?qty.toFixed(2):qty} ${it.unite||''} · ${Math.round(val).toLocaleString('fr-FR')} XOF`);
-    });
-    const set=(id,v)=>{const el=G(id);if(el)el.textContent=v;};
-    set('ana-val-stock',Math.round(stockVal).toLocaleString('fr-FR'));
-    set('ana-cump',String(cumpCount));
-    set('ana-val-cons','—'); set('ana-charges','—');
-    const det=G('ana-stock-detail'); if(det) det.innerHTML=stockLines.length?stockLines.slice(0,12).join('<br>'):'Aucune valeur de stock calculable pour le moment. Les valeurs apparaîtront après validation des prix et CUMP.';
-    const cd=G('ana-charges-detail'); if(cd) cd.innerHTML="Les charges d'exploitation sont centralisées dans Comptabilité → Charges exploitation. Les statistiques par période seront calculées à partir des saisies quotidiennes ou mensuelles.";
-  }catch(e){console.warn('Analyse ERP',e);}
-}
-
+// refreshAnalyseERP v5 → délégation à la version globale du script principal.
 </script>
 
 <script id="ichtus-login-fix-v3">
@@ -7778,29 +7772,8 @@ function refreshAnalyseERP(){
 })();
 
 
-// ═══════════════════════════════════════════════
-// ANALYSE ERP — résumé direction
-// ═══════════════════════════════════════════════
-function refreshAnalyseERP(){
-  try{
-    const d=G('ana-date'); if(d && !d.value) d.value=todayISO();
-    let stockVal=0, cumpCount=0, stockLines=[];
-    const intrants=(APP.intrants||[]).filter(x=>x.actif!==false);
-    intrants.forEach(it=>{
-      const qty=Number(it.stock||it.qte||0);
-      const cump=Number(it.cump||it.prix||0);
-      if(cump>0)cumpCount++;
-      const val=qty*cump; stockVal+=val;
-      if(qty||cump) stockLines.push(`${it.nom||it.name||'Intrant'} : ${qty.toFixed?qty.toFixed(2):qty} ${it.unite||''} · ${Math.round(val).toLocaleString('fr-FR')} XOF`);
-    });
-    const set=(id,v)=>{const el=G(id);if(el)el.textContent=v;};
-    set('ana-val-stock',Math.round(stockVal).toLocaleString('fr-FR'));
-    set('ana-cump',String(cumpCount));
-    set('ana-val-cons','—'); set('ana-charges','—');
-    const det=G('ana-stock-detail'); if(det) det.innerHTML=stockLines.length?stockLines.slice(0,12).join('<br>'):'Aucune valeur de stock calculable pour le moment. Les valeurs apparaîtront après validation des prix et CUMP.';
-    const cd=G('ana-charges-detail'); if(cd) cd.innerHTML="Les charges d'exploitation sont centralisées dans Comptabilité → Charges exploitation. Les statistiques par période seront calculées à partir des saisies quotidiennes ou mensuelles.";
-  }catch(e){console.warn('Analyse ERP',e);}
-}
+// refreshAnalyseERP est définie dans le script principal (ligne ~7757).
+// Ce bloc ne la redéfinit plus pour éviter tout conflit de version.
 
 </script>
 
@@ -7937,31 +7910,7 @@ const oldLoadIntrants=window.loadIntrants; if(typeof oldLoadIntrants==='function
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{ensureIntrantHelp();reloadComptaConfig();loadCharges();});else{ensureIntrantHelp();reloadComptaConfig();loadCharges();}
 })();
 
-
-// ═══════════════════════════════════════════════
-// ANALYSE ERP — résumé direction
-// ═══════════════════════════════════════════════
-function refreshAnalyseERP(){
-  try{
-    const d=G('ana-date'); if(d && !d.value) d.value=todayISO();
-    let stockVal=0, cumpCount=0, stockLines=[];
-    const intrants=(APP.intrants||[]).filter(x=>x.actif!==false);
-    intrants.forEach(it=>{
-      const qty=Number(it.stock||it.qte||0);
-      const cump=Number(it.cump||it.prix||0);
-      if(cump>0)cumpCount++;
-      const val=qty*cump; stockVal+=val;
-      if(qty||cump) stockLines.push(`${it.nom||it.name||'Intrant'} : ${qty.toFixed?qty.toFixed(2):qty} ${it.unite||''} · ${Math.round(val).toLocaleString('fr-FR')} XOF`);
-    });
-    const set=(id,v)=>{const el=G(id);if(el)el.textContent=v;};
-    set('ana-val-stock',Math.round(stockVal).toLocaleString('fr-FR'));
-    set('ana-cump',String(cumpCount));
-    set('ana-val-cons','—'); set('ana-charges','—');
-    const det=G('ana-stock-detail'); if(det) det.innerHTML=stockLines.length?stockLines.slice(0,12).join('<br>'):'Aucune valeur de stock calculable pour le moment. Les valeurs apparaîtront après validation des prix et CUMP.';
-    const cd=G('ana-charges-detail'); if(cd) cd.innerHTML="Les charges d'exploitation sont centralisées dans Comptabilité → Charges exploitation. Les statistiques par période seront calculées à partir des saisies quotidiennes ou mensuelles.";
-  }catch(e){console.warn('Analyse ERP',e);}
-}
-
+// refreshAnalyseERP v4 → délégation à la version globale du script principal.
 </script>
 
 
@@ -8163,9 +8112,11 @@ const G=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const today=()=>new Date().toISOString().slice(0,10);
 const money=v=>(Math.round(Number(v)||0)).toLocaleString('fr-FR')+' XOF';
-function role(){return (window.APP&&APP.user&&APP.user.role)||'';}
+// Fonctions de rôle alignées sur applyRoleRestrictions() du module principal
+// Rôles connus : 'Opérateur' | 'Responsable' | 'Responsable ferme' | 'Administrateur' | 'SuperAdmin'
+function role(){return (window.APP&&APP.user&&APP.user.role)||'Opérateur';}
 function canWrite(){const r=role().toLowerCase();return ['responsable','responsable ferme','administrateur','superadmin','super admin'].some(x=>r.includes(x));}
-function canValidate(){const r=role().toLowerCase();return ['responsable administratif','admin','administrateur','superadmin','super admin'].some(x=>r.includes(x));}
+function canValidate(){const r=role().toLowerCase();return ['responsable','responsable ferme','administrateur','superadmin','super admin'].some(x=>r.includes(x));}
 function canDelete(){const r=role().toLowerCase();return r.includes('super')||r.includes('administrateur');}
 window.APP_CHARGES=window.APP_CHARGES||[];
 window.CHARGE_CATS={
