@@ -4227,6 +4227,37 @@ function exportAnalysePDF(){
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(install,0);});else setTimeout(install,0);
 })();
 </script>
+
+<script id="ichtus-v21-console-fcr-clean">
+(function(){
+  function setValSafe(input, val){
+    if(!input) return;
+    if(val === null || val === undefined || val === '') input.value = '';
+    else input.value = String(val);
+  }
+  const oldRender = window.renderFCRModule;
+  window.renderFCRModule = function(){
+    if(typeof oldRender === 'function') oldRender();
+    try{
+      const bassin = (document.getElementById('fcr-bassin')||{}).value || '';
+      if(!bassin || !window.FCR_DATA || !window.FCR_DATA[bassin]) return;
+      const rows = document.querySelectorAll('#fcr-tbody tr');
+      rows.forEach(function(row, i){
+        const w = window.FCR_DATA[bassin][i];
+        if(!w) return;
+        setValSafe(row.querySelector('input[data-field="poidsMoyen"]'), w.poidsMoyen);
+        setValSafe(row.querySelector('input[data-field="alimKg"]'), w.alimKg);
+        setValSafe(row.querySelector('input[data-field="morts"]'), w.morts || 0);
+      });
+    }catch(e){ console.warn('FCR clean render warning', e); }
+  };
+  document.addEventListener('DOMContentLoaded', function(){
+    try{ if(typeof window.renderFCRModule === 'function') window.renderFCRModule(); }catch(e){}
+  });
+  console.log('ICHTUS v21 console FCR nettoyé');
+})();
+</script>
+
 </body></html>`);
   printWin.document.close();
 }
@@ -5211,6 +5242,37 @@ function printInventairePDF(){
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(install,0);});else setTimeout(install,0);
 })();
 </script>
+
+<script id="ichtus-v21-console-fcr-clean">
+(function(){
+  function setValSafe(input, val){
+    if(!input) return;
+    if(val === null || val === undefined || val === '') input.value = '';
+    else input.value = String(val);
+  }
+  const oldRender = window.renderFCRModule;
+  window.renderFCRModule = function(){
+    if(typeof oldRender === 'function') oldRender();
+    try{
+      const bassin = (document.getElementById('fcr-bassin')||{}).value || '';
+      if(!bassin || !window.FCR_DATA || !window.FCR_DATA[bassin]) return;
+      const rows = document.querySelectorAll('#fcr-tbody tr');
+      rows.forEach(function(row, i){
+        const w = window.FCR_DATA[bassin][i];
+        if(!w) return;
+        setValSafe(row.querySelector('input[data-field="poidsMoyen"]'), w.poidsMoyen);
+        setValSafe(row.querySelector('input[data-field="alimKg"]'), w.alimKg);
+        setValSafe(row.querySelector('input[data-field="morts"]'), w.morts || 0);
+      });
+    }catch(e){ console.warn('FCR clean render warning', e); }
+  };
+  document.addEventListener('DOMContentLoaded', function(){
+    try{ if(typeof window.renderFCRModule === 'function') window.renderFCRModule(); }catch(e){}
+  });
+  console.log('ICHTUS v21 console FCR nettoyé');
+})();
+</script>
+
 </body></html>');
   w.document.close();
 }
@@ -7874,6 +7936,37 @@ function exportJournalPDF(){
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(install,0);});else setTimeout(install,0);
 })();
 </script>
+
+<script id="ichtus-v21-console-fcr-clean">
+(function(){
+  function setValSafe(input, val){
+    if(!input) return;
+    if(val === null || val === undefined || val === '') input.value = '';
+    else input.value = String(val);
+  }
+  const oldRender = window.renderFCRModule;
+  window.renderFCRModule = function(){
+    if(typeof oldRender === 'function') oldRender();
+    try{
+      const bassin = (document.getElementById('fcr-bassin')||{}).value || '';
+      if(!bassin || !window.FCR_DATA || !window.FCR_DATA[bassin]) return;
+      const rows = document.querySelectorAll('#fcr-tbody tr');
+      rows.forEach(function(row, i){
+        const w = window.FCR_DATA[bassin][i];
+        if(!w) return;
+        setValSafe(row.querySelector('input[data-field="poidsMoyen"]'), w.poidsMoyen);
+        setValSafe(row.querySelector('input[data-field="alimKg"]'), w.alimKg);
+        setValSafe(row.querySelector('input[data-field="morts"]'), w.morts || 0);
+      });
+    }catch(e){ console.warn('FCR clean render warning', e); }
+  };
+  document.addEventListener('DOMContentLoaded', function(){
+    try{ if(typeof window.renderFCRModule === 'function') window.renderFCRModule(); }catch(e){}
+  });
+  console.log('ICHTUS v21 console FCR nettoyé');
+})();
+</script>
+
 </body></html>`;
   const win=window.open('','_blank');
   if(!win){alert('⚠️ Autorisez les popups pour exporter le PDF.');return;}
@@ -8553,6 +8646,37 @@ function exportAdminJournalPDF(){
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(install,0);});else setTimeout(install,0);
 })();
 </script>
+
+<script id="ichtus-v21-console-fcr-clean">
+(function(){
+  function setValSafe(input, val){
+    if(!input) return;
+    if(val === null || val === undefined || val === '') input.value = '';
+    else input.value = String(val);
+  }
+  const oldRender = window.renderFCRModule;
+  window.renderFCRModule = function(){
+    if(typeof oldRender === 'function') oldRender();
+    try{
+      const bassin = (document.getElementById('fcr-bassin')||{}).value || '';
+      if(!bassin || !window.FCR_DATA || !window.FCR_DATA[bassin]) return;
+      const rows = document.querySelectorAll('#fcr-tbody tr');
+      rows.forEach(function(row, i){
+        const w = window.FCR_DATA[bassin][i];
+        if(!w) return;
+        setValSafe(row.querySelector('input[data-field="poidsMoyen"]'), w.poidsMoyen);
+        setValSafe(row.querySelector('input[data-field="alimKg"]'), w.alimKg);
+        setValSafe(row.querySelector('input[data-field="morts"]'), w.morts || 0);
+      });
+    }catch(e){ console.warn('FCR clean render warning', e); }
+  };
+  document.addEventListener('DOMContentLoaded', function(){
+    try{ if(typeof window.renderFCRModule === 'function') window.renderFCRModule(); }catch(e){}
+  });
+  console.log('ICHTUS v21 console FCR nettoyé');
+})();
+</script>
+
 </body></html>`;
   const win=window.open('','_blank');
   if(!win){alert('⚠️ Autorisez les popups pour exporter le PDF.');return;}
@@ -9251,11 +9375,11 @@ function renderFCRModule(){
     return `<tr>
       <td style="color:var(--t3);font-weight:700">S${i+1}</td>
       <td style="font-size:9px;color:var(--t3)">${ref.phase}</td>
-      <td><input type="number" class="ci" style="width:65px;font-size:10px" value="${w.poidsMoyen||''}" placeholder="—" step="0.1"
+      <td><input type="number" class="ci" style="width:65px;font-size:10px" value="" placeholder="—" data-field="poidsMoyen" step="0.1"
         onchange="FCR_DATA['${bassin}'][${i}].poidsMoyen=this.value?+this.value:null;renderFCRModule()"></td>
-      <td><input type="number" class="ci" style="width:65px;font-size:10px" value="${w.alimKg||''}" placeholder="—" step="0.01"
+      <td><input type="number" class="ci" style="width:65px;font-size:10px" value="" placeholder="—" data-field="alimKg" step="0.01"
         onchange="FCR_DATA['${bassin}'][${i}].alimKg=this.value?+this.value:null;renderFCRModule()"></td>
-      <td><input type="number" class="ci" style="width:45px;font-size:10px" value="${w.morts||0}" min="0"
+      <td><input type="number" class="ci" style="width:45px;font-size:10px" value="0" data-field="morts" min="0"
         onchange="FCR_DATA['${bassin}'][${i}].morts=+this.value||0;renderFCRModule()"></td>
       <td style="font-family:var(--mono);color:${survie<85?'var(--dng)':survie<90?'var(--warn)':'var(--acc)'}">${survie}%</td>
       <td style="font-family:var(--mono);color:${fcrColor}">${fcrC?fcrC.toFixed(2):'—'}</td>
@@ -10584,5 +10708,36 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(install,0);});else setTimeout(install,0);
 })();
 </script>
+
+<script id="ichtus-v21-console-fcr-clean">
+(function(){
+  function setValSafe(input, val){
+    if(!input) return;
+    if(val === null || val === undefined || val === '') input.value = '';
+    else input.value = String(val);
+  }
+  const oldRender = window.renderFCRModule;
+  window.renderFCRModule = function(){
+    if(typeof oldRender === 'function') oldRender();
+    try{
+      const bassin = (document.getElementById('fcr-bassin')||{}).value || '';
+      if(!bassin || !window.FCR_DATA || !window.FCR_DATA[bassin]) return;
+      const rows = document.querySelectorAll('#fcr-tbody tr');
+      rows.forEach(function(row, i){
+        const w = window.FCR_DATA[bassin][i];
+        if(!w) return;
+        setValSafe(row.querySelector('input[data-field="poidsMoyen"]'), w.poidsMoyen);
+        setValSafe(row.querySelector('input[data-field="alimKg"]'), w.alimKg);
+        setValSafe(row.querySelector('input[data-field="morts"]'), w.morts || 0);
+      });
+    }catch(e){ console.warn('FCR clean render warning', e); }
+  };
+  document.addEventListener('DOMContentLoaded', function(){
+    try{ if(typeof window.renderFCRModule === 'function') window.renderFCRModule(); }catch(e){}
+  });
+  console.log('ICHTUS v21 console FCR nettoyé');
+})();
+</script>
+
 </body>
 </html>
