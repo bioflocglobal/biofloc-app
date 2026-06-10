@@ -6,6 +6,7 @@
 <title>ICHTUS ERP — Production, Logistique & Comptabilité</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐟</text></svg>">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -976,6 +977,9 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
 
       <!-- Résultats par bassin -->
       <div id="rat-results"></div>
+      <div style="margin-top:.6rem;text-align:right" class="no-print">
+        <button onclick="exportRationnementPDF()" style="background:var(--dng);color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer">📄 Exporter plan de rationnement PDF</button>
+      </div>
     </div>
 
 
@@ -1045,6 +1049,10 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
         </table>
       </div>
       <div class="mgrid" style="margin-top:.8rem" id="b-metrics"></div>
+      <div style="margin-top:.6rem;display:flex;gap:.5rem;justify-content:flex-end" class="no-print">
+        <button onclick="exportBassinsPDF()" style="background:var(--dng);color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer">📄 Fiche journalière PDF</button>
+        <button onclick="exportBassinsCSV()" style="background:var(--acc2);color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer">📊 Exporter Excel (.xlsx)</button>
+      </div>
     </div>
 
     <!-- T2 ALIMENTS (contenu déplacé dans t4 Logistique) -->
@@ -1067,6 +1075,10 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:.5rem;flex-wrap:wrap">
             <span style="font-size:10px;color:var(--t3)">Filtre :</span>
             <select id="sc-filter" class="si" style="font-size:11px" onchange="renderSuivi()"><option value="">Tous</option></select>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-bottom:.4rem" class="no-print">
+            <button onclick="exportSuiviPDF()" style="background:var(--dng);color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:10px;font-weight:700;cursor:pointer">📄 PDF</button>
+            <button onclick="exportSuiviCSV()" style="background:var(--acc2);color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:10px;font-weight:700;cursor:pointer">📊 Excel (.xlsx)</button>
           </div>
           <div class="tw" style="max-height:320px;overflow-y:auto">
             <table><thead><tr><th>Date</th><th>Bassin</th><th>Poids (g)</th><th>Cible (g)</th><th>GMQ</th><th>FCR</th><th></th></tr></thead>
@@ -1378,11 +1390,15 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
         </div>
         <div class="tw"><table>
           <thead><tr>
-            <th>Bassin</th><th>Aliment (XOF)</th><th>Probio (XOF)</th><th>Électricité</th><th>Eau+Bât</th><th>MO</th><th>Autres</th>
+            <th>Bassin</th><th>Aliment (XOF)</th><th>Probio (XOF)</th><th>Mélasse/Carb</th><th>Basifiant</th><th>Électricité</th><th>Eau+Bât+MO</th>
             <th>Coût Total</th><th>Biomasse (kg)</th><th>Coût/kg</th><th>Prix Vente/kg</th><th>Revenu</th><th>Marge</th><th>Marge %</th>
           </tr></thead>
           <tbody id="compta-tbody"></tbody>
         </table></div>
+        <div style="margin-top:.5rem;display:flex;gap:.5rem;justify-content:flex-end" class="no-print">
+          <button onclick="exportComptaPDF()" style="background:var(--dng);color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer">📄 Tableau financier PDF</button>
+          <button onclick="exportComptaCSV()" style="background:var(--acc2);color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer">📊 Exporter Excel (.xlsx)</button>
+        </div>
       </div>
     </div>
 
@@ -1414,6 +1430,10 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
         <thead><tr><th>Bassin</th><th>Date récolte</th><th>Vol (m³)</th><th>Durée (j)</th><th>Nb Init</th><th>Mortalité</th><th>Survie %</th><th>Poids Final (g)</th><th>Biomasse (kg)</th><th>FCR</th><th>GMQ (g/j)</th><th>Revenu (XOF)</th><th>Coût (XOF)</th><th>Marge (XOF)</th></tr></thead>
         <tbody id="rec-tbody"></tbody>
       </table></div>
+      <div style="margin-top:.5rem;display:flex;gap:.5rem;justify-content:flex-end" class="no-print">
+        <button onclick="exportRecoltesCSV()" style="background:var(--acc2);color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer">📊 Exporter Excel (.xlsx)</button>
+        <button onclick="exportRecoltePDF()" style="background:var(--dng);color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer">📄 Rapport Récoltes PDF</button>
+      </div>
     </div>
 
     <!-- T8 FICHE COLLECTE -->
@@ -2657,6 +2677,8 @@ async function showFarmApp(){
   loadFarmLogo();
   loadParamLists();
   loadIntrants(); // Module Logistique
+  // Appliquer les doses biofloc sauvegardées aux PWA_RATES
+  (function(){var cfg=load('biofloc_cfg',{});if(window.PWA_RATES){if(cfg.primo)PWA_RATES.primo.dose=cfg.primo;if(cfg.entretien){PWA_RATES.entretien.dose=cfg.entretien;if(PWA_RATES.rotation)PWA_RATES.rotation.dose=cfg.entretien;}if(cfg.postintro&&PWA_RATES.postintro)PWA_RATES.postintro.dose=cfg.postintro;}})();
   const role=APP.user?.role||'Opérateur';
   if(role==='Responsable'||role==='Administrateur'){
     checkNotifications();
@@ -2895,6 +2917,8 @@ function setupFarmListeners(){
       if(G('t2')?.classList.contains('active'))renderFeed();
     }
   }).catch(e=>console.warn('Feed load:',e));
+  // Recharger charges depuis Firebase pour que APP_CHARGES soit frais
+  if(typeof loadCharges==='function')setTimeout(()=>{try{loadCharges();}catch(e){}},800);
 }
 
 
@@ -6033,6 +6057,8 @@ function renderComptaCUMP(){
 }
 
 function getCUMP(intrantId){
+  // Délègue à window.getCUMP si disponible (version avec validation complète)
+  if(window.getCUMP&&window.getCUMP!==getCUMP)return window.getCUMP(intrantId);
   const entries=APP_STOCK_ENTRIES.filter(e=>e.validated&&e.intrantId===intrantId&&COMPTA_PRIX[e.id]!==undefined);
   if(!entries.length)return 0;
   const totalQty=entries.reduce((s,e)=>s+e.quantity,0);
@@ -6081,7 +6107,7 @@ function upComptaSynthese(){
   const fixeParBassin=(cElecJour*duree+(eau+batiment+mo*(duree/30)+autres)/nBassins);
 
   const tb=G('compta-tbody');if(!tb)return;tb.innerHTML='';
-  let tAlim=0,tProbio=0,tElec=0,tFixe=0,tCout=0,tRev=0,tM=0,tBio=0;
+  let tAlim=0,tProbio=0,tCarb=0,tBas=0,tElec=0,tFixe=0,tCout=0,tRev=0,tM=0,tBio=0;
 
   APP.state.bassins.forEach(b=>{
     const c=calcBassin(b);
@@ -6089,23 +6115,37 @@ function upComptaSynthese(){
     const feedItem=APP_INTRANTS.find(i=>i.category==='aliment'&&(i.id===c.ft||i.feedId===c.ft||i.name?.includes(c.ft)));
     const cumpAlim=feedItem?getCUMP(feedItem.id):0;
     const cAlim=c.alimReel>0?c.alimReel*cumpAlim:c.alimTheo*(duree/7)*cumpAlim;
-    // Probio via CUMP
+    // Probio via CUMP — quantité réelle b.probiot (ml/j) ÷ 1000 → L/j × duree
     const probioItem=APP_INTRANTS.find(i=>i.id?.includes('PWA')||i.name?.toLowerCase().includes('pwa'));
     const cumpProbio=probioItem?getCUMP(probioItem.id):0;
-    const cProbio=cumpProbio>0?c.biomasse*(duree/7)*0.5*cumpProbio:0;
+    const probioQtL=b.probiot>0?(b.probiot*duree/1000):c.biomasse*(duree/7)*0.5;
+    const cProbio=cumpProbio>0?probioQtL*cumpProbio:0;
+    // Mélasse / Carbohydrate via CUMP — b.carb (ml ou g / j) ÷ 1000 → L ou kg
+    const carbId=b.carbType||'melasse';
+    const carbItem=APP_INTRANTS.find(i=>i.id===carbId||i.name?.toLowerCase().includes(carbId));
+    const cumpCarb=carbItem?getCUMP(carbItem.id):0;
+    const carbQt=b.carb>0?(b.carb*duree/1000):0;
+    const cCarb=cumpCarb>0&&carbQt>0?carbQt*cumpCarb:0;
+    // Basifiant via CUMP — b.basifiant (g/j) ÷ 1000 → kg
+    const basId=b.basifiantType||'caco3';
+    const basItem=APP_INTRANTS.find(i=>i.id===basId);
+    const cumpBas=basItem?getCUMP(basItem.id):0;
+    const basQt=b.basifiant>0?(b.basifiant*duree/1000):0;
+    const cBas=cumpBas>0&&basQt>0?basQt*cumpBas:0;
     const cElec=cElecJour*duree;
     const cFixe=fixeParBassin-cElec;
-    const cTotal=cAlim+cProbio+cElec+cFixe;
+    const cTotal=cAlim+cProbio+cCarb+cBas+cElec+cFixe;
     const rev=c.biomasse*pVente,marge=rev-cTotal;
     const mPct=cTotal>0?marge/cTotal*100:0;
-    tAlim+=cAlim;tProbio+=cProbio;tElec+=cElec;tFixe+=cFixe;tCout+=cTotal;tRev+=rev;tM+=marge;tBio+=c.biomasse;
+    tAlim+=cAlim;tProbio+=cProbio;tCarb+=cCarb;tBas+=cBas;tElec+=cElec;tFixe+=cFixe;tCout+=cTotal;tRev+=rev;tM+=marge;tBio+=c.biomasse;
     const tr=document.createElement('tr');
     tr.innerHTML='<td class="cn">'+b.name+'</td>'
       +'<td class="cf">'+xof(cAlim)+'</td>'
       +'<td class="cf">'+xof(cProbio)+'</td>'
+      +'<td class="cf">'+(cCarb>0?xof(cCarb):'<span style="color:var(--t3)">—</span>')+'</td>'
+      +'<td class="cf">'+(cBas>0?xof(cBas):'<span style="color:var(--t3)">—</span>')+'</td>'
       +'<td class="cf">'+xof(cElec)+'</td>'
       +'<td class="cf">'+xof(cFixe)+'</td>'
-      +'<td class="cf">—</td><td class="cf">—</td>'
       +'<td class="cf" style="font-weight:700">'+xof(cTotal)+'</td>'
       +'<td class="cf">'+c.biomasse.toFixed(2)+'</td>'
       +'<td class="cf">'+(c.biomasse>0?Math.round(cTotal/c.biomasse).toLocaleString():0)+'</td>'
@@ -6131,6 +6171,8 @@ function upComptaSynthese(){
     const postes=[
       {label:'Aliment',val:tAlim,color:'var(--acc)'},
       {label:'Probiotiques',val:tProbio,color:'var(--purp)'},
+      {label:'Mélasse/Carb',val:tCarb,color:'var(--gold)'},
+      {label:'Basifiant',val:tBas,color:'#a78bfa'},
       {label:'Électricité',val:tElec,color:'var(--warn)'},
       {label:'Eau+Bâtiment',val:tFixe,color:'var(--acc2)'},
     ];
@@ -6295,7 +6337,6 @@ function renderFicheInventaire(){
 // ═══════════════════════════════════════════════
 function upAll(){
   upConfigCalcs();renderSuivi();saveBassins();
-  // Mettre à jour les éléments dépendants de l\'espèce
   const t0gmq=G('t0-species-gmq');
   if(t0gmq)t0gmq.textContent=`+${sp().gmqCible} g/j (${sp().nom})`;
   updateSpeciesBadge();
@@ -6306,6 +6347,8 @@ function upAll(){
   if(G('t6')?.classList.contains('active'))upCons();
   if(G('t7')?.classList.contains('active'))renderRecoltes();
   if(G('t8')?.classList.contains('active'))renderFiche();
+  // Toujours propager aux modules financiers même si onglets inactifs
+  if(window.refreshFinancials)setTimeout(refreshFinancials,200);
 }
 
 // ═══════════════════════════════════════════════
@@ -8729,7 +8772,7 @@ function n(v){var x=parseFloat(String(v==null?'':v).replace(',','.'));return isN
 function today(){return new Date().toISOString().slice(0,10)}
 function load(k,d){try{return JSON.parse(localStorage.getItem('ichtus_'+k)||JSON.stringify(d))}catch(e){return d}}
 function save(k,v){localStorage.setItem('ichtus_'+k,JSON.stringify(v))}
-function money(v){return n(v).toLocaleString('fr-FR')+' XOF'}
+function money(v){var cur=(load('finance_cfg',{currency:'XOF'}).currency)||'XOF';return n(v).toLocaleString('fr-FR')+' '+cur;}
 function toast(msg,type){if(window.showToast)showToast(msg,type||'ok');else alert(msg)}
 function bassins(){
   var a=load('bassins_ref',[]);
@@ -8770,26 +8813,96 @@ window.deleteCycleERP=function(id){var cs=cycles(),c=cs.find(function(x){return 
 window.archiveCycleERP=function(id){var cs=cycles(),c=cs.find(function(x){return x.id===id});if(!c)return;c.statut='Archivé';saveCycles(cs);syncBassins();toast('📦 Cycle archivé','warn');renderParamERP('cycles')};
 function renderClients(c){var a=clients();c.innerHTML='<div class="card"><div class="ctitle"><span class="dot"></span>Clients</div><div class="erp-note">Les clients sont synchronisés avec les ventes, le chiffre d\'affaires et l\'analyse de rentabilité.</div><div class="admin-form"><input id="cl-name" class="form-inp" placeholder="Nom client"><input id="cl-phone" class="form-inp" placeholder="Téléphone"><input id="cl-city" class="form-inp" placeholder="Ville"><select id="cl-type" class="form-inp"><option>Restaurant</option><option>Hôtel</option><option>Grossiste</option><option>Particulier</option><option>Autre</option></select></div><button class="sbtn" onclick="addClientERP()">Ajouter client</button></div><div class="tw"><table><thead><tr><th>Client</th><th>Type</th><th>Téléphone</th><th>Ville</th><th>Ventes</th><th>CA</th><th></th></tr></thead><tbody>'+a.map(function(cl){var sv=sales().filter(function(s){return s.client===cl.name});var ca=sv.reduce(function(x,s){return x+n(s.kg)*n(s.price)},0);return '<tr><td class="cn">'+esc(cl.name)+'</td><td>'+esc(cl.type)+'</td><td>'+esc(cl.phone)+'</td><td>'+esc(cl.city)+'</td><td>'+sv.length+'</td><td>'+money(ca)+'</td><td>'+(sv.length?'🔒':'<button class="dbtn" onclick="deleteClientERP(\''+esc(cl.id)+'\')">Supprimer</button>')+'</td></tr>'}).join('')+'</tbody></table></div>'}
 window.addClientERP=function(){var name=(G('cl-name').value||'').trim();if(!name)return alert('Nom client obligatoire');var a=clients();a.push({id:'CL-'+Date.now(),name:name,phone:G('cl-phone').value,city:G('cl-city').value,type:G('cl-type').value});saveClients(a);renderParamERP('clients')};window.deleteClientERP=function(id){var a=clients(),cl=a.find(function(x){return x.id===id});if(cl&&sales().some(function(s){return s.client===cl.name}))return alert('Client lié à une vente. Suppression interdite.');saveClients(a.filter(function(x){return x.id!==id}));renderParamERP('clients')};
-function renderBiofloc(c){var cfg=load('biofloc_cfg',{pwa:1,pfa:1,lab:0.5});c.innerHTML='<div class="card"><div class="ctitle"><span class="dot"></span>Paramètres biofloc</div><div class="erp-note">Ces doses sont utilisées dans les onglets <b>PWA · PFA · LAB</b> pour calculer la quantité de produit à préparer en fonction du volume à traiter (m³) saisi manuellement lors de chaque intervention.</div></div>'
-  +'<div style="display:grid;gap:.6rem;margin-bottom:.8rem">'
-  +'<div class="card" style="padding:.6rem .8rem">'
-  +'<div style="font-size:11px;font-weight:700;color:var(--acc);margin-bottom:4px">💧 PWA — Probiotique for Water Administration</div>'
-  +'<div style="font-size:10px;color:var(--t3);margin-bottom:8px">Traitement de l\'eau du bassin. Appliqué lors de l\'inoculation et de chaque entretien. Contient des bactéries hétérotrophes qui dégradent la matière organique et stabilisent l\'azote dans le biofloc.</div>'
-  +'<div style="display:flex;align-items:center;gap:8px"><label style="font-size:10px;color:var(--t2);white-space:nowrap">Dose (L/m³) :</label><input id="bio-pwa" type="number" min="0" step="0.1" class="form-inp" style="width:100px;margin:0" value="'+n(cfg.pwa||1)+'"><span style="font-size:10px;color:var(--t3)">Ex : 1 L pour 1 m³ = 1 bouteille/m³</span></div>'
+function renderBiofloc(c){
+  var cfg=load('biofloc_cfg',{primo:4.7,entretien:0.2,postintro:0.1,pfa_ml_kg:10,lab_l_m3:0.5,vol_ref:1.75});
+  var bs=APP.state&&APP.state.bassins?APP.state.bassins.filter(function(b){return b.statut!=='Archivé'}):[];
+  var volRef=n(cfg.vol_ref)||1.75;
+  // Exemple : 1 bassin, volume de référence
+  var ex_primo=(n(cfg.primo)||4.7)*volRef;
+  var ex_entretien=(n(cfg.entretien)||0.2)*volRef;
+  var ex_lab=(n(cfg.lab_l_m3)||0.5)*volRef;
+
+  c.innerHTML='<div class="card"><div class="ctitle"><span class="dot"></span>Paramètres biofloc — doses de traitement</div>'
+  +'<div class="erp-note">Ces doses <b>pilotent directement les calculs</b> dans l\'onglet 🧪 PWA/PFA/LAB. Quand vous ajoutez une activité (primo-inoculation, entretien...) et saisissez le volume à traiter en m³, la quantité de produit à préparer est calculée automatiquement selon ces valeurs.</div></div>'
+
+  // BLOC PWA
+  +'<div class="card" style="padding:.7rem .8rem;margin-bottom:.5rem">'
+  +'<div style="font-size:12px;font-weight:700;color:var(--acc);margin-bottom:6px">💧 PWA — Probiotique for Water Administration</div>'
+  +'<div style="font-size:10px;color:var(--t3);margin-bottom:10px">Produit liquide versé directement dans l\'eau du bassin. Contient des bactéries qui consomment l\'ammoniaque (NH₄) produit par les poissons et construisent le biofloc. <b>Sans PWA, pas de biofloc.</b></div>'
+  +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
+  +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:3px">DOSE PRIMO-INOCULATION (L/m³)</div>'
+  +'<div style="font-size:9px;color:var(--t3);margin-bottom:4px">Premier traitement — J1. Dose élevée pour amorcer le biofloc dès le départ.</div>'
+  +'<input id="bio-primo" type="number" min="0" step="0.1" class="form-inp" style="margin:0;width:100%" value="'+(n(cfg.primo)||4.7)+'"></div>'
+  +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:3px">DOSE ENTRETIEN (L/m³)</div>'
+  +'<div style="font-size:9px;color:var(--t3);margin-bottom:4px">J3/J5/J7/J8/J10 et système mature. Dose d\'entretien pour maintenir la population bactérienne.</div>'
+  +'<input id="bio-entretien" type="number" min="0" step="0.05" class="form-inp" style="margin:0;width:100%" value="'+(n(cfg.entretien)||0.2)+'"></div>'
+  +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:3px">DOSE POST-INTRO ALEVINS (L/m³)</div>'
+  +'<div style="font-size:9px;color:var(--t3);margin-bottom:4px">J14–J21 après introduction. Demi-dose car biofloc en cours de stabilisation.</div>'
+  +'<input id="bio-postintro" type="number" min="0" step="0.05" class="form-inp" style="margin:0;width:100%" value="'+(n(cfg.postintro)||0.1)+'"></div>'
+  +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:3px">VOLUME DE RÉFÉRENCE PAR BASSIN (m³)</div>'
+  +'<div style="font-size:9px;color:var(--t3);margin-bottom:4px">Volume habituel traité par bassin — utilisé pour les exemples ci-dessous.</div>'
+  +'<input id="bio-vol-ref" type="number" min="0.1" step="0.1" class="form-inp" style="margin:0;width:100%" value="'+volRef+'"></div>'
   +'</div>'
-  +'<div class="card" style="padding:.6rem .8rem">'
-  +'<div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:4px">🐟 PFA — Probiotique for Fish Administration</div>'
-  +'<div style="font-size:10px;color:var(--t3);margin-bottom:8px">Mélangé directement à l\'aliment avant distribution. Améliore la digestion, renforce le système immunitaire des tilapias et réduit la mortalité. Application quotidienne ou selon protocole.</div>'
-  +'<div style="display:flex;align-items:center;gap:8px"><label style="font-size:10px;color:var(--t2);white-space:nowrap">Dose (ml/kg aliment) :</label><input id="bio-pfa" type="number" min="0" step="0.5" class="form-inp" style="width:100px;margin:0" value="'+n(cfg.pfa||1)+'"><span style="font-size:10px;color:var(--t3)">Ex : 10 ml par kg d\'aliment</span></div>'
-  +'</div>'
-  +'<div class="card" style="padding:.6rem .8rem">'
-  +'<div style="font-size:11px;font-weight:700;color:var(--purp);margin-bottom:4px">🧪 LAB — Lactobacillus (fermentation)</div>'
-  +'<div style="font-size:10px;color:var(--t3);margin-bottom:8px">Bactéries lactiques produites par fermentation de son de blé ou de manioc. Acidifient légèrement l\'eau, inhibent les pathogènes et enrichissent le microbiome du biofloc. Préparation interne — coût réduit.</div>'
-  +'<div style="display:flex;align-items:center;gap:8px"><label style="font-size:10px;color:var(--t2);white-space:nowrap">Dose (L/m³) :</label><input id="bio-lab" type="number" min="0" step="0.1" class="form-inp" style="width:100px;margin:0" value="'+n(cfg.lab||0.5)+'"><span style="font-size:10px;color:var(--t3)">Ex : 0.5 L pour 1 m³</span></div>'
+  // Exemples calculés
+  +'<div style="background:rgba(0,201,167,.07);border:1px solid rgba(0,201,167,.2);border-radius:8px;padding:.6rem .8rem">'
+  +'<div style="font-size:10px;font-weight:700;color:var(--acc);margin-bottom:6px">📐 Exemples calculés pour '+volRef+' m³ (1 bassin)</div>'
+  +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px" id="bio-examples">'
+  +'<div style="text-align:center;background:rgba(0,0,0,.2);border-radius:6px;padding:6px">'
+  +'<div style="font-size:9px;color:var(--t3)">PRIMO J1</div>'
+  +'<div style="font-size:18px;font-weight:800;color:var(--acc)">'+(ex_primo).toFixed(2)+'<span style="font-size:10px">L</span></div>'
+  +'<div style="font-size:9px;color:var(--t3)">'+(n(cfg.primo)||4.7)+' L/m³ × '+volRef+' m³</div></div>'
+  +'<div style="text-align:center;background:rgba(0,0,0,.2);border-radius:6px;padding:6px">'
+  +'<div style="font-size:9px;color:var(--t3)">ENTRETIEN J3/J5...</div>'
+  +'<div style="font-size:18px;font-weight:800;color:var(--acc)">'+(ex_entretien).toFixed(3)+'<span style="font-size:10px">L</span></div>'
+  +'<div style="font-size:9px;color:var(--t3)">'+(n(cfg.entretien)||0.2)+' L/m³ × '+volRef+' m³</div></div>'
+  +'<div style="text-align:center;background:rgba(0,0,0,.2);border-radius:6px;padding:6px">'
+  +'<div style="font-size:9px;color:var(--t3)">LAB (m³)</div>'
+  +'<div style="font-size:18px;font-weight:800;color:var(--purp)">'+(ex_lab).toFixed(3)+'<span style="font-size:10px">L</span></div>'
+  +'<div style="font-size:9px;color:var(--t3)">'+(n(cfg.lab_l_m3)||0.5)+' L/m³ × '+volRef+' m³</div></div>'
+  +'</div></div></div>'
+
+  // BLOC PFA
+  +'<div class="card" style="padding:.7rem .8rem;margin-bottom:.5rem">'
+  +'<div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:6px">🐟 PFA — Probiotique for Fish Administration</div>'
+  +'<div style="font-size:10px;color:var(--t3);margin-bottom:10px">Produit mélangé <b>directement à l\'aliment</b> avant chaque distribution. Il ne va pas dans l\'eau — il est ingéré par le poisson. Améliore la digestion, réduit les maladies intestinales et améliore le FCR (taux de conversion alimentaire).</div>'
+  +'<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
+  +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:3px">DOSE (ml de PFA par kg d\'aliment)</div>'
+  +'<input id="bio-pfa" type="number" min="0" step="1" class="form-inp" style="margin:0;width:120px" value="'+(n(cfg.pfa_ml_kg)||10)+'"></div>'
+  +'<div style="font-size:10px;color:var(--t3);padding:.4rem .6rem;background:rgba(0,0,0,.15);border-radius:6px">Si vous distribuez <b>2 kg d\'aliment</b> aujourd\'hui → ajouter <b>'+(2*(n(cfg.pfa_ml_kg)||10))+' ml de PFA</b> et mélanger avant distribution.</div>'
   +'</div></div>'
-  +'<button class="sbtn" onclick="saveBioflocERP()">💾 Enregistrer les doses</button>';
+
+  // BLOC LAB
+  +'<div class="card" style="padding:.7rem .8rem;margin-bottom:.8rem">'
+  +'<div style="font-size:12px;font-weight:700;color:var(--purp);margin-bottom:6px">🧪 LAB — Lactobacillus (fermentation interne)</div>'
+  +'<div style="font-size:10px;color:var(--t3);margin-bottom:10px">Préparé sur place par fermentation de son de blé ou de farine de manioc avec du sucre. Versé dans le bassin comme le PWA. Enrichit le microbiome du biofloc, acidifie légèrement l\'eau et inhibe les bactéries pathogènes. Coût très faible.</div>'
+  +'<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
+  +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:3px">DOSE (L par m³ d\'eau)</div>'
+  +'<input id="bio-lab" type="number" min="0" step="0.1" class="form-inp" style="margin:0;width:120px" value="'+(n(cfg.lab_l_m3)||0.5)+'"></div>'
+  +'<div style="font-size:10px;color:var(--t3);padding:.4rem .6rem;background:rgba(0,0,0,.15);border-radius:6px">Pour <b>'+volRef+' m³</b> → préparer <b>'+ex_lab.toFixed(2)+' L de LAB</b></div>'
+  +'</div></div>'
+
+  +'<button class="sbtn" onclick="saveBioflocERP()">💾 Enregistrer et appliquer aux calculs</button>';
 }
-window.saveBioflocERP=function(){save('biofloc_cfg',{pwa:n(G('bio-pwa').value),pfa:n(G('bio-pfa').value),lab:n(G('bio-lab').value)});toast('✅ Paramètres biofloc enregistrés','ok')};
+window.saveBioflocERP=function(){
+  var primo=n(G('bio-primo').value)||4.7;
+  var entretien=n(G('bio-entretien').value)||0.2;
+  var postintro=n(G('bio-postintro').value)||0.1;
+  var pfa=n(G('bio-pfa').value)||10;
+  var lab=n(G('bio-lab').value)||0.5;
+  var volRef=n(G('bio-vol-ref').value)||1.75;
+  save('biofloc_cfg',{primo:primo,entretien:entretien,postintro:postintro,pfa_ml_kg:pfa,lab_l_m3:lab,vol_ref:volRef});
+  // Appliquer immédiatement aux calculs PWA
+  if(window.PWA_RATES){
+    PWA_RATES.primo.dose=primo;
+    PWA_RATES.entretien.dose=entretien;
+    if(PWA_RATES.rotation)PWA_RATES.rotation.dose=entretien;
+    if(PWA_RATES.postintro)PWA_RATES.postintro.dose=postintro;
+  }
+  if(typeof calcPWA==='function')calcPWA();
+  if(window.refreshFinancials)refreshFinancials();
+  toast('✅ Doses enregistrées et appliquées aux calculs PWA','ok');
+  renderParamERP('biofloc');
+};
 function renderFinance(c){var cfg=load('finance_cfg',{currency:'XOF',margin:30,vat:0,labor_monthly:0,overhead_monthly:0});c.innerHTML='<div class="card"><div class="ctitle"><span class="dot"></span>Paramètres financiers</div><div class="erp-note">Ces paramètres sont utilisés dans les onglets <b>Rentabilité · Comptabilité · Direction</b> pour calculer les coûts réels, la marge nette et le seuil de rentabilité.</div></div>'
   +'<div style="display:grid;gap:.6rem;margin-bottom:.8rem">'
   +'<div class="card" style="padding:.6rem .8rem">'
@@ -8833,7 +8946,7 @@ function renderInvest(c){var rows=investments();var totalCost=rows.reduce(functi
   +'</tbody></table></div>'
   +(rows.length===0?'<div style="text-align:center;padding:1.5rem;color:var(--t3);font-size:11px">Aucun investissement enregistré. Ajoutez vos équipements pour que la rentabilité soit calculée correctement.</div>':'');
 }
-window.addInvestERP=function(){var name=(G('inv-name').value||'').trim(),cost=n(G('inv-cost').value),years=n(G('inv-years').value)||1;if(!name||cost<=0)return alert('Désignation et montant obligatoires.');var a=investments();a.push({id:'INV-'+Date.now(),name:name,cost:cost,years:years,date:G('inv-date').value});saveInvestments(a);if(window.refreshFinancials)refreshFinancials();renderParamERP('invest')};
+window.addInvestERP=function(){var name=(G('inv-name').value||'').trim(),cost=n(G('inv-cost').value),years=n(G('inv-years').value)||1;if(!name||cost<=0)return alert('Désignation et montant obligatoires.');var a=investments();a.push({id:'INV-'+Date.now(),name:name,cost:cost,amount:cost,years:years,residual:0,date:G('inv-date').value});saveInvestments(a);if(window.refreshFinancials)refreshFinancials();renderParamERP('invest')};
 window.delInvestERP=function(id){if(!confirm('Supprimer cet investissement ?'))return;saveInvestments(investments().filter(function(x){return x.id!==id}));if(window.refreshFinancials)refreshFinancials();renderParamERP('invest')};
 function renderHarvestModule(){var root=G('t7');if(!root)return;var hs=harvests(),ss=sales(),outs=fishOuts();root.innerHTML='<div class="card"><div class="ctitle"><span class="dot"></span>Récoltes → Stock poisson → Ventes</div><div class="erp-note"><b>Récolte</b> = entrée stock poisson. <b>Vente, don, autoconsommation, perte, transformation</b> = sorties. Les invendus ne sont plus saisis : ils correspondent au stock poisson disponible.</div></div><div class="two"><div class="card"><div class="ctitle"><span class="dot"></span>Nouvelle récolte</div><div class="admin-form"><input id="hv-date" type="date" class="form-inp" value="'+today()+'"><select id="hv-cycle" class="form-inp">'+cycles().map(function(c){return '<option value="'+esc(c.id)+'">'+esc(cycleName(c))+'</option>'}).join('')+'</select><select id="hv-bassin" class="form-inp">'+bassins().map(function(b){return '<option value="'+esc(b.id)+'">'+esc(b.name||b.id)+'</option>'}).join('')+'</select><select id="hv-type" class="form-inp"><option>Partielle</option><option>Totale</option></select><input id="hv-nb" type="number" class="form-inp" placeholder="Nombre poissons"><input id="hv-kg" type="number" class="form-inp" placeholder="Biomasse kg"></div><button class="sbtn" onclick="addHarvestERP()">Enregistrer récolte</button></div><div class="card"><div class="ctitle"><span class="dot"></span>Sortie stock poisson</div><div class="admin-form"><select id="out-hv" class="form-inp">'+hs.map(function(h){return '<option value="'+esc(h.id)+'">'+esc(h.date)+' · '+esc(h.bassinName)+' · stock '+fishStockByHarvest(h.id).toFixed(2)+' kg</option>'}).join('')+'</select><select id="out-type" class="form-inp"><option>Don</option><option>Autoconsommation</option><option>Perte post-récolte</option><option>Transformation</option></select><input id="out-kg" type="number" class="form-inp" placeholder="Quantité kg"><input id="out-comment" class="form-inp" placeholder="Commentaire"></div><button class="sbtn" onclick="addFishOutERP()">Enregistrer sortie</button></div></div><div class="card"><div class="ctitle"><span class="dot"></span>Stock poisson disponible</div><div class="mgrid"><div class="met ok"><div class="mlbl">Stock poisson</div><div class="mval">'+totalFishStock().toFixed(1)+'<span class="munit">kg</span></div></div><div class="met"><div class="mlbl">Kg récoltés</div><div class="mval">'+hs.reduce(function(a,h){return a+n(h.kg)},0).toFixed(1)+'</div></div><div class="met"><div class="mlbl">Kg vendus</div><div class="mval">'+ss.reduce(function(a,s){return a+n(s.kg)},0).toFixed(1)+'</div></div></div><div class="tw"><table><thead><tr><th>Date</th><th>Cycle</th><th>Bassin</th><th>Récolté kg</th><th>Vendu kg</th><th>Autres sorties kg</th><th>Stock restant</th></tr></thead><tbody>'+hs.map(function(h){var vend=ss.filter(function(s){return s.harvestId===h.id}).reduce(function(a,s){return a+n(s.kg)},0);var out=outs.filter(function(o){return o.harvestId===h.id}).reduce(function(a,o){return a+n(o.kg)},0);return '<tr><td>'+esc(h.date)+'</td><td>'+esc(h.cycleName)+'</td><td>'+esc(h.bassinName)+'</td><td>'+n(h.kg).toFixed(2)+'</td><td>'+vend.toFixed(2)+'</td><td>'+out.toFixed(2)+'</td><td class="cn">'+fishStockByHarvest(h.id).toFixed(2)+'</td></tr>'}).join('')+'</tbody></table></div></div>'}
 window.addHarvestERP=function(){var bs=bassins(),b=bs.find(function(x){return x.id===G('hv-bassin').value})||{};var cs=cycles(),cy=cs.find(function(x){return x.id===G('hv-cycle').value})||{};var kg=n(G('hv-kg').value);if(kg<=0)return alert('Biomasse récoltée obligatoire');var nb=n(G('hv-nb').value);var a=harvests();a.push({id:'HV-'+Date.now(),date:G('hv-date').value,cycleId:cy.id,cycleName:cycleName(cy),bassinId:b.id,bassinName:b.name||b.id,type:G('hv-type').value,nb:nb,kg:kg,pm:nb?kg*1000/nb:0});saveHarvests(a);renderHarvestModule();toast('✅ Récolte enregistrée : stock poisson augmenté','ok')};
@@ -8867,7 +8980,7 @@ function n(v){var x=parseFloat(String(v==null?'':v).replace(',','.'));return isN
 function today(){return new Date().toISOString().slice(0,10)}
 function load(k,d){try{return JSON.parse(localStorage.getItem('ichtus_'+k)||JSON.stringify(d))}catch(e){return d}}
 function save(k,v){localStorage.setItem('ichtus_'+k,JSON.stringify(v))}
-function money(v){return n(v).toLocaleString('fr-FR')+' XOF'}
+function money(v){var cur=(load('finance_cfg',{currency:'XOF'}).currency)||'XOF';return n(v).toLocaleString('fr-FR')+' '+cur;}
 function toast(msg,type){if(window.showToast)showToast(msg,type||'ok');else alert(msg)}
 function role(){return (window.APP&&APP.user&&APP.user.role)||'Opérateur'}
 // Déverrouillage prix : utilise le mot de passe de connexion Firebase (même code d\'accès que la connexion)
@@ -9131,7 +9244,7 @@ function fc(col){return window.farmCol?window.farmCol(col):null;}
 function lsLoad(k,d){try{return JSON.parse(localStorage.getItem('ichtus_'+k)||JSON.stringify(d));}catch(e){return d;}}
 function lsSave(k,v){localStorage.setItem('ichtus_'+k,JSON.stringify(v));}
 function G(id){return document.getElementById(id);}
-function money(v){return Number(v||0).toLocaleString('fr-FR')+' XOF';}
+function money(v){var cur=(load('finance_cfg',{currency:'XOF'}).currency)||'XOF';return Number(v||0).toLocaleString('fr-FR')+' '+cur;}
 function pct(v){return (v||0).toFixed(1)+'%';}
 
 // ─── Firebase sync : Investissements ─────────────────────────────────────
@@ -9213,21 +9326,28 @@ function getKgRecoltes(){
   return (window.harvests?window.harvests():lsLoad('harvests',[]))
     .reduce(function(a,h){return a+Number(h.kg||0);},0);
 }
+function getFinanceCfg(){return load('finance_cfg',{currency:'XOF',margin:30,labor_monthly:0,overhead_monthly:0});}
 function getChargesTotal(type){
   // type = 'Fixe' | 'Variable' | undefined (toutes)
   var charges=window.APP_CHARGES||[];
-  return charges
+  var base=charges
     .filter(function(c){return c.status!=='Rejetée'&&(!type||c.type===type);})
     .reduce(function(a,c){return a+Number(c.amountXOF||c.amount||0);},0);
+  // Ajouter main d'œuvre + frais généraux depuis finance_cfg (comptés comme charges fixes)
+  if(!type||type==='Fixe'){
+    var cfg=getFinanceCfg();
+    base+=Number(cfg.labor_monthly||0)+Number(cfg.overhead_monthly||0);
+  }
+  return base;
 }
 function getInvestissementsTotal(){
   return (window.investments?window.investments():lsLoad('investments',[]))
-    .reduce(function(a,inv){return a+Number(inv.amount||0);},0);
+    .reduce(function(a,inv){return a+Number(inv.cost||inv.amount||0);},0);
 }
 function getAmortissementMensuel(){
   return (window.investments?window.investments():lsLoad('investments',[]))
     .reduce(function(a,inv){
-      var amt=Number(inv.amount||0),res=Number(inv.residual||0),yr=Number(inv.years||5)||5;
+      var amt=Number(inv.cost||inv.amount||0),res=Number(inv.residual||0),yr=Number(inv.years||5)||5;
       return a+(amt-res)/yr/12;
     },0);
 }
@@ -9248,6 +9368,8 @@ window.renderRentabilite=function(){
   var old=G('v29-rentabilite-box');if(old)old.remove();
   var box=document.createElement('div');box.id='v29-rentabilite-box';box.className='card';
 
+  var finCfg=getFinanceCfg();
+  var marginCible=Number(finCfg.margin||30);
   var ca=getCA();
   var kg=getKgVendus();
   var kgRec=getKgRecoltes();
@@ -9283,7 +9405,7 @@ window.renderRentabilite=function(){
       +met('CA total',money(ca),kg.toFixed(1)+' kg vendus','var(--acc)')
       +met('Charges totales',money(chargesGlobales),'Exploitation + intrants','var(--dng)')
       +met('Résultat brut',money(resultatBrut),'avant amortissements',resultatBrut>=0?'var(--acc)':'var(--dng)')
-      +met('Marge brute',badge(margeB,30),'CA − charges','')
+      +met('Marge brute',badge(margeB,marginCible),'Cible : '+marginCible+'%','')
       +met('Coût de revient/kg',money(coutRevient),'charges ÷ kg vendus','var(--warn)')
       +met('Prix moyen vente/kg',money(prixMoyenVente),'CA ÷ kg vendus','var(--gold)')
     +'</div>'
@@ -9292,7 +9414,9 @@ window.renderRentabilite=function(){
     +'<div class="tw" style="margin-top:.5rem"><table><thead><tr><th>Poste</th><th style="text-align:right">Montant</th><th style="text-align:right">% CA</th></tr></thead><tbody>'
     +'<tr><td><b style="color:var(--acc)">Chiffre d\'affaires</b></td><td style="text-align:right;font-weight:800;color:var(--acc)">'+money(ca)+'</td><td style="text-align:right">100%</td></tr>'
     +'<tr><td>Charges variables</td><td style="text-align:right">'+money(chargesVar)+'</td><td style="text-align:right;color:var(--dng)">'+pct(ca>0?chargesVar/ca*100:0)+'</td></tr>'
-    +'<tr><td>Charges fixes</td><td style="text-align:right">'+money(chargesFix)+'</td><td style="text-align:right;color:var(--dng)">'+pct(ca>0?chargesFix/ca*100:0)+'</td></tr>'
+    +'<tr><td>Charges fixes (exploitation)</td><td style="text-align:right">'+money(chargesFix)+'</td><td style="text-align:right;color:var(--dng)">'+pct(ca>0?chargesFix/ca*100:0)+'</td></tr>'
+    +(finCfg.labor_monthly>0?'<tr><td style="padding-left:16px;color:var(--t3)">↳ dont Main d\'œuvre (mensuel)</td><td style="text-align:right;color:var(--t3)">'+money(finCfg.labor_monthly)+'</td><td style="text-align:right;color:var(--t3)">'+pct(ca>0?finCfg.labor_monthly/ca*100:0)+'</td></tr>':'')
+    +(finCfg.overhead_monthly>0?'<tr><td style="padding-left:16px;color:var(--t3)">↳ dont Frais généraux (mensuel)</td><td style="text-align:right;color:var(--t3)">'+money(finCfg.overhead_monthly)+'</td><td style="text-align:right;color:var(--t3)">'+pct(ca>0?finCfg.overhead_monthly/ca*100:0)+'</td></tr>':'')
     +'<tr><td>Coût intrants (CUMP validés)</td><td style="text-align:right">'+money(coutIntrants)+'</td><td style="text-align:right;color:var(--warn)">'+pct(ca>0?coutIntrants/ca*100:0)+'</td></tr>'
     +'<tr style="background:rgba(0,212,180,.06)"><td><b>Résultat brut</b></td><td style="text-align:right;font-weight:800;color:'+(resultatBrut>=0?'var(--acc)':'var(--dng)')+'">'+money(resultatBrut)+'</td><td style="text-align:right">'+pct(margeB)+'</td></tr>'
     +'<tr><td>Amortissements (mensuel)</td><td style="text-align:right;color:var(--t3)">'+money(amortMens)+'</td><td style="text-align:right;color:var(--t3)">—</td></tr>'
@@ -9321,7 +9445,11 @@ window.renderRentabilite=function(){
       +(kgRec>0?' · Taux de commercialisation : <b>'+pct(kgRec>0?kg/kgRec*100:0)+'</b>':'')
       +'</div>':'')
 
-    +'<div style="font-size:9px;color:var(--t3);margin-top:.5rem">Données en temps réel. Les amortissements sont calculés linéairement sur la durée de vie de chaque équipement.</div>';
+    +'<div style="font-size:9px;color:var(--t3);margin-top:.5rem">Données en temps réel. Les amortissements sont calculés linéairement sur la durée de vie de chaque équipement.</div>'
+    +'<div style="margin-top:.6rem;display:flex;gap:.5rem;justify-content:flex-end" class="no-print">'
+    +'<button onclick="exportRentabilitePDF()" style="background:var(--dng);color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer">📄 Rapport rentabilité PDF</button>'
+    +'<button onclick="exportRentabiliteCSV()" style="background:var(--acc2);color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer">📊 Exporter Excel (.xlsx)</button>'
+    +'</div>';
 
   // Insertion : avant erp-sales-box si dans t5, sinon en tête de t13
   var t13=G('t13');
@@ -9412,6 +9540,254 @@ window.refreshFinancials=function(){
   console.log('ICHTUS v29 rentabilité & sync chargé');
 })();
 
+})();
+
+// ═══════════════════════════════════════════════════════════
+// EXPORT PDF / CSV — toutes sections
+// ═══════════════════════════════════════════════════════════
+
+(function(){
+  var farmName=function(){return (window.APP&&APP.state&&APP.state.farmName)||'Ferme';};
+  var d=function(){return new Date().toLocaleDateString('fr-FR');};
+  var currency=function(){try{return (JSON.parse(localStorage.getItem('finance_cfg')||'{}')).currency||'XOF';}catch(e){return 'XOF';}};
+  var fmt=function(v){return Number(v||0).toLocaleString('fr-FR')+ ' '+currency();};
+  var n=function(v){return Number(v)||0;};
+  var esc=function(v){return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+
+  // ── CSS commun pour les PDF ──────────────────────────────
+  var pdfCss='<style>*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;font-size:11px}body{padding:14px;color:#1a2233}h1{font-size:16px;color:#1a4fa0;margin-bottom:4px}h2{font-size:13px;color:#1a4fa0;margin:10px 0 4px}p.sub{font-size:10px;color:#666;margin-bottom:10px}table{width:100%;border-collapse:collapse;margin-bottom:12px}th{background:#1a4fa0;color:#fff;padding:5px 7px;text-align:left}td{padding:4px 7px;border-bottom:1px solid #e2e8f0}tr:nth-child(even)td{background:#f6f9ff}.total td{font-weight:700;background:#e8f0fb}.warn{color:#b45309;font-weight:700}.ok{color:#166534;font-weight:700}.badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10px}.badge-ok{background:#dcfce7;color:#166534}.badge-warn{background:#fef3c7;color:#92400e}@media print{button{display:none}}</style>';
+
+  // ── Helper XLSX download (SheetJS) ──────────────────────
+  var downloadXLSX=function(sheets,filename){
+    if(typeof XLSX==='undefined'){alert('Bibliothèque Excel non chargée. Vérifiez votre connexion internet.');return;}
+    var wb=XLSX.utils.book_new();
+    sheets.forEach(function(s){
+      var ws=XLSX.utils.aoa_to_sheet(s.rows);
+      // Largeur automatique colonnes
+      var cols=s.rows[0]?s.rows[0].map(function(_,ci){
+        var max=0;
+        s.rows.forEach(function(r){var v=String(r[ci]||'');if(v.length>max)max=v.length;});
+        return {wch:Math.min(Math.max(max+2,8),40)};
+      }):[];
+      ws['!cols']=cols;
+      // Gras sur la première ligne (en-têtes)
+      if(s.rows[0]){
+        s.rows[0].forEach(function(_,ci){
+          var ref=XLSX.utils.encode_cell({r:0,c:ci});
+          if(!ws[ref])return;
+          ws[ref].s={font:{bold:true},fill:{fgColor:{rgb:'1A4FA0'}},font:{bold:true,color:{rgb:'FFFFFF'}}};
+        });
+      }
+      XLSX.utils.book_append_sheet(wb,ws,s.name||'Données');
+    });
+    XLSX.writeFile(wb,filename);
+  };
+
+  // ── Helper PDF open ──────────────────────────────────────
+  var openPDF=function(html){
+    var w=window.open('','_blank','width=960,height=720');
+    if(!w)return alert('Autorisez les pop-ups pour exporter en PDF');
+    w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Export</title>'+pdfCss+'</head><body>'+html+'<br><button onclick="window.print()" style="padding:6px 18px;background:#1a4fa0;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-top:8px">🖨️ Imprimer / Enregistrer PDF</button></body></html>');
+    w.document.close();
+  };
+
+  // ════════════════════════════════════════════════════════
+  // 1. BASSINS — PDF (fiche journalière terrain)
+  // ════════════════════════════════════════════════════════
+  window.exportBassinsPDF=function(){
+    var bs=(window.APP&&APP.state&&APP.state.bassins)||[];
+    var rows=bs.filter(function(b){return b.statut==='Actif';}).map(function(b){
+      var c=typeof calcBassin==='function'?calcBassin(b):{};
+      return '<tr><td>'+esc(b.name)+'</td><td>'+n(b.vol).toFixed(1)+'</td><td>'+n(b.poids).toFixed(0)+'</td><td>'+(c.nbVivant||n(b.nbInit)).toFixed(0)+'</td>'
+        +'<td>'+(c.biomasse||0).toFixed(1)+'</td><td>'+(c.alimTheo||0).toFixed(0)+'</td><td>'+(b.alimReel||0)+'</td>'
+        +'<td>'+(b.temp||'—')+'</td><td>'+(b.ph||'—')+'</td><td>'+(b.DO||'—')+'</td><td>'+(b.NH3||'—')+'</td>'
+        +'<td>'+(b.statut||'')+'</td></tr>';
+    }).join('');
+    var html='<h1>'+esc(farmName())+' — Fiche Journalière Bassins</h1><p class="sub">Date : '+d()+'</p>'
+      +'<table><thead><tr><th>Bassin</th><th>Vol m³</th><th>Poids g</th><th>Nb vivants</th><th>Biomasse kg</th>'
+      +'<th>Alim théo g</th><th>Alim réelle g</th><th>Temp °C</th><th>pH</th><th>DO mg/L</th><th>NH₃ mg/L</th><th>Statut</th></tr></thead><tbody>'
+      +rows+'</tbody></table>';
+    openPDF(html);
+  };
+
+  // ════════════════════════════════════════════════════════
+  // 2. BASSINS — Excel .xlsx
+  // ════════════════════════════════════════════════════════
+  window.exportBassinsCSV=function(){
+    var bs=(window.APP&&APP.state&&APP.state.bassins)||[];
+    var header=['Bassin','Volume m³','Poids g','Nb vivants','Biomasse kg','Alim théo g','Alim réelle g','Temp °C','pH','DO mg/L','NH₃ mg/L','Statut','Cycle'];
+    var rows=[header];
+    bs.filter(function(b){return b.statut==='Actif';}).forEach(function(b){
+      var c=typeof calcBassin==='function'?calcBassin(b):{};
+      rows.push([b.name,+n(b.vol).toFixed(1),+n(b.poids),+(c.nbVivant||n(b.nbInit)),+(c.biomasse||0).toFixed(1),+(c.alimTheo||0),(b.alimReel||0),(b.temp||''),(b.ph||''),(b.DO||''),(b.NH3||''),(b.statut||''),(b.cycle||'')]);
+    });
+    downloadXLSX([{name:'Bassins',rows:rows}],'bassins_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  };
+
+  // ════════════════════════════════════════════════════════
+  // 3. SUIVI CROISSANCE — PDF
+  // ════════════════════════════════════════════════════════
+  window.exportSuiviPDF=function(){
+    var suivi=(window.APP&&APP.state&&APP.state.suivi)||[];
+    var rows=suivi.map(function(s){
+      return '<tr><td>'+esc(s.date||'')+'</td><td>'+esc(s.bassin||s.bassinName||'')+'</td>'
+        +'<td>'+n(s.poids).toFixed(1)+'</td><td>'+n(s.nb)+'</td><td>'+n(s.biomasse||0).toFixed(1)+'</td>'
+        +'<td>'+n(s.fcr||0).toFixed(2)+'</td><td>'+n(s.temp||0)+'</td><td>'+n(s.ph||0)+'</td>'
+        +'<td>'+n(s.DO||0)+'</td><td>'+esc(s.note||'')+'</td></tr>';
+    }).join('');
+    var html='<h1>'+esc(farmName())+' — Suivi Croissance / FCR</h1><p class="sub">Date export : '+d()+'</p>'
+      +'<table><thead><tr><th>Date</th><th>Bassin</th><th>Poids g</th><th>Nb</th><th>Biomasse kg</th><th>FCR</th><th>Temp</th><th>pH</th><th>DO</th><th>Note</th></tr></thead><tbody>'
+      +rows+'</tbody></table>';
+    openPDF(html);
+  };
+
+  // ════════════════════════════════════════════════════════
+  // 4. SUIVI CROISSANCE — Excel .xlsx
+  // ════════════════════════════════════════════════════════
+  window.exportSuiviCSV=function(){
+    var suivi=(window.APP&&APP.state&&APP.state.suivi)||[];
+    var header=['Date','Bassin','Poids g','Nb poissons','Biomasse kg','FCR','Temp °C','pH','DO mg/L','Note'];
+    var rows=[header];
+    suivi.forEach(function(s){
+      rows.push([s.date||'',s.bassin||s.bassinName||'',+n(s.poids).toFixed(1),n(s.nb),+(s.biomasse||0).toFixed(1),+n(s.fcr||0).toFixed(2),s.temp||'',s.ph||'',s.DO||'',s.note||'']);
+    });
+    downloadXLSX([{name:'Suivi croissance',rows:rows}],'suivi_croissance_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  };
+
+  // ════════════════════════════════════════════════════════
+  // 5. COMPTABILITÉ SYNTHÈSE — PDF
+  // ════════════════════════════════════════════════════════
+  window.exportComptaPDF=function(){
+    var tbody=document.getElementById('compta-tbody');
+    var tableHTML='<table><thead><tr><th>Bassin</th><th>Durée j</th><th>Biomasse kg</th><th>FCR</th><th>Aliment</th><th>Probio</th><th>Carb</th><th>Basifiant</th><th>Élec</th><th>Charges fixes</th><th>Total charges</th></tr></thead><tbody>';
+    if(tbody){tableHTML+=tbody.innerHTML;}
+    tableHTML+='</tbody></table>';
+    var html='<h1>'+esc(farmName())+' — Comptabilité Synthèse</h1><p class="sub">Date export : '+d()+'</p>'+tableHTML;
+    openPDF(html);
+  };
+
+  // ════════════════════════════════════════════════════════
+  // 6. COMPTABILITÉ SYNTHÈSE — Excel .xlsx
+  // ════════════════════════════════════════════════════════
+  window.exportComptaCSV=function(){
+    var tbody=document.getElementById('compta-tbody');
+    var header=['Bassin','Durée j','Biomasse kg','FCR','Aliment','Probio','Carb','Basifiant','Elec','Charges fixes','Total charges'];
+    var rows=[header];
+    if(tbody){
+      tbody.querySelectorAll('tr').forEach(function(tr){
+        var cells=tr.querySelectorAll('td');
+        if(cells.length){rows.push(Array.from(cells).map(function(td){return td.textContent.trim();}));}
+      });
+    }
+    downloadXLSX([{name:'Comptabilité',rows:rows}],'compta_synthese_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  };
+
+  // ════════════════════════════════════════════════════════
+  // 7. RÉCOLTES — PDF
+  // ════════════════════════════════════════════════════════
+  window.exportRecoltePDF=function(){
+    var hs=typeof harvests==='function'?harvests():[];
+    var ss=typeof sales==='function'?sales():[];
+    var n2=function(v){return Number(v||0);};
+    var hrRows=hs.map(function(h){
+      var vend=ss.filter(function(s){return s.harvestId===h.id;}).reduce(function(a,s){return a+n2(s.kg);},0);
+      var stock=Math.max(0,n2(h.kg)-vend);
+      return '<tr><td>'+esc(h.date)+'</td><td>'+esc(h.cycleName||'')+'</td><td>'+esc(h.bassinName||'')+'</td>'
+        +'<td>'+n2(h.nb)+'</td><td>'+n2(h.kg).toFixed(2)+'</td><td>'+vend.toFixed(2)+'</td><td class="ok">'+stock.toFixed(2)+'</td></tr>';
+    }).join('');
+    var saleRows=ss.map(function(s){
+      return '<tr><td>'+esc(s.date)+'</td><td>'+esc(s.client)+'</td><td>'+esc(s.harvestLabel||'')+'</td>'
+        +'<td>'+n2(s.kg).toFixed(2)+'</td><td>'+fmt(s.price)+'</td><td class="cn ok">'+fmt(n2(s.kg)*n2(s.price))+'</td></tr>';
+    }).join('');
+    var totalKg=ss.reduce(function(a,s){return a+n2(s.kg);},0);
+    var totalCA=ss.reduce(function(a,s){return a+n2(s.kg)*n2(s.price);},0);
+    var html='<h1>'+esc(farmName())+' — Rapport Récoltes & Ventes</h1><p class="sub">Date export : '+d()+'</p>'
+      +'<h2>Récoltes</h2><table><thead><tr><th>Date</th><th>Cycle</th><th>Bassin</th><th>Nb</th><th>Récolté kg</th><th>Vendu kg</th><th>Stock restant</th></tr></thead><tbody>'+hrRows+'</tbody></table>'
+      +'<h2>Ventes</h2><table><thead><tr><th>Date</th><th>Client</th><th>Récolte</th><th>Kg</th><th>Prix/kg</th><th>CA</th></tr></thead><tbody>'+saleRows+'</tbody>'
+      +'<tr class="total"><td colspan="3">TOTAL</td><td>'+totalKg.toFixed(2)+' kg</td><td></td><td>'+fmt(totalCA)+'</td></tr></table>';
+    openPDF(html);
+  };
+
+  // ════════════════════════════════════════════════════════
+  // 8. RÉCOLTES — Excel .xlsx (2 onglets)
+  // ════════════════════════════════════════════════════════
+  window.exportRecoltesCSV=function(){
+    var hs=typeof harvests==='function'?harvests():[];
+    var ss=typeof sales==='function'?sales():[];
+    var n2=function(v){return Number(v||0);};
+    var recolteRows=[['Date','Cycle','Bassin','Type','Nb poissons','Kg récoltés','Vendu kg','Stock restant kg']];
+    hs.forEach(function(h){
+      var vend=ss.filter(function(s){return s.harvestId===h.id;}).reduce(function(a,s){return a+n2(s.kg);},0);
+      recolteRows.push([h.date||'',h.cycleName||'',h.bassinName||'',h.type||'',n2(h.nb),n2(h.kg),+vend.toFixed(2),+Math.max(0,n2(h.kg)-vend).toFixed(2)]);
+    });
+    var venteRows=[['Date','Client','Récolte référence','Kg vendus','Prix/kg','CA','Mode paiement']];
+    ss.forEach(function(s){venteRows.push([s.date||'',s.client||'',s.harvestLabel||'',n2(s.kg),n2(s.price),+n2(s.kg*s.price).toFixed(0),s.payment||'']);});
+    downloadXLSX([{name:'Récoltes',rows:recolteRows},{name:'Ventes',rows:venteRows}],'recoltes_ventes_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  };
+
+  // ════════════════════════════════════════════════════════
+  // 9. PLAN DE RATIONNEMENT — PDF
+  // ════════════════════════════════════════════════════════
+  window.exportRationnementPDF=function(){
+    var container=document.getElementById('rat-results');
+    var inner=container?container.innerHTML:'<p>Aucun plan de rationnement calculé.</p>';
+    var html='<h1>'+esc(farmName())+' — Plan de Rationnement</h1><p class="sub">Date export : '+d()+'</p>'+inner;
+    openPDF(html);
+  };
+
+  // ════════════════════════════════════════════════════════
+  // 10. RENTABILITÉ — PDF
+  // ════════════════════════════════════════════════════════
+  window.exportRentabilitePDF=function(){
+    var getCA=window.getCA||function(){return 0;};
+    var getChargesTotal=window.getChargesTotal||function(){return 0;};
+    var getAmortissementMensuel=window.getAmortissementMensuel||function(){return 0;};
+    var getInvestissementsTotal=window.getInvestissementsTotal||function(){return 0;};
+    var cfg;try{cfg=JSON.parse(localStorage.getItem('finance_cfg')||'{}');}catch(e){cfg={};}
+    var ca=getCA(),charges=getChargesTotal('all'),amort=getAmortissementMensuel(),inv=getInvestissementsTotal();
+    var coût=charges+amort;
+    var marge=ca-coût;
+    var margeP=ca>0?(marge/ca*100):0;
+    var html='<h1>'+esc(farmName())+' — Rapport Rentabilité</h1><p class="sub">Date export : '+d()+'</p>'
+      +'<table><thead><tr><th>Indicateur</th><th>Valeur</th></tr></thead><tbody>'
+      +'<tr><td>Chiffre d\'affaires total</td><td class="ok">'+fmt(ca)+'</td></tr>'
+      +'<tr><td>Charges opérationnelles</td><td>'+fmt(charges)+'</td></tr>'
+      +'<tr><td>Amortissements mensuels</td><td>'+fmt(amort)+'</td></tr>'
+      +'<tr><td>Coût total</td><td>'+fmt(coût)+'</td></tr>'
+      +'<tr class="total"><td>Marge nette</td><td class="'+(marge>=0?'ok':'warn')+'">'+fmt(marge)+'</td></tr>'
+      +'<tr><td>Taux de marge</td><td class="'+(margeP>=0?'ok':'warn')+'">'+margeP.toFixed(1)+' %</td></tr>'
+      +'<tr><td>Total investissements</td><td>'+fmt(inv)+'</td></tr>'
+      +'<tr><td>Marge cible (paramètre)</td><td>'+(cfg.margin||30)+' %</td></tr>'
+      +'</tbody></table>';
+    openPDF(html);
+  };
+
+  // ════════════════════════════════════════════════════════
+  // 11. RENTABILITÉ — Excel .xlsx
+  // ════════════════════════════════════════════════════════
+  window.exportRentabiliteCSV=function(){
+    var getCA=window.getCA||function(){return 0;};
+    var getChargesTotal=window.getChargesTotal||function(){return 0;};
+    var getAmortissementMensuel=window.getAmortissementMensuel||function(){return 0;};
+    var getInvestissementsTotal=window.getInvestissementsTotal||function(){return 0;};
+    var cfg;try{cfg=JSON.parse(localStorage.getItem('finance_cfg')||'{}');}catch(e){cfg={};}
+    var ca=getCA(),charges=getChargesTotal('all'),amort=getAmortissementMensuel(),inv=getInvestissementsTotal();
+    var rows=[
+      ['Ferme',farmName()],['Date export',d()],[],
+      ['Indicateur','Valeur ('+currency()+')'],
+      ['Chiffre d\'affaires',+ca.toFixed(0)],
+      ['Charges opérationnelles',+charges.toFixed(0)],
+      ['Amortissements mensuels',+amort.toFixed(0)],
+      ['Coût total',+(charges+amort).toFixed(0)],
+      ['Marge nette',+(ca-charges-amort).toFixed(0)],
+      ['Taux de marge %',+(ca>0?((ca-charges-amort)/ca*100):0).toFixed(2)],
+      ['Total investissements',+inv.toFixed(0)],
+      ['Marge cible %',cfg.margin||30],
+    ];
+    downloadXLSX([{name:'Rentabilité',rows:rows}],'rentabilite_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  };
+
+  console.log('ICHTUS exports PDF/CSV chargés');
 })();
 </script>
 </body>
