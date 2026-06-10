@@ -2823,7 +2823,7 @@ async function loadFarmData(){
   if(!APP.farmCode){console.warn('loadFarmData: farmCode manquant');return;}
   try{
     const [bSnap,sSnap,fSnap,cfgSnap]=await Promise.all([
-      farmCol('bassins').orderBy('_order').get().catch(()=>({empty:true,docs:[]})),
+      farmCol('bassins').get().catch(()=>({empty:true,docs:[]})),
       farmCol('suivi').orderBy('date').get().catch(()=>({empty:true,docs:[]})),
       farmCol('feed').get().catch(()=>({empty:true,docs:[]})),
       farmCol('config').doc('app').get().catch(()=>({exists:false})),
@@ -8636,7 +8636,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     var password=(G2('adm-pass')&&G2('adm-pass').value||'').trim();
     var err=G2('adm-err');
     if(!email||!password){ if(err){err.textContent='⚠️ Saisir email et mot de passe'; err.classList.add('show');} return; }
-    try{ if(window.showLoader)showLoader('Connexion…'); await auth.signInWithEmailAndPassword(email,password); window.APP=window.APP||{}; APP.user={uid:auth.currentUser.uid,email:email,name:'Administrateur',role:'Administrateur',farmCode:null}; if(window.loadAdminDashboard)try{await loadAdminDashboard();}catch(e){console.warn(e)} if(window.hideLoader)hideLoader(); window.hideAdminModal(); if(window.showScreen)showScreen('screen-admin'); else {var b=G2('screen-boot'),a=G2('screen-admin'); if(b)b.classList.add('hidden'); if(a)a.classList.remove('hidden');} if(window.startSession)startSession(); }
+    try{ if(window.showLoader)showLoader('Connexion…'); var _auth=window.auth||window.firebase&&firebase.auth&&firebase.auth(); if(!_auth)throw new Error('Firebase Auth non disponible. Vérifiez votre connexion.'); await _auth.signInWithEmailAndPassword(email,password); window.APP=window.APP||{}; APP.user={uid:_auth.currentUser.uid,email:email,name:'Administrateur',role:'Administrateur',farmCode:null}; if(window.loadAdminDashboard)try{await loadAdminDashboard();}catch(e){console.warn(e)} if(window.hideLoader)hideLoader(); window.hideAdminModal(); if(window.showScreen)showScreen('screen-admin'); else {var b=G2('screen-boot'),a=G2('screen-admin'); if(b)b.classList.add('hidden'); if(a)a.classList.remove('hidden');} if(window.startSession)startSession(); }
     catch(e){ if(window.hideLoader)hideLoader(); if(err){err.textContent='❌ Email ou mot de passe incorrect'; err.classList.add('show');} var p=G2('adm-pass'); if(p)p.value=''; console.warn(e);}
   };
   document.addEventListener('DOMContentLoaded',function(){
