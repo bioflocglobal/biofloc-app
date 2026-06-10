@@ -2863,44 +2863,29 @@ async function loadFarmData(){
 }
 
 function setupFarmListeners(){
-  // Désabonner les anciens listeners avant d'en créer de nouveaux
+  // Désabonner les anciens listeners avant de recharger
   APP.unsubs.forEach(u=>{try{u();}catch(e){}});
   APP.unsubs=[];
 
-  // Listener temps-réel pour les bassins (onSnapshot)
-  // Ignorer les mises à jour déclenchées par notre propre écriture locale (_localWrite)
-  let _bassinsLocalWrite=false;
-  const unsubBassins=farmCol('bassins').orderBy('_order').onSnapshot(snap=>{
-    if(_bassinsLocalWrite){_bassinsLocalWrite=false;return;}
+  // Utilisation de get() pour éviter les erreurs WebChannel (onSnapshot instable sur certains réseaux)
+  // Les données se rafraîchissent à chaque navigation entre onglets
+  farmCol('bassins').orderBy('_order').get().then(snap=>{
     if(snap&&!snap.empty){
       const nb=snap.docs.map(d=>{
         const x={...d.data()};delete x._order;
         if(!x.feedId)x.feedId=getRationEntry(x.poids||1)?.id||FEED_TYPES[0]?.id;
         return x;
       });
-      APP.state.bassins=nb;APP.bCount=nb.length+1;
-      buildBTable();popSelects();upAll();
+      APP.state.bassins=nb;APP.bCount=nb.length+1;buildBTable();popSelects();upAll();
     }
-  },e=>{
-    // Fallback get() si onSnapshot échoue (WebChannel)
-    console.warn('Bassins onSnapshot failed, fallback get():',e);
-    farmCol('bassins').get().then(snap=>{
-      if(snap&&!snap.empty){
-        const nb=snap.docs.map(d=>{const x={...d.data()};delete x._order;if(!x.feedId)x.feedId=getRationEntry(x.poids||1)?.id||FEED_TYPES[0]?.id;return x;});
-        APP.state.bassins=nb;APP.bCount=nb.length+1;buildBTable();popSelects();upAll();
-      }
-    }).catch(()=>{});
-  });
-  APP.unsubs.push(unsubBassins);
+  }).catch(e=>console.warn('Bassins load:',e));
 
-  // Suivi : one-shot (rarement modifié par d'autres utilisateurs simultanément)
   farmCol('suivi').orderBy('date').get().then(snap=>{
     if(snap&&!snap.empty){
       const ns=snap.docs.map(d=>({...d.data()}));
       APP.state.suivi=ns;APP.state.suiviId=Math.max(0,...ns.map(r=>r.id||0))+1;
     }
   }).catch(e=>{
-    // Sans index orderBy — fallback sans tri
     farmCol('suivi').get().then(snap=>{
       if(snap&&!snap.empty){
         const ns=snap.docs.map(d=>({...d.data()})).sort((a,b)=>a.date>b.date?1:-1);
@@ -2909,8 +2894,7 @@ function setupFarmListeners(){
     }).catch(()=>{});
   });
 
-  // Feed : listener temps-réel
-  const unsubFeed=farmCol('feed').onSnapshot(snap=>{
+  farmCol('feed').get().then(snap=>{
     if(snap&&!snap.empty){
       snap.docs.forEach(d=>{
         const ft=FEED_TYPES.find(f=>f.id===d.id);
@@ -2918,13 +2902,7 @@ function setupFarmListeners(){
       });
       if(G('t2')?.classList.contains('active'))renderFeed();
     }
-  },e=>{
-    console.warn('Feed onSnapshot failed, fallback get():',e);
-    farmCol('feed').get().then(snap=>{
-      if(snap&&!snap.empty){snap.docs.forEach(d=>{const ft=FEED_TYPES.find(f=>f.id===d.id);if(ft&&d.data().batches)ft.batches=d.data().batches;});}
-    }).catch(()=>{});
-  });
-  APP.unsubs.push(unsubFeed);
+  }).catch(e=>console.warn('Feed load:',e));
 }
 
 
