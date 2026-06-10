@@ -4527,7 +4527,8 @@ function pwaDoseLitres(row){
 function calcPWA(){
   const list=G('pwa-plan-list'),res=G('pwa-result');if(!res)return;
   if(!PWA_PLAN.length){
-    PWA_PLAN=[{id:'def1',activity:'rotation',nb:1,vol:1.75}];
+    if(list)list.innerHTML='<div style="font-size:10px;color:var(--t3);padding:.4rem">Aucune activité ajoutée. Cliquez sur ➕ pour ajouter.</div>';
+    res.innerHTML='';return;
   }
   if(list)list.innerHTML=PWA_PLAN.map(row=>{
     const r=PWA_RATES[row.activity]||PWA_RATES.entretien;
@@ -8513,7 +8514,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   window.calcPWA=function(){
     var list=$('pwa-plan-list'),res=$('pwa-result'); if(!res)return;
     window.PWA_PLAN=window.PWA_PLAN||[];
-    if(!window.PWA_PLAN.length){ window.PWA_PLAN=[{id:'def1',activity:'rotation',bassin:'Bassin 01',bassinVol:3.8,coverVol:3.8,nb:1,vol:3.8}]; }
+    if(!window.PWA_PLAN.length){
+      if(list)list.innerHTML='<div style="font-size:10px;color:var(--t3);padding:.4rem">Aucune activité ajoutée. Cliquez sur ➕ pour ajouter.</div>';
+      res.innerHTML='';return;
+    }
     if(list) list.innerHTML=window.PWA_PLAN.map(function(row){
       var rates=window.PWA_RATES||{}; var r=rates[row.activity]||rates.entretien||{label:row.activity,moment:'',dose:0.2};
       var q=window.pwaDoseLitres(row);
