@@ -2786,7 +2786,6 @@ function showSyncErr(){if(syncDotEl)syncDotEl.style.background='var(--dng)';}
 
 function saveBassins(){
   if(!APP.farmCode)return;
-  if(!Array.isArray(APP.state.bassins)||APP.state.bassins.length===0)return;
   debounce('bassins',()=>{
     showSyncing();
     const batch=db.batch();
@@ -2869,7 +2868,7 @@ function setupFarmListeners(){
 
   // Utilisation de get() pour éviter les erreurs WebChannel (onSnapshot instable sur certains réseaux)
   // Les données se rafraîchissent à chaque navigation entre onglets
-  farmCol('bassins').orderBy('_order').get().then(snap=>{
+  farmCol('bassins').get().then(snap=>{
     if(snap&&!snap.empty){
       const nb=snap.docs.map(d=>{
         const x={...d.data()};delete x._order;
@@ -8740,7 +8739,7 @@ function save(k,v){localStorage.setItem('ichtus_'+k,JSON.stringify(v))}
 function money(v){return n(v).toLocaleString('fr-FR')+' XOF'}
 function toast(msg,type){if(window.showToast)showToast(msg,type||'ok');else alert(msg)}
 function role(){return (window.APP&&APP.user&&APP.user.role)||'Opérateur'}
-function canManageSalePrices(){var r=String(role()).toLowerCase();return ['superadmin','super admin','administrateur','responsable ferme','responsable'].indexOf(r)>=0}
+function canManageSalePrices(){var r=String(role()).toLowerCase().trim().normalize('NFD').replace(/[̀-ͯ]/g,'');return ['superadmin','super admin','administrateur','admin','responsable ferme','responsable','proprietaire','gerant','manager','owner'].indexOf(r)>=0||r.indexOf('admin')>=0||r.indexOf('responsable')>=0||r.indexOf('superadmin')>=0}
 function bassins(){var a=load('bassins_ref',[]);if(!a.length&&window.APP&&APP.state&&Array.isArray(APP.state.bassins)){a=APP.state.bassins.map(function(b,i){return {id:b.id||b.name||('B'+(i+1)),name:b.name||('Bassin '+(i+1)),volumeMaxM3:n(b.volumeMaxM3||b.vol||b.volume)||12,type:'Production',statut:'Actif'}})}if(!a.length)a=Array.from({length:16},function(_,i){return {id:'B'+(i+1),name:'Bassin '+String(i+1).padStart(2,'0'),volumeMaxM3:12,type:'Production',statut:'Actif'}});return a}
 function saveBassins(a){save('bassins_ref',a)}
 function cycles(){return load('cycles',[])} function saveCycles(a){save('cycles',a)}
@@ -8785,8 +8784,78 @@ window.salePrices=salePrices;
 window.activeSalePrices=activeSalePrices;
 window.fishStockByHarvest=fishStockByHarvest;
 window.applySalePriceRule=function(){var sel=G('sale-price-rule'),inp=G('sale-price'),msg=G('sale-price-msg');if(!sel||!inp)return;var p=salePrices().find(function(x){return x.id===sel.value});if(p){inp.value=n(p.conseille);if(msg)msg.innerHTML='<span class="v28-ok">Prix conseillé appliqué : <b>'+money(p.conseille)+'</b>. Minimum : <b>'+money(p.min)+'</b>.</span>'}else if(msg){msg.innerHTML='<span class="v28-lock">Aucun barème sélectionné : prix manuel.</span>'}}
-window.openSalePriceEditor=function(id){if(!canManageSalePrices())return alert('Lecture seule : réservé au SuperAdmin / Responsable ferme.');var p=salePrices().find(function(x){return x.id===id})||{id:'',fishType:'',calibre:'Standard',min:0,conseille:0,premium:0,start:today(),statut:'Actif'};var old=G('v28-price-modal');if(old)old.remove();var d=document.createElement('div');d.id='v28-price-modal';d.className='v28-modal';d.innerHTML='<div class="v28-modal-box"><div class="ctitle"><span class="dot"></span>'+(p.id?'Modifier le prix de vente poisson':'Nouveau barème de prix')+'</div><div class="v28-help">Les champs sont préremplis ou indiqués en surbrillance pour guider l’utilisateur. Les anciennes ventes restent inchangées ; ce barème s’applique seulement aux nouvelles ventes.</div><div class="admin-form"><input id="v28-pv-id" type="hidden" value="'+esc(p.id)+'"><input id="v28-pv-type" class="form-inp v28-field" placeholder="Type poisson : ex. Tilapia GIFT" value="'+esc(p.fishType)+'"><input id="v28-pv-calibre" class="form-inp v28-field" placeholder="Calibre : ex. Standard / 300-500 g" value="'+esc(p.calibre||'Standard')+'"><input id="v28-pv-min" type="number" class="form-inp v28-field" placeholder="Prix minimum/kg XOF" value="'+(n(p.min)||'')+'"><input id="v28-pv-cons" type="number" class="form-inp v28-field" placeholder="Prix conseillé/kg XOF" value="'+(n(p.conseille)||'')+'"><input id="v28-pv-prem" type="number" class="form-inp v28-field" placeholder="Prix premium/kg XOF" value="'+(n(p.premium)||'')+'"><input id="v28-pv-start" type="date" class="form-inp v28-field" value="'+esc(p.start||today())+'"><select id="v28-pv-status" class="form-inp v28-field"><option '+((p.statut||'Actif')==='Actif'?'selected':'')+'>Actif</option><option '+((p.statut||'Actif')==='Archivé'?'selected':'')+'>Archivé</option></select></div><div class="v28-row-actions" style="margin-top:.8rem"><button class="sbtn" onclick="saveSalePriceEditor()">Enregistrer</button><button class="dbtn" onclick="document.getElementById(\'v28-price-modal\').remove()">Annuler</button></div></div>';document.body.appendChild(d)};
-window.saveSalePriceEditor=function(){if(!canManageSalePrices())return alert('Lecture seule.');var id=G('v28-pv-id').value;var type=(G('v28-pv-type').value||'').trim();var calibre=(G('v28-pv-calibre').value||'Standard').trim();var min=n(G('v28-pv-min').value);var cons=n(G('v28-pv-cons').value);var prem=n(G('v28-pv-prem').value)||cons;var start=G('v28-pv-start').value||today();var statut=G('v28-pv-status').value||'Actif';if(!type||min<=0||cons<=0)return alert('Type poisson, prix minimum et prix conseillé sont obligatoires.');if(cons<min)return alert('Le prix conseillé ne peut pas être inférieur au prix minimum.');var a=salePrices();var p=id?a.find(function(x){return x.id===id}):null;var user=(window.APP&&APP.user&&APP.user.name)||'Utilisateur';if(p){p.history=p.history||[];p.history.push({at:new Date().toISOString(),by:user,old:{fishType:p.fishType,calibre:p.calibre,min:p.min,conseille:p.conseille,premium:p.premium,start:p.start,statut:p.statut},newValue:{fishType:type,calibre:calibre,min:min,conseille:cons,premium:prem,start:start,statut:statut}});p.fishType=type;p.calibre=calibre;p.min=min;p.conseille=cons;p.premium=prem;p.start=start;p.statut=statut;p.updatedAt=new Date().toISOString();p.updatedBy=user}else{a.push({id:'PV-'+Date.now(),fishType:type,calibre:calibre,min:min,conseille:cons,premium:prem,currency:'XOF',start:start,statut:statut,history:[],createdAt:new Date().toISOString(),createdBy:user})}saveSalePrices(a);var m=G('v28-price-modal');if(m)m.remove();renderSalePricesPanel();renderSalesBoxERP();toast('✅ Prix de vente enregistré. Les anciennes ventes restent inchangées.','ok')};
+window.openSalePriceEditor=function(id){
+  if(!canManageSalePrices())return alert(‘Accès refusé : modification réservée au Responsable ferme ou au SuperAdmin.’);
+  var p=salePrices().find(function(x){return x.id===id})||{id:’’,fishType:’’,calibre:’Standard’,min:0,conseille:0,premium:0,start:today(),statut:’Actif’};
+  var isNew=!p.id;
+  var old=G(‘v28-price-modal’);if(old)old.remove();
+  var hist=’’;
+  if(!isNew&&p.history&&p.history.length){
+    hist=’<div style="margin-top:.6rem"><div style="font-size:10px;font-weight:700;color:var(--t2);margin-bottom:3px">Historique des modifications :</div>’
+    +p.history.slice(-3).reverse().map(function(h){return ‘<div style="font-size:9px;color:var(--t3);padding:2px 0">’+esc(h.at?h.at.slice(0,10):’?’)+’ par <b>’+esc(h.by||’?’)+’</b> — min ‘+money(h.old&&h.old.min)+’ → ‘+money(h.newValue&&h.newValue.min)+’ / conseillé ‘+money(h.old&&h.old.conseille)+’ → ‘+money(h.newValue&&h.newValue.conseille)+’</div>’}).join(‘’)+’</div>’;
+  }
+  var d=document.createElement(‘div’);d.id=’v28-price-modal’;d.className=’v28-modal’;
+  d.innerHTML=’<div class="v28-modal-box" style="max-width:580px">’
+    +’<div class="ctitle"><span class="dot"></span>’+(isNew?’➕ Nouveau barème de prix’:’✏ Modifier le barème de prix’)+’</div>’
+    +’<div class="v28-help">⚠ Ce barème sera appliqué uniquement aux <b>nouvelles ventes</b>. Les ventes déjà enregistrées ne sont <b>jamais</b> modifiées rétroactivement. Renseignez tous les champs avant de valider.</div>’
+    +’<div class="admin-form" style="display:grid;gap:.5rem">’
+    +’<input id="v28-pv-id" type="hidden" value="’+esc(p.id)+’">’
+    +’<label style="font-size:10px;color:var(--t2);margin-bottom:-4px">Type de poisson <span style="color:var(--dng)">*</span></label>’
+    +’<input id="v28-pv-type" class="form-inp" placeholder="ex. Tilapia GIFT, Tilapia hybride, Catfish..." value="’+esc(p.fishType)+’">’
+    +’<label style="font-size:10px;color:var(--t2);margin-bottom:-4px">Calibre / Taille commerciale</label>’
+    +’<input id="v28-pv-calibre" class="form-inp" placeholder="ex. Standard · 300–500 g · Gros · Petit" value="’+esc(p.calibre||’Standard’)+’">’
+    +’<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem">’
+    +’<div><label style="font-size:9px;color:var(--dng);font-weight:700">Prix minimum/kg XOF <span title="Plancher non négociable. La vente est bloquée en dessous.">⚠</span></label><input id="v28-pv-min" type="number" min="0" class="form-inp" placeholder="ex. 1500" value="’+(n(p.min)||’’)+’"></div>’
+    +’<div><label style="font-size:9px;color:var(--acc);font-weight:700">Prix conseillé/kg XOF <span title="Appliqué automatiquement dans les ventes">★</span></label><input id="v28-pv-cons" type="number" min="0" class="form-inp" placeholder="ex. 1800" value="’+(n(p.conseille)||’’)+’"></div>’
+    +’<div><label style="font-size:9px;color:var(--gold);font-weight:700">Prix premium/kg XOF <span title="Pour clients VIP, restaurants. Indicatif.">💎</span></label><input id="v28-pv-prem" type="number" min="0" class="form-inp" placeholder="ex. 2200" value="’+(n(p.premium)||’’)+’"></div>’
+    +’</div>’
+    +’<label style="font-size:10px;color:var(--t2);margin-bottom:-4px">Valable depuis</label>’
+    +’<input id="v28-pv-start" type="date" class="form-inp" value="’+esc(p.start||today())+’">’
+    +’<label style="font-size:10px;color:var(--t2);margin-bottom:-4px">Statut</label>’
+    +’<select id="v28-pv-status" class="form-inp"><option ‘+((p.statut||’Actif’)===’Actif’?’selected’:’’)+’>Actif</option><option ‘+((p.statut||’Actif’)===’Archivé’?’selected’:’’)+’>Archivé</option></select>’
+    +’</div>’
+    +hist
+    +’<div id="v28-pv-err" class="v28-danger-note" style="display:none"></div>’
+    +’<div class="v28-row-actions" style="margin-top:.9rem;gap:.5rem">’
+    +’<button class="sbtn" style="flex:2" onclick="saveSalePriceEditor()">✅ Valider et appliquer le barème</button>’
+    +’<button class="dbtn" style="flex:1" onclick="document.getElementById(\’v28-price-modal\’).remove()">Annuler</button>’
+    +’</div>’
+    +’</div>’;
+  document.body.appendChild(d);
+};
+window.saveSalePriceEditor=function(){
+  if(!canManageSalePrices())return alert('Accès refusé.');
+  function err(msg){var e=G('v28-pv-err');if(e){e.textContent=msg;e.style.display='block';}else alert(msg);}
+  var id=G('v28-pv-id').value;
+  var type=(G('v28-pv-type').value||'').trim();
+  var calibre=(G('v28-pv-calibre').value||'Standard').trim();
+  var min=n(G('v28-pv-min').value);
+  var cons=n(G('v28-pv-cons').value);
+  var prem=n(G('v28-pv-prem').value)||cons;
+  var start=G('v28-pv-start').value||today();
+  var statut=G('v28-pv-status').value||'Actif';
+  if(!type)return err('⚠ Le type de poisson est obligatoire.');
+  if(min<=0)return err('⚠ Le prix minimum doit être supérieur à 0 XOF.');
+  if(cons<=0)return err('⚠ Le prix conseillé doit être supérieur à 0 XOF.');
+  if(cons<min)return err('⚠ Le prix conseillé ('+money(cons)+') ne peut pas être inférieur au prix minimum ('+money(min)+').');
+  if(prem>0&&prem<cons)return err('⚠ Le prix premium ('+money(prem)+') ne peut pas être inférieur au prix conseillé ('+money(cons)+').');
+  var a=salePrices();
+  var p=id?a.find(function(x){return x.id===id}):null;
+  var user=(window.APP&&APP.user&&APP.user.name)||'Utilisateur';
+  var now=new Date().toISOString();
+  if(p){
+    p.history=p.history||[];
+    p.history.push({at:now,by:user,old:{fishType:p.fishType,calibre:p.calibre,min:p.min,conseille:p.conseille,premium:p.premium,start:p.start,statut:p.statut},newValue:{fishType:type,calibre:calibre,min:min,conseille:cons,premium:prem,start:start,statut:statut}});
+    p.fishType=type;p.calibre=calibre;p.min=min;p.conseille=cons;p.premium=prem;p.start=start;p.statut=statut;p.updatedAt=now;p.updatedBy=user;
+  }else{
+    a.push({id:'PV-'+Date.now(),fishType:type,calibre:calibre,min:min,conseille:cons,premium:prem,currency:'XOF',start:start,statut:statut,history:[],createdAt:now,createdBy:user,updatedAt:now,updatedBy:user});
+  }
+  saveSalePrices(a);
+  var m=G('v28-price-modal');if(m)m.remove();
+  renderSalePricesPanel();
+  renderSalesBoxERP();
+  toast('✅ Barème enregistré et synchronisé. Les ventes antérieures ne sont pas affectées.','ok');
+};
 window.toggleSalePriceRuleERP=function(id){if(!canManageSalePrices())return alert('Lecture seule.');var a=salePrices();var p=a.find(function(x){return x.id===id});if(p){p.statut=(p.statut||'Actif')==='Actif'?'Archivé':'Actif';p.updatedAt=new Date().toISOString();saveSalePrices(a);renderSalePricesPanel();renderSalesBoxERP()}};
 window.deleteSalePriceRuleERP=function(id){if(!canManageSalePrices())return alert('Lecture seule.');if(sales().some(function(s){return s.priceRuleId===id}))return alert('Barème déjà utilisé dans une vente : archivez-le au lieu de le supprimer.');saveSalePrices(salePrices().filter(function(x){return x.id!==id}));renderSalePricesPanel();renderSalesBoxERP()};
 window.addSalePriceRuleERP=function(){window.openSalePriceEditor('')};
@@ -8823,7 +8892,7 @@ window.renderSalePricesPanel=function(){
         +'<td style="color:var(--gold)">'+money(p.premium)+'</td>'
         +'<td style="font-size:10px;color:var(--t3)">'+esc(p.start||'—')+'</td>'
         +'<td><span class="badge '+(isActif?'b-ok':'b-warn')+'">'+esc(p.statut||'Actif')+'</span></td>'
-        +'<td>'+(can?'<div class="v28-row-actions"><button class="ebtn" onclick="openSalePriceEditor(\''+esc(p.id)+'\')">Modifier</button><button class="ebtn" onclick="toggleSalePriceRuleERP(\''+esc(p.id)+'\')">'+((isActif)?'Archiver':'Activer')+'</button><button class="dbtn" onclick="deleteSalePriceRuleERP(\''+esc(p.id)+'\')">Supprimer</button></div>':'—')+'</td>'
+        +'<td><div class="v28-row-actions">'+(can?'<button class="ebtn" title="Modifier ce barème de prix" onclick="openSalePriceEditor(\''+esc(p.id)+'\')">✏ Modifier</button><button class="ebtn" title="'+(isActif?'Archiver ce barème':'Réactiver ce barème')+'" onclick="toggleSalePriceRuleERP(\''+esc(p.id)+'\')">'+((isActif)?'📦 Archiver':'✅ Activer')+'</button><button class="dbtn" title="Supprimer définitivement" onclick="deleteSalePriceRuleERP(\''+esc(p.id)+'\')">🗑</button>':'<span class="v28-lock" title="Modification réservée au Responsable ferme / SuperAdmin">🔒 Réservé admin</span>')+'</div></td>'
         +'</tr>';
     }).join('')
     +'</tbody></table></div>';
