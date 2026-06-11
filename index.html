@@ -4520,49 +4520,69 @@ const PWA_RATES={
   rotation:{label:'Système mature — post introduction alevins',moment:'Soirée jeudi + lundi · rotation continue',dose:0.2,vol380Fixed:0.38},
   postintro:{label:'Système immature_post introduction alevins J14-J21',moment:'Hebdomadaire',dose:0.1}
 };
+
+// ── Source de vérité unique : localStorage 'pwa_monthly_plan' ──────────────
+// PWA_PLAN et window.PWA_PLAN sont des vues de ce store, jamais des copies indépendantes.
+var PWA_MONTHLY_KEY_GLOBAL='pwa_monthly_plan';
+function _pwaLoad(){try{return JSON.parse(localStorage.getItem(PWA_MONTHLY_KEY_GLOBAL)||'[]');}catch(e){return [];}}
+function _pwaSave(a){localStorage.setItem(PWA_MONTHLY_KEY_GLOBAL,JSON.stringify(a));PWA_PLAN=a;window.PWA_PLAN=a;}
+// Initialisation depuis localStorage
+(function(){var a=_pwaLoad();PWA_PLAN=a;window.PWA_PLAN=a;})();
+
 function addPWAActivity(){
-  const a=G('pwa-add-activity')?.value||'entretien';
-  const nb=Math.max(1,parseInt(G('pwa-add-bassins')?.value||'1'));
-  const vol=+(G('pwa-add-volume')?.value||1.75);
-  const dateDebut=G('pwa-activity-date')?.value||new Date().toISOString().slice(0,10);
+  var a=G('pwa-add-activity')?.value||'entretien';
+  var bassin=(window.$&&$('pwa-add-bassin'))?$('pwa-add-bassin').value:(G('pwa-add-bassin')?.value||'Bassin 01');
+  var bassinVol=typeof currentBassinVolume==='function'?currentBassinVolume():+(G('pwa-add-volume')?.value||3.8);
+  var cover=+(G('pwa-add-volume-cover')?.value||G('pwa-add-volume')?.value||bassinVol)||bassinVol;
+  var dateDebut=G('pwa-activity-date')?.value||new Date().toISOString().slice(0,10);
   if(!dateDebut){alert('Veuillez saisir une date de début.');return;}
-  var entry={id:Date.now()+Math.random(),activity:a,nb,vol,dateDebut:dateDebut};
-  PWA_PLAN.push(entry);
-  window.PWA_PLAN=window.PWA_PLAN||[];
-  window.PWA_PLAN.push(entry);
+  if(cover<=0){alert('Volume invalide.');return;}
+  var plan=_pwaLoad();
+  plan.push({id:Date.now()+Math.random(),activity:a,bassin:bassin,bassinVol:bassinVol,coverVol:cover,nb:1,vol:cover,dateDebut:dateDebut});
+  _pwaSave(plan);
   calcPWA();
+  if(typeof window.renderPWAMonthlyCalendar==='function')window.renderPWAMonthlyCalendar();
 }
 function removePWAActivity(id){
-  // Synchronise les deux références pour éviter les conflits entre scripts
-  var plan=window.PWA_PLAN||PWA_PLAN;
-  plan=plan.filter(function(x){return String(x.id)!==String(id);});
-  window.PWA_PLAN=plan;
-  PWA_PLAN=plan;
+  var plan=_pwaLoad().filter(function(x){return String(x.id)!==String(id);});
+  _pwaSave(plan);
   calcPWA();
+  if(typeof window.renderPWAMonthlyCalendar==='function')window.renderPWAMonthlyCalendar();
 }
 function pwaDoseLitres(row){
-  const r=PWA_RATES[row.activity]||PWA_RATES.entretien;
-  if(row.activity==='rotation'&&Math.abs(row.vol-3.8)<0.01)return 0.38*row.nb; // dossier technique : 380 ml à hauteur 110 cm
-  return r.dose*row.vol*row.nb;
+  var rates=window.PWA_RATES||PWA_RATES;
+  var r=rates[row.activity]||rates.entretien||{dose:0.2};
+  var cover=Number(row.coverVol!=null?row.coverVol:row.vol)||0;
+  // Cas spécial rotation 3.80 m³ = 380 ml fixe (dossier technique)
+  if(row.activity==='rotation'&&Math.abs(cover-3.8)<0.01)return 0.38*(row.nb||1);
+  return (Number(r.dose)||0)*cover*(row.nb||1);
 }
 function calcPWA(){
   const list=G('pwa-plan-list'),res=G('pwa-result');if(!res)return;
-  if(!PWA_PLAN.length){
+  // Toujours lire depuis la source unique
+  var plan=_pwaLoad();PWA_PLAN=plan;window.PWA_PLAN=plan;
+  if(!plan.length){
     if(list)list.innerHTML='<div style="font-size:10px;color:var(--t3);padding:.4rem">Aucune activité ajoutée. Cliquez sur ➕ pour ajouter.</div>';
     res.innerHTML='';return;
   }
-  if(list)list.innerHTML=PWA_PLAN.map(row=>{
-    const r=PWA_RATES[row.activity]||PWA_RATES.entretien;
+  if(list)list.innerHTML=plan.map(row=>{
+    const rates=window.PWA_RATES||PWA_RATES;
+    const r=rates[row.activity]||rates.entretien;
     const q=pwaDoseLitres(row);
     const isEnt=row.activity==='entretien';
-    const qDisplay=isEnt?(q*5).toFixed(2).replace('.',',')+' L (×5)':q.toFixed(2).replace('.',',')+' L';
+    // Entretien : 5 séances/cycle (J3,J5,J7,J8,J10) × 2 fois/jour
+    const qDisplay=isEnt?(q*5*2).toFixed(2).replace('.',',')+' L (5×2/j)':q.toFixed(2).replace('.',',')+' L';
+    const cover=Number(row.coverVol!=null?row.coverVol:row.vol)||0;
     const dateLbl=row.dateDebut?'<span style="color:var(--acc2);font-weight:700">📅 '+row.dateDebut+'</span> · ':'';
     return '<div style="display:flex;align-items:center;gap:.4rem;background:var(--panel);border:1px solid var(--b1);border-radius:6px;padding:.35rem .5rem;margin-bottom:.3rem">'
-      +'<div style="flex:1"><strong style="color:var(--t1);font-size:11px">'+r.label+'</strong><div style="font-size:9px;color:var(--t3)">'+dateLbl+r.moment+' · '+row.nb+' bassin(s) × '+row.vol.toFixed(2).replace('.',',')+' m³</div></div>'
-      +'<div style="font-family:var(--mono);font-weight:800;color:'+(isEnt?'var(--purp)':'var(--acc)')+'">'+qDisplay+'</div>'
+      +'<div style="flex:1"><strong style="color:var(--t1);font-size:11px">'+r.label+'</strong>'
+      +'<div style="font-size:9px;color:var(--t3)">'+dateLbl+r.moment+' · '+(row.bassin||'')+(cover?' · '+cover.toFixed(2)+' m³':'')+'</div>'
+      +'<div style="font-size:9px;color:var(--acc2)">Dose : '+((window.PWA_RATES||PWA_RATES)[row.activity]||{dose:'?'}).dose+' L/m³ × '+cover.toFixed(2)+' m³'+(isEnt?' × 5 séances × 2/j':'')+' = <strong>'+qDisplay+'</strong></div>'
+      +'</div>'
+      +'<div style="font-family:var(--mono);font-weight:800;font-size:13px;color:'+(isEnt?'var(--purp)':'var(--acc)')+'">'+qDisplay+'</div>'
       +'<button class="dbtn" onclick="removePWAActivity(\''+row.id+'\')">×</button></div>';
   }).join('');
-  const base=PWA_PLAN.reduce((s,row)=>s+pwaDoseLitres(row),0);
+  const base=plan.reduce((s,row)=>s+pwaDoseLitres(row),0);
   const pfa=base*0.04;
   const total=base+pfa;
   res.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-bottom:.5rem">'
@@ -4572,6 +4592,8 @@ function calcPWA(){
     +'<div style="font-size:10px;color:var(--t2);line-height:1.6">Référence dossier : primo ≈4,7 L/m³ ; entretien 200 ml/m³ ; rotation croisière 200 ml/m³ avec cas 3,80 m³ = 380 ml ; post-introduction 100 ml/m³. PFA : préparation administrée à 30 ml/kg d\'aliments, provisionnée ici par +4%.</div>'
     +'<div style="font-size:9px;color:var(--warn);margin-top:.3rem">⏱ Bullage 24h avant usage · Préparation prospective pour la semaine S+1 · Validité 48–72h</div>'
     +'<button class="sbtn" onclick="exportPWAPdf()" style="margin-top:.6rem;font-size:11px;width:100%">📄 Exporter le planning en PDF</button>';
+  // Rafraîchir aussi le calendrier mensuel
+  setTimeout(function(){if(typeof window.renderPWAMonthlyCalendar==='function')window.renderPWAMonthlyCalendar();},30);
 }
 
 function exportPWAPdf(){
@@ -8545,31 +8567,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
   window.installPwaUi=installPwaUi;
 
-  // PWA : planification par bassin + volume réel à couvrir.
-  window.addPWAActivity=function(){
-    var a=($('pwa-add-activity')&&$('pwa-add-activity').value)||'entretien';
-    var bassin=($('pwa-add-bassin')&&$('pwa-add-bassin').value)||'Bassin 01';
-    var bassinVol=currentBassinVolume();
-    var cover=Number(($('pwa-add-volume-cover')&&$('pwa-add-volume-cover').value)||bassinVol)||bassinVol;
-    if(cover<=0){toast('⚠️ Volume à traiter invalide','warn');return;}
-    if(cover>bassinVol){toast('⚠️ Le volume à traiter dépasse le volume du bassin sélectionné','warn');}
-    window.PWA_PLAN=window.PWA_PLAN||[];
-    var dateDebut=($('pwa-activity-date')&&$('pwa-activity-date').value)||new Date().toISOString().slice(0,10);
-    var newEntry={id:Date.now()+Math.random(),activity:a,bassin:bassin,bassinVol:bassinVol,coverVol:cover,nb:1,vol:cover,dateDebut:dateDebut};
-    window.PWA_PLAN.push(newEntry);
-    if(typeof PWA_PLAN!=='undefined')PWA_PLAN.push(newEntry);
-    if(typeof window.calcPWA==='function') window.calcPWA();
-  };
-  window.pwaDoseLitres=function(row){
-    var rates=window.PWA_RATES||{};
-    var r=rates[row.activity]||rates.entretien||{dose:0.2};
-    var cover=Number(row.coverVol!=null?row.coverVol:row.vol)||0;
-    return (Number(r.dose)||0)*cover;
-  };
-  // ─── Données planning mensuel PWA (persistées en localStorage) ──────────
-  var PWA_MONTHLY_KEY='pwa_monthly_plan';
-  function loadMonthlyPlan(){try{return JSON.parse(localStorage.getItem(PWA_MONTHLY_KEY)||'[]');}catch(e){return [];}}
-  function saveMonthlyPlan(a){localStorage.setItem(PWA_MONTHLY_KEY,JSON.stringify(a));}
+  // PWA : toutes les fonctions déléguent vers les globales (source unique _pwaLoad/_pwaSave)
+  window.addPWAActivity=function(){addPWAActivity();};
+  window.pwaDoseLitres=function(row){return pwaDoseLitres(row);};
+  // Aliases locaux pour le calendrier mensuel
+  function loadMonthlyPlan(){return _pwaLoad();}
+  function saveMonthlyPlan(a){_pwaSave(a);}
   // Décalage J1 : nécessite Responsable ferme ou Super Admin
   function canEditPwaJ1(){var r=role();return r==='Responsable'||r==='Responsable ferme'||r==='Administrateur'||r==='SuperAdmin'||r==='Super Admin';}
   // Jours d'admin/prépa depuis J1 (0-indexed)
@@ -8877,30 +8880,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   window.calcPWA=function(){
-    var list=$('pwa-plan-list'),res=$('pwa-result'); if(!res)return;
-    window.PWA_PLAN=window.PWA_PLAN||[];
-    if(!window.PWA_PLAN.length){
-      if(list)list.innerHTML='<div style="font-size:10px;color:var(--t3);padding:.4rem">Aucune activité ajoutée. Cliquez sur ➕ pour ajouter.</div>';
-      res.innerHTML='';return;
-    }
-    if(list) list.innerHTML=window.PWA_PLAN.map(function(row){
-      var rates=window.PWA_RATES||{}; var r=rates[row.activity]||rates.entretien||{label:row.activity,moment:'',dose:0.2};
-      var q=window.pwaDoseLitres(row);
-      // Pour entretien : afficher la dose × 5 séances
-      var isEnt=row.activity==='entretien';
-      var qDisplay=isEnt?fmtNum(q*5,2)+' L (×5 séances)':fmtNum(q,2)+' L';
-      var dateLbl=row.dateDebut?'<span style="color:var(--acc2);font-weight:700">📅 '+row.dateDebut+'</span> · ':'';
-      return '<div style="display:flex;align-items:center;gap:.4rem;background:var(--panel);border:1px solid var(--b1);border-radius:6px;padding:.35rem .5rem;margin-bottom:.3rem">'
-        +'<div style="flex:1"><strong style="color:var(--t1);font-size:11px">'+(r.label||row.activity)+'</strong><div style="font-size:9px;color:var(--t3)">'+dateLbl+(r.moment||'')+' · '+(row.bassin||'Bassin')+' · volume bassin '+fmtNum(row.bassinVol,2)+' m³ · volume traité '+fmtNum(row.coverVol,2)+' m³'+(isEnt?' · <span style="color:var(--purp)">5 administrations/semaine</span>':'')+'</div></div>'
-        +'<div style="font-family:var(--mono);font-weight:800;color:'+(isEnt?'var(--purp)':'var(--acc)')+'">'+qDisplay+'</div>'
-        +'<button class="dbtn" onclick="removePWAActivity(\''+row.id+'\')">×</button></div>';
-    }).join('');
-
-    // Volume de base : entretien compte × 5, les autres × 1
-    var base=window.PWA_PLAN.reduce(function(s,row){
-      var q=window.pwaDoseLitres(row);
-      return s+(row.activity==='entretien'?q*5:q);
-    },0);
+    // Délègue vers la fonction globale unifiée
+    if(typeof calcPWA==='function'){calcPWA();return;}
+  };
     var pfa=base*0.04,total=base+pfa;
     res.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-bottom:.5rem">'
       +'<div><div style="font-size:9px;color:var(--t3)">PWA activités</div><div style="font-size:18px;font-weight:800;color:var(--acc);font-family:var(--mono)">'+fmtNum(base,2)+' L</div></div>'
