@@ -8010,30 +8010,6 @@ window.validateComptaPrice=async function(entryId){
  if(window.renderComptaPrix)renderComptaPrix(); if(window.renderComptaCUMP)renderComptaCUMP();
 };
 function priceIsValidated(id){return !!(window.COMPTA_PRIX_VALIDATIONS&&COMPTA_PRIX_VALIDATIONS[id]&&COMPTA_PRIX_VALIDATIONS[id].validated);}
-window.getCUMP=function(intrantId){
- const entries=(window.APP_STOCK_ENTRIES||[]).filter(e=>e.validated&&e.intrantId===intrantId&&window.COMPTA_PRIX&&COMPTA_PRIX[e.id]!==undefined&&priceIsValidated(e.id));
- if(!entries.length)return 0; const q=entries.reduce((s,e)=>s+(Number(e.quantity)||0),0); const c=entries.reduce((s,e)=>s+(Number(COMPTA_PRIX[e.id])||0),0); return q?c/q:0;
-};
-window.renderComptaPrix=function(){
- const container=$('compta-prix-list'); if(!container)return; const validated=(window.APP_STOCK_ENTRIES||[]).filter(e=>e.validated);
- if(!validated.length){container.innerHTML='<div style="color:var(--t3);text-align:center;padding:2rem">Aucune entrée validée.<br>Validez des entrées dans Logistique → Entrées Stock.</div>'; if(window.renderComptaCUMP)renderComptaCUMP(); return;}
- container.innerHTML='<div style="font-size:10px;color:var(--t3);line-height:1.6;margin-bottom:.6rem">Après saisie du prix de facture, le CUMP ne retient le prix que lorsqu\'il est <strong style="color:var(--acc)">validé</strong>. Validation réservée au Responsable admin et au SuperAdmin.</div>'+validated.map(e=>{
-  const item=(window.APP_INTRANTS||[]).find(i=>i.id===e.intrantId)||{}; const val=window.COMPTA_PRIX&&COMPTA_PRIX[e.id]!==undefined?COMPTA_PRIX[e.id]:''; const ok=priceIsValidated(e.id); const has=Number(val)>0; const v=window.COMPTA_PRIX_VALIDATIONS&&COMPTA_PRIX_VALIDATIONS[e.id];
-  return `<div style="background:var(--card);border:1px solid ${ok?'var(--acc)':has?'rgba(245,166,35,.45)':'rgba(245,166,35,.25)'};border-radius:8px;padding:.55rem .7rem;margin-bottom:.35rem">
-   <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-    <div style="flex:1;min-width:190px"><strong>${escapeHtml(item.name||e.intrantId)}</strong> <span style="color:var(--acc);font-weight:700">${Number(e.quantity||0)} ${escapeHtml(item.unit||'')}</span>${e.lot?` <span style="color:var(--t3);font-size:9px">Lot:${escapeHtml(e.lot)}</span>`:''}${e.facture?` <span style="color:var(--t3);font-size:9px">Fact:${escapeHtml(e.facture)}</span>`:''}<div style="font-size:9px;color:var(--t3)">${escapeHtml(e.date||'')}${e.supplier?' · '+escapeHtml(e.supplier):''}</div></div>
-    <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap"><label style="font-size:10px;color:var(--t3)">Prix total facture:</label><input type="number" value="${escapeHtml(val)}" placeholder="XOF" ${ok&&!isAdminOrSuper()?'disabled':''} style="width:120px;border:1px solid var(--b2);border-radius:4px;background:var(--bg);color:var(--t1);padding:3px 6px;font-size:11px" onchange="saveComptaPriceAndWait('${e.id}',this.value)">
-    ${has?`<span style="color:var(--gold);font-size:10px">${Math.round(Number(val)/Number(e.quantity||1)).toLocaleString('fr-FR')} XOF/${escapeHtml(item.unit||'u')}</span>`:'<span style="color:var(--warn);font-size:10px">⚠ À saisir</span>'}
-    ${ok?`<span class="badge b-ok">✅ Validé${v&&v.by?' par '+escapeHtml(v.by):''}</span>`:(isAdminOrSuper()&&has?`<button class="sbtn" style="font-size:10px;padding:3px 9px" onclick="validateComptaPrice('${e.id}')">✅ Valider prix</button>`:'<span class="badge b-warn">⏳ Prix non validé</span>')}
-    </div></div></div>`;
- }).join(''); if(window.renderComptaCUMP)renderComptaCUMP();
-};
-window.renderComptaCUMP=function(){
- const container=$('compta-cump-table'); if(!container)return; const rows=[];
- (window.APP_INTRANTS||[]).forEach(item=>{const entries=(window.APP_STOCK_ENTRIES||[]).filter(e=>e.validated&&e.intrantId===item.id&&window.COMPTA_PRIX&&COMPTA_PRIX[e.id]!==undefined&&priceIsValidated(e.id)); if(entries.length){const qty=entries.reduce((s,e)=>s+(Number(e.quantity)||0),0); const cost=entries.reduce((s,e)=>s+(Number(COMPTA_PRIX[e.id])||0),0); rows.push({item,qty,cost,cump:qty?cost/qty:0});}});
- if(!rows.length){container.innerHTML='<div style="color:var(--t3);font-size:11px;padding:.5rem">Aucun CUMP validé. Saisissez puis validez au moins un prix de facture.</div>';return;}
- container.innerHTML='<table style="width:100%;font-size:10px;border-collapse:collapse"><thead><tr><th>Intrant</th><th>Unité</th><th>Quantité avec prix validé</th><th>Coût validé</th><th style="color:var(--acc)">CUMP validé</th></tr></thead><tbody>'+rows.map(r=>`<tr style="border-bottom:1px solid var(--b1)"><td style="padding:5px 8px;text-align:left;font-weight:700">${escapeHtml(r.item.name)}</td><td>${escapeHtml(r.item.unit||'')}</td><td style="text-align:right">${r.qty.toFixed(3)}</td><td style="text-align:right">${fmtXOF(r.cost)}</td><td style="text-align:right;color:var(--acc);font-weight:800">${fmtXOF(r.cump)}</td></tr>`).join('')+'</tbody></table>';
-};
 async function loadCharges(){
  try{if(window.farmCol){const snap=await farmCol('charges').orderBy('date','desc').limit(500).get(); window.APP_CHARGES=snap.docs.map(d=>({id:d.id,...d.data()}));}}
  catch(e){console.warn('Charges:',e);}
@@ -8080,7 +8056,21 @@ function stockValueAt(date){
 const oldSynth=window.upComptaSynthese;
 window.upComptaSynthese=function(){if(typeof oldSynth==='function')oldSynth(); const box=$('ct-synthese'); if(!box)return; let extra=$('stock-value-synthesis'); if(!extra){extra=document.createElement('div');extra.id='stock-value-synthesis';extra.className='card';extra.style.marginBottom='.7rem'; const metrics=$('compta-metrics'); if(metrics)metrics.insertAdjacentElement('afterend',extra); else box.prepend(extra);} const date=($('stock-value-date')||{}).value||todayISO(); const rows=stockValueAt(date); const total=rows.reduce((s,r)=>s+r.value,0); const consumed=rows.reduce((s,r)=>s+r.consumedValue,0); extra.innerHTML=`<div class="ctitle"><span class="dot"></span>Valeur de stock et statistiques de charges à date t / date rétrospective</div><div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:.6rem"><label style="font-size:10px;color:var(--t3)">Date d\'analyse</label><input type="date" class="di2" id="stock-value-date" value="${date}" onchange="upComptaSynthese()"><span class="badge b-ok">Stock disponible : ${fmtXOF(total)}</span><span class="badge b-warn">Stock consommé estimé : ${fmtXOF(consumed)}</span></div><div class="tw"><table><thead><tr><th>Intrant</th><th>Unité</th><th>Entrées validées</th><th>Consommé</th><th>Disponible</th><th>CUMP validé</th><th>Valeur stock</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="cn">${escapeHtml(r.it.name)}</td><td>${escapeHtml(r.it.unit||'')}</td><td class="cf">${r.inQty.toFixed(3)}</td><td class="cf">${r.used.toFixed(3)}</td><td class="cf">${r.available.toFixed(3)}</td><td class="cf">${fmtXOF(r.cump)}</td><td class="cf" style="font-weight:800;color:var(--acc)">${fmtXOF(r.value)}</td></tr>`).join('')}</tbody></table></div><div style="font-size:10px;color:var(--t3);margin-top:.5rem;line-height:1.6">Cette synthèse permet de consulter la valeur du stock disponible à la date choisie, la valeur consommée estimée, la valeur par intrant et la valeur globale. Les CUMP utilisés sont uniquement les CUMP issus de prix validés.</div>`;};
 const oldSwLog=window.swLog; if(typeof oldSwLog==='function')window.swLog=function(panel){const r=oldSwLog.apply(this,arguments); if(panel==='intrants')ensureIntrantHelp(); return r;};
-const oldSwCompta=window.swCompta; window.swCompta=function(tab){ if(typeof oldSwCompta==='function')oldSwCompta(tab); if(tab==='charges')renderChargesPanel(); if(tab==='saisie'){reloadComptaConfig().then(()=>{if(window.renderComptaPrix)renderComptaPrix();});} if(tab==='synthese'&&window.upComptaSynthese)window.upComptaSynthese(); };
+const oldSwCompta=window.swCompta;
+window.swCompta=function(tab){
+  if(typeof oldSwCompta==='function')oldSwCompta(tab);
+  if(tab==='charges'){renderChargesPanel(); setTimeout(()=>{if(window.initChargeForm)initChargeForm(); if(window.loadChargesV9)loadChargesV9();},0);}
+  if(tab==='saisie'){
+    const doRender=()=>{if(window.renderComptaPrix)renderComptaPrix();};
+    if(window.reloadFinanceQuality)reloadFinanceQuality().then(doRender);
+    else if(window.reloadComptaConfig)reloadComptaConfig().then(doRender);
+    else doRender();
+  }
+  if(tab==='synthese'&&window.upComptaSynthese)upComptaSynthese();
+  if(tab==='invest'&&window.renderInvest)renderInvest();
+  if(tab==='vente'&&window.renderSalesCompta)renderSalesCompta();
+  ['invest','vente'].forEach(function(t){var el=document.getElementById('ct-'+t);if(el)el.style.display=t===tab?'block':'none';var btn=document.getElementById('ct-tab-'+t);if(btn)btn.classList.toggle('active',t===tab);});
+};
 const oldLoadIntrants=window.loadIntrants; if(typeof oldLoadIntrants==='function')window.loadIntrants=async function(){const r=await oldLoadIntrants.apply(this,arguments); await reloadComptaConfig(); await loadCharges(); ensureIntrantHelp(); return r;};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{ensureIntrantHelp();reloadComptaConfig();loadCharges();});else{ensureIntrantHelp();reloadComptaConfig();loadCharges();}
 })();
@@ -8247,8 +8237,6 @@ window.renderComptaCUMP=function(){
  if(!rows.length){container.innerHTML='<div style="color:var(--t3);font-size:11px;padding:.5rem">Aucun CUMP validé. Saisissez puis validez au moins un prix de facture complet.</div>';return;}
  container.innerHTML='<table style="width:100%;font-size:10px;border-collapse:collapse"><thead><tr><th>Intrant</th><th>Unité</th><th>Quantité avec prix validé</th><th>Coût validé</th><th style="color:var(--acc)">CUMP validé</th></tr></thead><tbody>'+rows.map(r=>`<tr style="border-bottom:1px solid var(--b1)"><td style="padding:5px 8px;text-align:left;font-weight:700">${escapeHtml(r.item.name)}</td><td>${escapeHtml(r.item.unit||'')}</td><td style="text-align:right">${r.qty.toFixed(3)}</td><td style="text-align:right">${Math.round(r.cost).toLocaleString('fr-FR')}</td><td style="text-align:right;color:var(--acc);font-weight:800">${Math.round(r.cump).toLocaleString('fr-FR')}</td></tr>`).join('')+'</tbody></table>';
 };
-const oldSwCompta=window.swCompta;
-window.swCompta=function(tab){const r=typeof oldSwCompta==='function'?oldSwCompta.apply(this,arguments):undefined; if(tab==='saisie')reloadFinanceQuality().then(()=>{if(window.renderComptaPrix)renderComptaPrix();}); return r;};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',reloadFinanceQuality);else reloadFinanceQuality();
 })();
 
@@ -8366,8 +8354,6 @@ window.renderChargesPanelV9=function(){
  <div class="tw"><table><thead><tr><th>Date</th><th>Cycle</th><th>Catégorie</th><th>Désignation</th><th>Type</th><th>Qté</th><th>Unité</th><th>Montant</th><th>Devise</th><th>XOF</th><th>Affectation</th><th>Statut</th><th>Actions</th></tr></thead><tbody>${rows.map(c=>`<tr><td>${esc(c.date)}</td><td>${esc(c.cycle||'—')}</td><td>${esc(c.category||'')}</td><td class="cn">${esc(c.label||c.name||'')}</td><td>${esc(c.type||'')}</td><td class="cf">${Number(c.quantity||0).toLocaleString('fr-FR')}</td><td>${esc(c.unit||'')}</td><td class="cf">${Number(c.amount||0).toLocaleString('fr-FR')}</td><td>${esc(c.currency||'XOF')}</td><td class="cf" style="color:var(--acc);font-weight:800">${money(Number(c.amountXOF)||0)}</td><td>${esc(c.affectation||'')}</td><td><span class="badge ${c.status==='Validée'?'b-ok':c.status==='Rejetée'?'b-dng':'b-warn'}">${esc(c.status||'Brouillon')}</span></td><td>${canWrite()?`<button class="ebtn" onclick="editChargeV9('${esc(c.id)}')">✏️</button>`:''}${canValidate()?` <button class="abtn" style="padding:2px 6px;font-size:10px" onclick="validateChargeV9('${esc(c.id)}','Validée')">✓</button> <button class="dbtn" onclick="validateChargeV9('${esc(c.id)}','Rejetée')">↯</button>`:''}${canDelete()?` <button class="dbtn" onclick="deleteChargeV9('${esc(c.id)}')">🗑</button>`:''}</td></tr>`).join('')||'<tr><td colspan="13" style="padding:1rem;color:var(--t3)">Aucune charge enregistrée.</td></tr>'}</tbody></table></div>`;
 };
 window.loadChargesV9=async function(){try{if(window.farmCol){const snap=await farmCol('charges').orderBy('date','desc').limit(1000).get(); window.APP_CHARGES=snap.docs.map(d=>({id:d.id,...d.data()}));}}catch(e){console.warn('loadChargesV9',e);} renderChargesPanelV9();};
-const oldSwCompta=window.swCompta;
-window.swCompta=function(tab){ if(typeof oldSwCompta==='function') oldSwCompta.apply(this,arguments); if(tab==='charges'){setTimeout(()=>{initChargeForm(); loadChargesV9();},0);} };
 const oldLoad=window.loadFarmData;
 if(typeof oldLoad==='function'){ window.loadFarmData=async function(){const r=await oldLoad.apply(this,arguments); try{await loadChargesV9();}catch(e){} return r;}; }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initChargeForm);else initChargeForm();
@@ -8473,7 +8459,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   function enhanceCompta(){
     var bar=G('ct-tab-synthese')&&G('ct-tab-synthese').parentElement;if(bar&&!G('ct-tab-invest'))bar.insertAdjacentHTML('beforeend','<button class="tb" id="ct-tab-invest" onclick="swCompta(\'invest\')" style="font-size:11px">🏗️ Investissements</button><button class="tb" id="ct-tab-vente" onclick="swCompta(\'vente\')" style="font-size:11px">💵 Ventes</button>');
     var base=G('ct-synthese')&&G('ct-synthese').parentElement;if(base&&!G('ct-invest'))base.insertAdjacentHTML('beforeend','<div id="ct-invest" style="display:none"></div><div id="ct-vente" style="display:none"></div>');
-    if(!window._swComptaClean){window._swComptaClean=window.swCompta;window.swCompta=function(tab){if(['saisie','charges','synthese'].indexOf(tab)>=0&&typeof window._swComptaClean==='function')window._swComptaClean(tab);['invest','vente'].forEach(function(t){var el=G('ct-'+t);if(el)el.style.display=t===tab?'block':'none';var btn=G('ct-tab-'+t);if(btn)btn.classList.toggle('active',t===tab);});if(tab==='invest')renderInvest();if(tab==='vente')renderSalesCompta();};}
+    window.renderInvest=renderInvest; window.renderSalesCompta=renderSalesCompta;
   }
   function renderInvest(){var c=G('ct-invest');if(!c)return;var rows=investments();c.innerHTML='<div class="card"><div class="ctitle"><span class="dot"></span>Investissements / immobilisations</div><div class="admin-form"><input id="iv-name" class="form-inp" placeholder="Souffleur, bassin, hangar..."><input id="iv-date" type="date" class="form-inp" value="'+today()+'"><input id="iv-amount" type="number" class="form-inp" placeholder="Montant XOF"><input id="iv-years" type="number" class="form-inp" placeholder="Durée amortissement années"><input id="iv-res" type="number" class="form-inp" placeholder="Valeur résiduelle"><select id="iv-cat" class="form-inp"><option>Bassins</option><option>Souffleurs</option><option>Hangar</option><option>Groupe électrogène</option><option>Batteries</option><option>LED</option><option>Pompes</option><option>Travaux</option><option>Autre</option></select></div><button class="sbtn" onclick="saveInvestV12()">Enregistrer investissement</button></div><div class="tw"><table><thead><tr><th>Désignation</th><th>Catégorie</th><th>Montant</th><th>Durée</th><th>Amort. mensuel</th></tr></thead><tbody>'+rows.map(function(i){return '<tr><td class="cn">'+i.name+'</td><td>'+i.cat+'</td><td>'+money(i.amount)+'</td><td>'+i.years+' ans</td><td>'+money((n(i.amount)-n(i.residual))/(n(i.years)||1)/12)+'</td></tr>';}).join('')+'</tbody></table></div>';}
   window.saveInvestV12=function(){var a=investments();a.push({id:Date.now(),name:G('iv-name').value,date:G('iv-date').value,amount:n(G('iv-amount').value),years:n(G('iv-years').value)||1,residual:n(G('iv-res').value),cat:G('iv-cat').value});save('investments',a);renderInvest();renderAnalyseEconomique();renderDirection();};
@@ -9043,7 +9029,7 @@ function cycleName(c){return c?(c.name||c.code||c.id):'—'}
 function bassinById(id){return bassins().find(function(b){return b.id===id||b.name===id})}
 function usageBassin(b){var id=b.id,name=b.name;return {cycles:cycles().filter(function(c){return (c.bassins||[]).indexOf(id)>=0}).length,harvests:harvests().filter(function(h){return h.bassinId===id||h.bassin===id||h.bassin===name}).length,sales:sales().filter(function(s){return s.bassinId===id||s.bassin===id||s.bassin===name}).length,total:0}}
 function usageCycle(c){var id=c.id,code=c.code;var u={harvests:harvests().filter(function(h){return h.cycleId===id||h.cycle===code||h.cycle===id}).length,sales:sales().filter(function(s){return s.cycleId===id||s.cycle===code||s.cycle===id}).length,outs:fishOuts().filter(function(o){return o.cycleId===id||o.cycle===code||o.cycle===id}).length,total:0};u.total=u.harvests+u.sales+u.outs;return u}
-function syncBassins(){var bs=bassins(), cs=cycles();bs.forEach(function(b){var c=cs.find(function(x){return (x.bassins||[]).indexOf(b.id)>=0 && x.statut!=='Archivé' && x.statut!=='Annulé'});b.cycleId=c?c.id:'';b.statut=c?'Occupé':'Libre'});saveBassins(bs)}
+function syncBassins(){var bs=bassins(), cs=cycles();bs.forEach(function(b){var c=cs.find(function(x){return (x.bassins||[]).indexOf(b.id)>=0 && x.statut!=='Archivé' && x.statut!=='Annulé'});b.cycleId=c?c.id:'';b.statut='Actif'});saveBassins(bs)}
 function fishStockByHarvest(hid){var h=harvests().find(function(x){return x.id===hid});var base=n(h&&h.kg);var vend=sales().filter(function(s){return s.harvestId===hid}).reduce(function(a,s){return a+n(s.kg)},0);var outs=fishOuts().filter(function(o){return o.harvestId===hid}).reduce(function(a,o){return a+n(o.kg)},0);return Math.max(0,base-vend-outs)}
 function totalFishStock(){return harvests().reduce(function(a,h){return a+fishStockByHarvest(h.id)},0)}
 function ensureNav(){
