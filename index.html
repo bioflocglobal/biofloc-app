@@ -4638,13 +4638,31 @@ function pwaDoseLitres(row){
 }
 function calcPWA(){
   const list=G('pwa-plan-list'),res=G('pwa-result');if(!res)return;
-  // Remplir le select bassin à chaque ouverture de l'onglet probio
-  if(window.fillPwaBassinSelect){
-    var sel=G('pwa-add-bassin');
-    if(sel&&(!sel.options.length||(sel.options.length===1&&sel.options[0].value===''))){
-      fillPwaBassinSelect();
+  // Remplir le select bassin — lecture directe sans dépendre d'aucun IIFE
+  (function remplirSelectBassin(){
+    var sel=G('pwa-add-bassin'); if(!sel)return;
+    var bs=[];
+    if(typeof window.bassins==='function')bs=window.bassins();
+    if(!bs.length&&window.APP&&APP.state&&Array.isArray(APP.state.bassins))bs=APP.state.bassins;
+    if(!bs.length){
+      // window.bassins pas encore exposé (race condition au chargement) — réessayer dans 800ms
+      sel.innerHTML='<option value="">— aucun bassin —</option>';
+      setTimeout(function(){if(G('pwa-add-bassin'))remplirSelectBassin();},800);
+      return;
     }
-  }
+    var prev=sel.value;
+    sel.innerHTML=bs.map(function(b){
+      var vol=Number(b.volumeMaxM3||b.vol||b.volume)||3.8;
+      var nm=b.name||b.id||'Bassin';
+      var id=b.id||nm;
+      return '<option value="'+nm.replace(/"/g,'&quot;')+'" data-id="'+id.replace(/"/g,'&quot;')+'" data-vol="'+vol+'">'+nm+' · '+vol.toFixed(2)+' m³</option>';
+    }).join('');
+    // Restaurer la sélection précédente si possible
+    if(prev)for(var i=0;i<sel.options.length;i++){if(sel.options[i].value===prev){sel.selectedIndex=i;break;}}
+    var opt=sel.options[sel.selectedIndex];
+    var vEl=G('pwa-bassin-volume');
+    if(vEl&&opt)vEl.textContent=(Number(opt.getAttribute('data-vol'))||3.8).toFixed(2)+' m³';
+  })();
   // Toujours lire depuis la source unique
   var plan=_pwaLoad();PWA_PLAN=plan;window.PWA_PLAN=plan;
   if(!plan.length){
