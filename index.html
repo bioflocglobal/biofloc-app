@@ -4091,6 +4091,7 @@ const DEFAULT_INTRANTS=[
 
 let APP_INTRANTS=[...DEFAULT_INTRANTS];
 let APP_STOCK_ENTRIES=[];
+let APP_STOCK_MOVEMENTS=[];
 let APP_INVENTAIRE_CURRENT=null;
 let APP_LOG_PANEL='intrants';
 
@@ -4122,6 +4123,10 @@ async function loadIntrants(){
     const snap=await withTimeout(farmCol('stock_entries').get(),6000);
     if(snap&&!snap.empty)APP_STOCK_ENTRIES=snap.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   }catch(e){console.warn('Stock:',e);}
+  try{
+    const mSnap=await withTimeout(farmCol('stock_movements').get(),6000);
+    if(mSnap&&!mSnap.empty)APP_STOCK_MOVEMENTS=mSnap.docs.map(d=>({...d.data(),id:d.id}));
+  }catch(e){console.warn('Movements:',e);}
   try{const cs=await withTimeout(farmCol('config').doc('compta').get(),6000);if(cs.exists&&cs.data().prix)COMPTA_PRIX=cs.data().prix;}catch(e){console.warn('Compta prix:',e);}
   checkStockAlerts();
 }
@@ -4281,14 +4286,15 @@ async function validateSeuilsChanges(){
 }
 
 function getItemCurrentStock(intrantId){
-  const entries=APP_STOCK_ENTRIES.filter(e=>e.intrantId===intrantId);
+  const entries=APP_STOCK_ENTRIES.filter(e=>e.validated&&e.intrantId===intrantId);
   const totalIn=entries.reduce((s,e)=>s+(e.quantity||0),0);
   const item=APP_INTRANTS.find(i=>i.id===intrantId);
   if(item&&item.category==='aliment'){
     const totalUsed=APP.state.bassins.filter(b=>b.statut==='Actif').reduce((s,b)=>s+(b.alimReel||0),0);
     return Math.max(0,totalIn-totalUsed);
   }
-  return totalIn;
+  const totalMov=(APP_STOCK_MOVEMENTS||[]).filter(m=>m.intrantId===intrantId&&m.type==='sortie').reduce((s,m)=>s+(m.quantity||0),0);
+  return Math.max(0,totalIn-totalMov);
 }
 
 function openAddIntrant(){
@@ -4329,7 +4335,7 @@ async function deleteIntrant(id){
 
 function openAddStock(preselect){
   G('stock-modal').classList.remove('hidden');
-  G('stock-date').value=today();G('stock-qty').value=1;
+  G('stock-date').value=today();G('stock-qty').value='';
   G('stock-expiry').value='';G('stock-supplier').value='';G('stock-notes').value='';
   G('stock-lot').value='';G('stock-facture').value='';G('stock-cond').value='';G('stock-msg').textContent='';
   const sel=G('stock-intrant');
@@ -4381,13 +4387,14 @@ function renderStockEntries(){
         const expCol=isExpired?'var(--dng)':expireSoon?'var(--warn)':'var(--t3)';
         const validBtns=pending
           ?(canValidate
-            ?('<button data-validate="'+e.id+'" style="font-size:9px;background:var(--acc);color:#fff;border:none;border-radius:4px;padding:2px 8px;cursor:pointer">✅ Valider</button>'
-              +'<span style="font-size:9px;color:var(--warn);font-weight:700">⏳ En attente</span>')
+            ?('<span style="font-size:9px;color:var(--warn);font-weight:700">⏳ En attente</span>')
             :'<span style="font-size:9px;color:var(--warn);font-weight:700">⏳ Attente validation</span>')
           :'<span style="font-size:9px;color:var(--acc)">✅ '+(e.validatedBy||'OK')+'</span>';
+        const saveBtn=canValidate?'<button data-save="'+e.id+'" style="font-size:9px;background:var(--acc);color:#fff;border:none;border-radius:4px;padding:2px 8px;cursor:pointer">💾 Enregistrer</button>':'';
         const editBtn=canValidate?'<button data-edit="'+e.id+'" style="font-size:9px;background:var(--acc2);color:#fff;border:none;border-radius:4px;padding:2px 8px;cursor:pointer">✏️ Modifier</button>':'';
-        const deletBtn=(pending&&e.createdBy===APP.user?.name)
-          ?'<button data-delete="'+e.id+'" style="font-size:9px;background:var(--dng);color:#fff;border:none;border-radius:4px;padding:2px 8px;cursor:pointer">🗑</button>':'';
+        const deletBtn=canValidate
+          ?'<button data-delete="'+e.id+'" style="font-size:9px;background:var(--dng);color:#fff;border:none;border-radius:4px;padding:2px 8px;cursor:pointer">🗑 Supprimer</button>'
+          :(pending&&e.createdBy===APP.user?.name?'<button data-delete="'+e.id+'" style="font-size:9px;background:var(--dng);color:#fff;border:none;border-radius:4px;padding:2px 8px;cursor:pointer">🗑</button>':'');
         return '<div style="background:var(--card);border:1px solid '+borderCol+';border-radius:8px;padding:.5rem .7rem;margin-bottom:.3rem">'
           +'<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">'
           +'<div style="flex:1;min-width:160px"><span style="font-weight:700;color:var(--t1)">'+(item?.name||e.intrantId)+'</span>'
@@ -4399,13 +4406,13 @@ function renderStockEntries(){
           +(e.supplier?'Fourn: '+e.supplier+' · ':'')
           +(e.expiryDate?'<span style="color:'+expCol+'">⏱ '+(isExpired?'⚠️PÉRIMÉ ':'')+e.expiryDate+'</span> · ':'')
           +'Par: '+(e.createdBy||'?')+'</div></div>'
-          +'<div style="display:flex;gap:.3rem;align-items:center;flex-wrap:wrap">'+validBtns+editBtn+deletBtn+'</div>'
+          +'<div style="display:flex;gap:.3rem;align-items:center;flex-wrap:wrap">'+validBtns+saveBtn+editBtn+deletBtn+'</div>'
           +'</div></div>';
       }).join('')+'</div>';
   }).join('');
-  // Event delegation for validate/delete buttons
+  // Event delegation
   container.onclick=function(ev){
-    const vb=ev.target.closest('[data-validate]');if(vb)validateStockEntry(vb.dataset.validate);
+    const sb=ev.target.closest('[data-save]');if(sb)validateStockEntry(sb.dataset.save);
     const eb=ev.target.closest('[data-edit]');if(eb)editStockEntry(eb.dataset.edit);
     const db=ev.target.closest('[data-delete]');if(db)deleteStockEntry(db.dataset.delete);
   };
@@ -4435,11 +4442,15 @@ async function validateStockEntry(id){
 }
 
 async function deleteStockEntry(id){
-  if(!confirm('Supprimer cette entrée ?'))return;
+  const role=APP.user?.role||'Opérateur';
+  const canDel=role==='Administrateur'||role==='Responsable';
+  const entry=APP_STOCK_ENTRIES.find(e=>e.id===id);
+  if(!canDel&&!(entry&&!entry.validated&&entry.createdBy===APP.user?.name)){showToast('❌ Réservé Responsable / Administrateur','dng');return;}
+  if(!confirm('Supprimer définitivement cette entrée ?'))return;
   try{
     await withTimeout(farmCol('stock_entries').doc(id).delete(),6000);
     APP_STOCK_ENTRIES=APP_STOCK_ENTRIES.filter(e=>e.id!==id);
-    renderStockEntries();showToast('✅ Supprimé','acc');
+    renderStockEntries();showToast('✅ Entrée supprimée','acc');
   }catch(e){showToast('❌ '+e.message,'dng');}
 }
 
@@ -5993,6 +6004,15 @@ async function saveBassinRow(i){
       logAudit('modification',`Modification historique ${b.name}`,`Date: ${dateStr}`);
     } else {
       logAudit('modification',`Enregistrement ${b.name}`,`Date: ${dateStr}`);
+    }
+    // Mouvement de sortie PWA si probiot saisi pour aujourd'hui (pas historique)
+    if(!isHistorical&&b.probiot>0){
+      const movId='mov_'+b.name.replace(/\s+/g,'_')+'_'+dateStr;
+      const mov={id:movId,intrantId:'pwa_prep',quantity:b.probiot/1000,date:dateStr,type:'sortie',source:'daily',bassin:b.name,createdAt:new Date().toISOString(),createdBy:APP.user?.name||'?'};
+      farmCol('stock_movements').doc(movId).set(mov).then(()=>{
+        const idx=APP_STOCK_MOVEMENTS.findIndex(m=>m.id===movId);
+        if(idx>=0)APP_STOCK_MOVEMENTS[idx]=mov;else APP_STOCK_MOVEMENTS.push(mov);
+      }).catch(e=>console.warn('Movement:',e));
     }
     const tr=G('b-tbody')?.rows[i];
     if(tr){tr.style.background='rgba(0,201,167,.15)';setTimeout(()=>{tr.style.background='';},1500);}
