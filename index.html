@@ -1279,7 +1279,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
               <div class="ctitle"><span class="dot" style="background:var(--acc)"></span>💧 Préparation PWA (bihebdomadaire)</div>
               <p style="font-size:10px;color:var(--t3);line-height:1.6;margin-bottom:.75rem">Planification prospective S+1 · Sélection cumulative des activités · Majorée de 4% pour couvrir la PFA (30 ml/kg d'aliment).</p>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.6rem">
-                <div><div class="form-lbl">Activité PWA</div><select id="pwa-add-activity" class="si" style="width:100%;font-size:11px"><option value="primo">Primo inoculation J1</option><option value="entretien">Entretien J3/J5/J7/J8/J10</option><option value="rotation">Système mature — post introduction alevins</option><option value="postintro">Système immature — post introduction alevins J14-J21</option></select><div style="margin-top:4px"><div class="form-lbl">Date de début <span style="color:var(--dng)">*</span></div><input type="date" id="pwa-activity-date" class="form-inp" style="font-size:11px"></div></div>
+                <div><div class="form-lbl">Activité PWA</div><select id="pwa-add-activity" class="si" style="width:100%;font-size:11px"><option value="primo">Primo inoculation J1</option><option value="entretien">Entretien J3/J5/J7/J8/J10</option><option value="tan">Test Maturite TAN J12-J14</option><option value="rotation">Système mature — post introduction alevins</option><option value="postintro">Système immature — post introduction alevins J14-J21</option></select><div style="margin-top:4px"><div class="form-lbl">Date de début <span style="color:var(--dng)">*</span></div><input type="date" id="pwa-activity-date" class="form-inp" style="font-size:11px"></div></div>
                 <div><div class="form-lbl">Bassin ciblé</div><select id="pwa-add-bassin" class="si" style="width:100%;font-size:11px" onchange="syncPwaVolumeFromBassin()"><option value="">— chargement —</option></select><div style="font-size:9px;color:var(--t3);margin-top:2px">Volume max : <span id="pwa-bassin-volume">—</span></div></div>
                 <div><div class="form-lbl">Volume à traiter (m³)</div><input type="number" id="pwa-add-volume-cover" class="form-inp" value="3.8" step="0.1" min="0" style="width:100%"><div style="font-size:9px;color:var(--t3);margin-top:2px">Peut être inférieur au volume total du bassin.</div></div>
               </div>
@@ -4583,10 +4583,11 @@ async function loadAnalyseStock(){
 
 let PWA_PLAN=[];
 const PWA_RATES={
-  primo:{label:'Primo inoculation J1 mardi',moment:'Soirée · après bullage 24h',dose:4.7},
-  entretien:{label:'Entretien J3 · J5 · J7 · J8 · J10',moment:'Soirée · après bullage 24h',dose:0.2},
-  rotation:{label:'Système mature — post introduction alevins',moment:'Soirée jeudi + lundi · rotation continue',dose:0.2,vol380Fixed:0.38},
-  postintro:{label:'Système immature_post introduction alevins J14-J21',moment:'Hebdomadaire',dose:0.1}
+  primo:{label:'Primo inoculation J1 mardi',moment:'Soirée · dose unique · avant BC100+ (+1h) Melasse (+4h)',dose:4.7},
+  entretien:{label:'Entretien J3 · J5 · J7 · J8 · J10',moment:'Soirée · dose unique · avant BC100+ (+1h) Melasse (+4h)',dose:0.2},
+  tan:{label:'Test Maturite TAN J12-J14',moment:'Soirée · dose unique · avant BC100+ (+1h) Melasse (+4h)',dose:0.2},
+  rotation:{label:'Systeme mature — post introduction alevins',moment:'Soirée · dose unique · avant BC100+ (+1h) Melasse (+4h)',dose:0.2,vol380Fixed:0.38},
+  postintro:{label:'Systeme immature_post introduction alevins J14-J21',moment:'Soirée · dose unique',dose:0.1}
 };
 
 // ── Source de vérité unique : localStorage 'pwa_monthly_plan' ──────────────
@@ -4667,27 +4668,29 @@ function calcPWA(){
     const r=rates[row.activity]||rates.entretien;
     const q=pwaDoseLitres(row);
     const isEnt=row.activity==='entretien';
-    // Entretien : 5 séances/cycle (J3,J5,J7,J8,J10) × 2 fois/jour
-    const qDisplay=isEnt?(q*5*2).toFixed(2).replace('.',',')+' L (5×2/j)':q.toFixed(2).replace('.',',')+' L';
+    const isTan=row.activity==='tan';
+    // PWA dose unique le soir — entretien=5séances ; tan=2séances
+    const qDisplay=isEnt?(q*5).toFixed(2).replace('.',',')+' L (5 séances)':isTan?(q*2).toFixed(2).replace('.',',')+' L (2 séances)':q.toFixed(2).replace('.',',')+' L';
     const cover=Number(row.coverVol!=null?row.coverVol:row.vol)||0;
     const dateLbl=row.dateDebut?'<span style="color:var(--acc2);font-weight:700">📅 '+row.dateDebut+'</span> · ':'';
     return '<div style="display:flex;align-items:center;gap:.4rem;background:var(--panel);border:1px solid var(--b1);border-radius:6px;padding:.35rem .5rem;margin-bottom:.3rem">'
       +'<div style="flex:1"><strong style="color:var(--t1);font-size:11px">'+r.label+'</strong>'
       +'<div style="font-size:9px;color:var(--t3)">'+dateLbl+r.moment+' · '+(row.bassin||'')+(cover?' · '+cover.toFixed(2)+' m³':'')+'</div>'
-      +'<div style="font-size:9px;color:var(--acc2)">Dose : '+((window.PWA_RATES||PWA_RATES)[row.activity]||{dose:'?'}).dose+' L/m³ × '+cover.toFixed(2)+' m³'+(isEnt?' × 5 séances × 2/j':'')+' = <strong>'+qDisplay+'</strong></div>'
+      +'<div style="font-size:9px;color:var(--acc2)">Dose : '+((window.PWA_RATES||PWA_RATES)[row.activity]||{dose:'?'}).dose+' L/m³ × '+cover.toFixed(2)+' m³'+(isEnt?' × 5 séances':isTan?' × 2 séances':'')+' = <strong>'+qDisplay+'</strong></div>'
       +'</div>'
       +'<div style="font-family:var(--mono);font-weight:800;font-size:13px;color:'+(isEnt?'var(--purp)':'var(--acc)')+'">'+qDisplay+'</div>'
       +'<button class="dbtn" onclick="removePWAActivity(\''+row.id+'\')">×</button></div>';
   }).join('');
-  // Total : entretien = dose × 5 séances × 2/j ; autres activités = dose simple
-  const base=plan.reduce((s,row)=>{const q=pwaDoseLitres(row);return s+(row.activity==='entretien'?q*5*2:q);},0);
+  // Total : PWA dose unique le soir — entretien=5séances ; tan=2séances ; autres=1 dose
+  const base=plan.reduce((s,row)=>{const q=pwaDoseLitres(row);const a=row.activity;return s+(a==='entretien'?q*5:a==='tan'?q*2:q);},0);
   const pfa=base*0.04;
   const total=base+pfa;
   res.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-bottom:.5rem">'
     +'<div><div style="font-size:9px;color:var(--t3)">PWA activités</div><div style="font-size:18px;font-weight:800;color:var(--acc);font-family:var(--mono)">'+base.toFixed(2).replace('.',',')+' L</div></div>'
     +'<div><div style="font-size:9px;color:var(--t3)">Majoration PFA 4%</div><div style="font-size:18px;font-weight:800;color:var(--warn);font-family:var(--mono)">'+pfa.toFixed(2).replace('.',',')+' L</div></div>'
     +'<div><div style="font-size:9px;color:var(--t3)">Total à préparer</div><div style="font-size:18px;font-weight:800;color:var(--gold);font-family:var(--mono)">'+total.toFixed(2).replace('.',',')+' L</div></div></div>'
-    +'<div style="font-size:10px;color:var(--t2);line-height:1.6">Référence dossier : primo ≈4,7 L/m³ ; entretien 200 ml/m³ ; rotation croisière 200 ml/m³ avec cas 3,80 m³ = 380 ml ; post-introduction 100 ml/m³. PFA : préparation administrée à 30 ml/kg d\'aliments, provisionnée ici par +4%.</div>'
+    +'<div style="font-size:10px;color:var(--t2);line-height:1.6">Dose unique le soir — Séquence : PWA T+0 · BC100+ T+1h · BC100 T+2h · Mélasse T+4h min.</div>'
+    +'<div style="font-size:9px;color:var(--t3);line-height:1.5">Primo ≈4,7 L/m³ · Entretien/TAN/Rotation 200 ml/m³ · Post-intro 100 ml/m³. PFA +4%.</div>'
     +'<div style="font-size:9px;color:var(--warn);margin-top:.3rem">⏱ Bullage 24h avant usage · Préparation prospective pour la semaine S+1 · Validité 48–72h</div>'
     +'<div style="margin-top:.6rem">'
     +'<div style="display:flex;gap:.3rem;align-items:flex-end;margin-bottom:.4rem">'
@@ -4749,8 +4752,136 @@ function exportPWAPlanningPdf(){
   var fromEl=G('pwa-export-from'),toEl=G('pwa-export-to');
   var fromStr=fromEl&&fromEl.value,toStr=toEl&&toEl.value;
   if(!fromStr||!toStr){alert('Sélectionnez une plage de dates.');return;}
-  if(window._exportPWAPlanningPdfFull)window._exportPWAPlanningPdfFull(fromStr,toStr);
-  else alert('Module export non chargé.');
+  var plan=_pwaLoad();
+  if(!plan||!plan.length){alert('Aucune activité planifiée.');return;}
+  var rates=window.PWA_RATES||PWA_RATES||{};
+  var farmName=(window.APP&&APP.state&&APP.state.farmName)||'Ferme';
+  var DAY=86400000;
+  var ADMIN_OFF=[2,4,6,7,9]; // J3,J5,J7,J8,J10 (offset 0-based depuis J1)
+  var PREP_OFF=[0,2,4,5,7];  // H-48 avant chaque admin day
+  var ADMIN_J=[3,5,7,8,10];
+  var TAN_ADMIN_OFF=[11,13]; // J12, J14
+  var TAN_PREP_OFF=[9,11];   // J10 soir, J12 soir
+  var TAN_J=[12,14];
+  var dFrom=new Date(fromStr);dFrom.setHours(0,0,0,0);
+  var dTo=new Date(toStr);dTo.setHours(23,59,59,999);
+  var DAY_FR=['Dim.','Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.'];
+  var fmtD=function(d){return DAY_FR[d.getDay()]+' '+d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});};
+  var fmt2=function(v){return Number(v||0).toFixed(2).replace('.',',');};
+  var esc2=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+  var td='padding:5px 7px;border-bottom:1px solid #e5e7eb;vertical-align:middle;font-size:11px;';
+  // Générer événements selon activité dans la plage
+  function cycleEvents(entry,df,dt){
+    var j1s=entry.j1||entry.dateDebut;if(!j1s)return[];
+    var activ=entry.activity||'entretien';
+    var j1=new Date(j1s);j1.setHours(0,0,0,0);
+    var evs=[];
+    if(activ==='tan'){
+      // J12 et J14 depuis J1, occurrence unique
+      TAN_ADMIN_OFF.forEach(function(off){var d=new Date(j1.getTime()+off*DAY);if(d>=df&&d<=dt)evs.push({date:d,type:'admin',entry:entry});});
+      TAN_PREP_OFF.forEach(function(off){var d=new Date(j1.getTime()+off*DAY);if(d>=df&&d<=dt)evs.push({date:d,type:'prep',entry:entry});});
+      return evs;
+    }
+    for(var c=0;c<25;c++){
+      var cs=new Date(j1.getTime()+c*10*DAY);
+      ADMIN_OFF.forEach(function(off){var d=new Date(cs.getTime()+off*DAY);if(d>=df&&d<=dt)evs.push({date:d,type:'admin',entry:entry});});
+      PREP_OFF.forEach(function(off){var d=new Date(cs.getTime()+off*DAY);if(d>=df&&d<=dt)evs.push({date:d,type:'prep',entry:entry});});
+      if(cs>dt)break;
+    }
+    return evs;
+  }
+  var allEvents=[];
+  plan.forEach(function(entry){
+    var activ=entry.activity||'entretien';
+    var j1s=entry.j1||entry.dateDebut;if(!j1s)return;
+    var j1=new Date(j1s);j1.setHours(0,0,0,0);
+    if(activ==='primo'){
+      var prep=new Date(j1.getTime()-DAY);
+      if(prep>=dFrom&&prep<=dTo)allEvents.push({date:prep,type:'prep',entry:entry});
+      if(j1>=dFrom&&j1<=dTo)allEvents.push({date:j1,type:'admin',entry:entry});
+    } else {
+      cycleEvents(entry,dFrom,dTo).forEach(function(ev){allEvents.push(ev);});
+    }
+  });
+  allEvents.sort(function(a,b){var dt=a.date-b.date;return dt!==0?dt:(a.type==='admin'?-1:1);});
+  if(!allEvents.length){alert('Aucune activité dans cette période.\nEssayez le bouton "Mois".');return;}
+  var rows=allEvents.map(function(item){
+    var entry=item.entry,activ=entry.activity||'entretien';
+    var r=rates[activ]||rates.entretien||{label:activ,dose:0.2};
+    var cover=Number(entry.coverVol||entry.vol||3.8);
+    var volUnit=Number(r.dose||0.2)*cover;
+    var isPrimo=activ==='primo';
+    var isPrep=item.type==='prep';
+    var bassin=entry.bassin||entry.bassinId||'?';
+    var dateStr=fmtD(item.date);
+    if(isPrep){
+      var adminDate=new Date(item.date.getTime()+2*DAY);
+      var prepTotal=volUnit*1.04;
+      return '<tr style="background:#fffbeb">'
+        +'<td style="'+td+'font-weight:600;white-space:nowrap;color:#92400e">'+dateStr+'</td>'
+        +'<td style="'+td+'color:#d97706;font-weight:700">Preparer ce soir (bullage) - admin le '+fmtD(adminDate)+'</td>'
+        +'<td style="'+td+'">'+esc2(bassin)+'</td>'
+        +'<td style="'+td+'text-align:right">'+fmt2(cover)+' m3</td>'
+        +'<td style="'+td+'text-align:center;color:#9ca3af">-</td>'
+        +'<td style="'+td+'text-align:right;font-weight:800;color:#d97706">'+fmt2(prepTotal)+' L (+4%)</td>'
+        +'</tr>';
+    } else {
+      var j1b=new Date(entry.j1||entry.dateDebut);j1b.setHours(0,0,0,0);
+      var jLabel='';
+      if(activ==='entretien'){
+        var diff=Math.round((item.date-j1b)/DAY);
+        var cycOff=((diff%10)+10)%10;
+        var idx=ADMIN_OFF.indexOf(cycOff);
+        jLabel=' (J'+(idx>=0?ADMIN_J[idx]:(cycOff+1))+')';
+      } else if(activ==='tan'){
+        var diff=Math.round((item.date-j1b)/DAY);
+        var idx=TAN_ADMIN_OFF.indexOf(diff);
+        jLabel=' (J'+(idx>=0?TAN_J[idx]:(diff+1))+')';
+      }
+      var typeLabel=(isPrimo?'Primo-inoculation J1':(r.label||activ)+jLabel);
+      var bg=isPrimo?'#f0f9ff':(activ==='entretien'?'#f0fdf4':(activ==='tan'?'#fff7ed':'#fefce8'));
+      // PWA = dose unique le soir — matin toujours vide
+      return '<tr style="background:'+bg+'">'
+        +'<td style="'+td+'font-weight:600;white-space:nowrap">'+dateStr+'</td>'
+        +'<td style="'+td+'font-weight:700">'+typeLabel+'</td>'
+        +'<td style="'+td+'">'+esc2(bassin)+'</td>'
+        +'<td style="'+td+'text-align:right">'+fmt2(cover)+' m3</td>'
+        +'<td style="'+td+'text-align:center;color:#9ca3af">-</td>'
+        +'<td style="'+td+'text-align:right;color:#0d9488;font-weight:800">'+fmt2(volUnit)+' L</td>'
+        +'</tr>';
+    }
+  }).join('');
+  var periodLabel=fmtD(dFrom)+' - '+fmtD(dTo);
+  var w=window.open('','_blank','width=1000,height=750');
+  if(!w){alert('Autorisez les pop-ups pour exporter en PDF.');return;}
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Planning PWA</title>'
+    +'<style>*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}body{padding:16px;font-size:11px;color:#111}'
+    +'h1{font-size:15px;margin-bottom:3px}p.sub{font-size:10px;color:#6b7280;margin-bottom:10px}'
+    +'table{width:100%;border-collapse:collapse}th{background:#0d9488;color:#fff;padding:5px 8px;text-align:left;font-size:11px}'
+    +'td{padding:5px 7px;border-bottom:1px solid #e5e7eb}'
+    +'.legend{font-size:9px;color:#6b7280;margin-top:12px;border-top:1px solid #e5e7eb;padding-top:8px;line-height:1.8}'
+    +'@media print{button{display:none}}'
+    +'</style></head><body>'
+    +'<h1>Planning previsionnel PWA - '+esc2(farmName)+'</h1>'
+    +'<p class="sub">Periode : <strong>'+periodLabel+'</strong> - Exporte le '+new Date().toLocaleDateString('fr-FR')
+      +' - Dose entretien : '+fmt2((rates.entretien||{dose:0.2}).dose)+' L/m3'
+      +' - Primo : '+fmt2((rates.primo||{dose:4.7}).dose)+' L/m3</p>'
+    +'<table><thead><tr>'
+    +'<th>Date activite</th><th>Type activite</th><th>Bassin concerne</th>'
+    +'<th style="text-align:right">Vol. couvert</th>'
+    +'<th style="text-align:center;color:#d1d5db">Matin</th>'
+    +'<th style="text-align:right">Vol. a verser (Soir)</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table>'
+    +'<div class="legend">'
+    +'PWA = dose unique le SOIR uniquement (colonne Matin toujours vide) | '
+    +'Sequence obligatoire : PWA T+0 → BC100+ T+1h → BC100 T+2h → Melasse T+4h minimum | '
+    +'Preparation (soir) : lancer bullage H+48 avant administration | '
+    +'Vol. prep = dose x 1.04 (+4% marge) | '
+    +'Entretien J3·J5·J7·J8·J10 — Correction TAN J12·J14'
+    +'</div>'
+    +'<br><button onclick="window.print()" style="padding:6px 18px;background:#0d9488;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px">Imprimer / Sauvegarder PDF</button>'
+    +'</body></html>');
+  w.document.close();
 }
 window.setPwaExportWeek=setPwaExportWeek;
 window.setPwaExportMonth=setPwaExportMonth;
@@ -8741,6 +8872,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   // Jours d'admin/prépa depuis J1 (0-indexed)
   var ADMIN_OFFSETS=[2,4,6,7,9]; // J3,J5,J7,J8,J10
   var PREP_OFFSETS=[0,2,4,5,7];  // J1,J3,J5,J6,J8 soir — H-36 (avant-veille soir) avant chaque admin
+  var TAN_ADMIN_OFFSETS=[11,13]; // J12, J14
+  var TAN_PREP_OFFSETS=[9,11];   // J10 soir, J12 soir
   // Retourne la liste des événements (admin/prep) pour une entrée sur une plage de dates
   function pwaEventsForEntry(entry, monthStart, monthEnd){
     var j1Str=entry.j1||entry.dateDebut;
@@ -8748,8 +8881,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     var DAY=86400000;
     var j1=new Date(j1Str); j1.setHours(0,0,0,0);
     var events=[];
+    // TAN : occurrence unique J12 et J14
+    if(entry.activity==='tan'){
+      TAN_ADMIN_OFFSETS.forEach(function(off){var d=new Date(j1.getTime()+off*DAY);if(d>=monthStart&&d<=monthEnd)events.push({date:d,type:'admin',entry:entry,cycle:0});});
+      TAN_PREP_OFFSETS.forEach(function(off){var d=new Date(j1.getTime()+off*DAY);if(d>=monthStart&&d<=monthEnd)events.push({date:d,type:'prep',entry:entry,cycle:0});});
+      return events;
+    }
     // Calculer les répétitions du cycle J1→J10 dans le mois
-    // On cherche d'abord le premier cycle possible dans la fenêtre -9j..+30j
     for(var cycle=0;cycle<20;cycle++){
       var cycleStart=new Date(j1.getTime()+cycle*10*DAY);
       ADMIN_OFFSETS.forEach(function(off){
@@ -8928,117 +9066,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     if(entry){entry.origJ1=null;saveMonthlyPlan(plan);window.renderPWAMonthlyCalendar();}
   };
 
-  // ─── Export PDF planning prévisionnel (chronologique) ────────────────────
-  window.exportPWAWeekPdf=window._exportPWAPlanningPdfFull=function(dateFromStr,dateToStr){
-    var plan=_pwaLoad();
-    if(!plan||!plan.length){alert('Aucune activité planifiée.');return;}
-    var rates=window.PWA_RATES||{};
-    var farmName=(window.APP&&APP.state&&APP.state.farmName)||'Ferme';
-    var DAY=86400000;
-    // Plage par défaut = semaine courante
-    if(!dateFromStr){var dn=new Date(),dw=dn.getDay(),do2=dw===0?-6:1-dw,mn=new Date(dn.getTime()+do2*DAY);dateFromStr=mn.toISOString().slice(0,10);}
-    if(!dateToStr){dateToStr=new Date(new Date(dateFromStr).getTime()+6*DAY).toISOString().slice(0,10);}
-    var dFrom=new Date(dateFromStr);dFrom.setHours(0,0,0,0);
-    var dTo=new Date(dateToStr);dTo.setHours(23,59,59,999);
-    var DAY_FR=['Dim.','Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.'];
-    var fmtD=function(d){return DAY_FR[d.getDay()]+' '+d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});};
-    var fmt2=function(v){return Number(v||0).toFixed(2).replace('.',',');};
-    function esc2(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-    var tdBase='padding:5px 7px;border-bottom:1px solid #e5e7eb;vertical-align:middle;font-size:11px;';
-    var ADMIN_J=[3,5,7,8,10]; // correspondance ADMIN_OFFSETS=[2,4,6,7,9]
-    // Construire liste chronologique d'événements (prep + admin)
-    var allEvents=[];
-    plan.forEach(function(entry){
-      var activ=entry.activity||'entretien';
-      var j1Str=entry.j1||entry.dateDebut;
-      if(!j1Str)return;
-      var j1=new Date(j1Str);j1.setHours(0,0,0,0);
-      if(activ==='primo'){
-        // Primo : prep veille + admin J1
-        var prepDate=new Date(j1.getTime()-DAY);
-        if(prepDate>=dFrom&&prepDate<=dTo) allEvents.push({date:prepDate,type:'prep',entry:entry});
-        if(j1>=dFrom&&j1<=dTo) allEvents.push({date:j1,type:'admin',entry:entry});
-      } else {
-        // entretien/rotation/postintro : cycle J3·J5·J7·J8·J10
-        pwaEventsForEntry(entry,dFrom,dTo).forEach(function(ev){
-          allEvents.push({date:ev.date,type:ev.type,entry:entry,cycle:ev.cycle});
-        });
-      }
-    });
-    // Tri : par date, puis admin avant prep (admin=matin, prep=soir)
-    allEvents.sort(function(a,b){var dt=a.date-b.date;return dt!==0?dt:(a.type==='admin'?-1:1);});
-    if(!allEvents.length){alert('Aucune activité dans cette période.\nEssayez "Mois" pour élargir la plage.');return;}
-    // Générer lignes tableau
-    var rows=allEvents.map(function(item){
-      var entry=item.entry,activ=entry.activity||'entretien';
-      var r=rates[activ]||rates.entretien||{label:activ,dose:0.2};
-      var cover=Number(entry.coverVol||entry.vol||3.8);
-      var dose=Number(r.dose||0.2);
-      var volUnit=dose*cover;
-      var isPrimo=activ==='primo';
-      var isPrep=item.type==='prep';
-      var bassin=entry.bassin||entry.bassinId||'?';
-      var dateStr=fmtD(item.date);
-      if(isPrep){
-        var adminDate=new Date(item.date.getTime()+2*DAY);
-        var prepTotal=(isPrimo?volUnit:volUnit*2)*1.04;
-        return '<tr style="background:#fffbeb">'
-          +'<td style="'+tdBase+'font-weight:600;white-space:nowrap;color:#92400e">'+dateStr+'</td>'
-          +'<td style="'+tdBase+'color:#d97706;font-weight:700">🫧 Préparer ce soir (lancer bullage) → admin le '+fmtD(adminDate)+'</td>'
-          +'<td style="'+tdBase+'">'+esc2(bassin)+'</td>'
-          +'<td style="'+tdBase+'text-align:right">'+fmt2(cover)+' m³</td>'
-          +'<td style="'+tdBase+'text-align:center;color:#9ca3af">—</td>'
-          +'<td style="'+tdBase+'text-align:right;font-weight:800;color:#d97706">'+fmt2(prepTotal)+' L (+4%)</td>'
-          +'</tr>';
-      } else {
-        var j1b=new Date(entry.j1||entry.dateDebut);j1b.setHours(0,0,0,0);
-        var jLabel='';
-        if(activ==='entretien'){
-          var diff=Math.round((item.date-j1b)/DAY);
-          var cycOff=((diff%10)+10)%10;
-          var idx=ADMIN_OFFSETS.indexOf(cycOff);
-          jLabel=' (J'+(idx>=0?ADMIN_J[idx]:(cycOff+1))+')';
-        }
-        var typeLabel='💉 '+(isPrimo?'Primo-inoculation J1':(r.label||activ)+jLabel);
-        var bg=isPrimo?'#f0f9ff':(activ==='entretien'?'#f0fdf4':'#fefce8');
-        var matinStr=isPrimo?'<span style="color:#9ca3af">—</span>':'<span style="font-weight:700;color:#0d9488">'+fmt2(volUnit)+' L</span>';
-        var soirStr='<span style="font-weight:700;color:#0d9488">'+fmt2(volUnit)+' L</span>'+(isPrimo?' <em style="font-size:9px;color:#6b7280">(dose unique soir)</em>':'');
-        return '<tr style="background:'+bg+'">'
-          +'<td style="'+tdBase+'font-weight:600;white-space:nowrap">'+dateStr+'</td>'
-          +'<td style="'+tdBase+'font-weight:700">'+typeLabel+'</td>'
-          +'<td style="'+tdBase+'">'+esc2(bassin)+'</td>'
-          +'<td style="'+tdBase+'text-align:right">'+fmt2(cover)+' m³</td>'
-          +'<td style="'+tdBase+'text-align:right">'+matinStr+'</td>'
-          +'<td style="'+tdBase+'text-align:right">'+soirStr+'</td>'
-          +'</tr>';
-      }
-    }).join('');
-    var periodLabel=fmtD(dFrom)+' → '+fmtD(dTo);
-    var w=window.open('','_blank','width=1000,height=750');
-    if(!w){alert('Autorisez les pop-ups pour exporter en PDF.');return;}
-    w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Planning PWA — '+esc2(farmName)+'</title>'
-      +'<style>*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}body{padding:16px;font-size:11px;color:#111}h1{font-size:15px;margin-bottom:3px}p.sub{font-size:10px;color:#6b7280;margin-bottom:10px}table{width:100%;border-collapse:collapse}th{background:#0d9488;color:#fff;padding:5px 8px;text-align:left;font-size:11px}td{padding:5px 7px;border-bottom:1px solid #e5e7eb}.legend{font-size:9px;color:#6b7280;margin-top:12px;line-height:1.8;border-top:1px solid #e5e7eb;padding-top:8px}@media print{button{display:none}}</style>'
-      +'</head><body>'
-      +'<h1>📋 Planning prévisionnel PWA — '+esc2(farmName)+'</h1>'
-      +'<p class="sub">Période : <strong>'+periodLabel+'</strong> · Exporté le '+new Date().toLocaleDateString('fr-FR')+' · Dose entretien : '+fmt2((rates.entretien||{dose:0.2}).dose)+' L/m³ · Primo : '+fmt2((rates.primo||{dose:4.7}).dose)+' L/m³</p>'
-      +'<table>'
-      +'<thead><tr>'
-      +'<th>Date activité</th><th>Type d\'activité</th><th>Bassin concerné</th>'
-      +'<th style="text-align:right">Vol. couvert</th>'
-      +'<th style="text-align:right">Vol. à verser Matin</th>'
-      +'<th style="text-align:right">Vol. à verser Soir / Prép.</th>'
-      +'</tr></thead>'
-      +'<tbody>'+rows+'</tbody>'
-      +'</table>'
-      +'<div class="legend">'
-      +'💉 <strong>Administration</strong> : Matin + Soir (sauf Primo-inoculation : dose unique le soir) · '
-      +'🫧 <strong>Préparation (soir)</strong> : lancer le bullage ce soir pour l\'administration du surlendemain (H+48) · '
-      +'Volume prep = (Matin + Soir) × 1,04 marge +4% · '
-      +'Entretien : J3 · J5 · J7 · J8 · J10 · Sur J3/J5/J8 : administration le matin <em>et</em> préparation le soir pour la séance suivante'
-      +'</div>'
-      +'<br><button onclick="window.print()" style="padding:6px 18px;background:#0d9488;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px">🖨️ Imprimer / Sauvegarder PDF</button>'
-      +'</body></html>');
-    w.document.close();
+  // Export PDF : délégue vers exportPWAPlanningPdf (fonction globale, évite les problèmes d'encodage IIFE)
+  window.exportPWAWeekPdf=function(){
+    if(typeof setPwaExportWeek==='function')setPwaExportWeek();
+    if(typeof exportPWAPlanningPdf==='function')exportPWAPlanningPdf();
   };
 
   // Génère le calendrier de préparation entretien J3/J5/J7/J8/J10 (vue compacte legacy)
