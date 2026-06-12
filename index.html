@@ -4766,45 +4766,79 @@ function exportPWAPlanningPdf(){
   var dFrom=new Date(fromStr);dFrom.setHours(0,0,0,0);
   var dTo=new Date(toStr);dTo.setHours(23,59,59,999);
   var DAY_LONG=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-  var MONTHS=['jan','fev','mar','avr','mai','jun','jul','aou','sep','oct','nov','dec'];
-  var fmtDLong=function(d){return DAY_LONG[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()];};
+  var MONTHS=['janvier','fevrier','mars','avril','mai','juin','juillet','aout','septembre','octobre','novembre','decembre'];
+  var fmtD=function(d){return DAY_LONG[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()];};
   var fmt2=function(v){return Number(v||0).toFixed(2).replace('.',',');};
   var esc2=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
   var dateKey=function(d){return d.toISOString().slice(0,10);};
+
+  // Build allEvents — prep items carry adminDate, admin items carry prepDate
   function cycleEvents(entry,df,dt){
     var j1s=entry.j1||entry.dateDebut;if(!j1s)return[];
     var activ=entry.activity||'entretien';
     var j1=new Date(j1s);j1.setHours(0,0,0,0);
     var evs=[];
     if(activ==='tan'){
-      TAN_ADMIN_OFF.forEach(function(off){var d=new Date(j1.getTime()+off*DAY);if(d>=df&&d<=dt)evs.push({date:d,type:'admin',entry:entry});});
-      TAN_PREP_OFF.forEach(function(off){var d=new Date(j1.getTime()+off*DAY);if(d>=df&&d<=dt)evs.push({date:d,type:'prep',entry:entry});});
+      TAN_ADMIN_OFF.forEach(function(off,idx){
+        var d=new Date(j1.getTime()+off*DAY);
+        var prepD=new Date(j1.getTime()+TAN_PREP_OFF[idx]*DAY);
+        if(d>=df&&d<=dt)evs.push({date:d,type:'admin',prepDate:prepD,entry:entry});
+      });
+      TAN_PREP_OFF.forEach(function(off,idx){
+        var d=new Date(j1.getTime()+off*DAY);
+        var adminD=new Date(j1.getTime()+TAN_ADMIN_OFF[idx]*DAY);
+        if(d>=df&&d<=dt)evs.push({date:d,type:'prep',adminDate:adminD,entry:entry});
+      });
       return evs;
     }
     for(var c=0;c<25;c++){
       var cs=new Date(j1.getTime()+c*10*DAY);
-      ADMIN_OFF.forEach(function(off){var d=new Date(cs.getTime()+off*DAY);if(d>=df&&d<=dt)evs.push({date:d,type:'admin',entry:entry});});
-      PREP_OFF.forEach(function(off){var d=new Date(cs.getTime()+off*DAY);if(d>=df&&d<=dt)evs.push({date:d,type:'prep',entry:entry});});
+      ADMIN_OFF.forEach(function(off,idx){
+        var d=new Date(cs.getTime()+off*DAY);
+        var prepD=new Date(cs.getTime()+PREP_OFF[idx]*DAY);
+        if(d>=df&&d<=dt)evs.push({date:d,type:'admin',prepDate:prepD,entry:entry});
+      });
+      PREP_OFF.forEach(function(off,idx){
+        var d=new Date(cs.getTime()+off*DAY);
+        var adminD=new Date(cs.getTime()+ADMIN_OFF[idx]*DAY);
+        if(d>=df&&d<=dt)evs.push({date:d,type:'prep',adminDate:adminD,entry:entry});
+      });
       if(cs>dt)break;
     }
     return evs;
   }
+
   var allEvents=[];
   plan.forEach(function(entry){
     var activ=entry.activity||'entretien';
     var j1s=entry.j1||entry.dateDebut;if(!j1s)return;
     var j1=new Date(j1s);j1.setHours(0,0,0,0);
     if(activ==='primo'){
-      var prep=new Date(j1.getTime()-DAY);
-      if(prep>=dFrom&&prep<=dTo)allEvents.push({date:prep,type:'prep',entry:entry});
-      if(j1>=dFrom&&j1<=dTo)allEvents.push({date:j1,type:'admin',entry:entry});
+      var prepD=new Date(j1.getTime()-DAY);
+      if(prepD>=dFrom&&prepD<=dTo)allEvents.push({date:prepD,type:'prep',adminDate:j1,entry:entry});
+      if(j1>=dFrom&&j1<=dTo)allEvents.push({date:j1,type:'admin',prepDate:prepD,entry:entry});
     } else {
       cycleEvents(entry,dFrom,dTo).forEach(function(ev){allEvents.push(ev);});
     }
   });
-  allEvents.sort(function(a,b){var dt=a.date-b.date;return dt!==0?dt:(a.type==='admin'?-1:1);});
+  allEvents.sort(function(a,b){var dt=a.date-b.date;return dt!==0?dt:(a.type==='prep'?-1:1);});
   if(!allEvents.length){alert('Aucune activite dans cette periode.\nEssayez le bouton "Mois".');return;}
-  // Grouper par date
+
+  // Assign LOT numbers — one per unique (prepDateKey|adminDateKey) pair, by chronological prep order
+  var lotMap={};var lotCounter=0;
+  var lotPairs=[];
+  allEvents.forEach(function(ev){
+    if(ev.type!=='prep')return;
+    var k=dateKey(ev.date)+'|'+dateKey(ev.adminDate);
+    if(!lotMap[k]){lotPairs.push({k:k,prepDK:dateKey(ev.date)});lotMap[k]=null;}
+  });
+  lotPairs.sort(function(a,b){return a.prepDK.localeCompare(b.prepDK);});
+  lotPairs.forEach(function(p,i){
+    lotMap[p.k]='LOT-'+(String(i+1).padStart(3,'0'));
+  });
+  function getLot(prepDK,adminDK){return lotMap[prepDK+'|'+adminDK]||'';}
+
+  // Group by date
   var byDate={};var dateOrder=[];
   allEvents.forEach(function(item){
     var dk=dateKey(item.date);
@@ -4812,124 +4846,174 @@ function exportPWAPlanningPdf(){
     if(item.type==='prep')byDate[dk].preps.push(item);
     else byDate[dk].admins.push(item);
   });
-  // Générer sections par jour
+
+  // Build HTML sections per day
   var sections=dateOrder.map(function(dk){
     var day=byDate[dk];
-    var hasPrep=day.preps.length>0;
-    var hasAdmin=day.admins.length>0;
-    var headerBg=hasPrep&&hasAdmin?'#7c3aed':(hasPrep?'#d97706':'#0d9488');
-    var headerLabel=hasPrep&&hasAdmin?'Preparation + Administration':hasPrep?'Preparation soir':'Administration soir';
     var html='';
-    // En-tete jour
-    html+='<tr><td colspan="5" style="background:'+headerBg+';color:#fff;padding:7px 10px;font-weight:700;font-size:12px">'
-      +fmtDLong(day.date)
-      +'<span style="float:right;font-size:10px;font-weight:400;opacity:.85">'+headerLabel+'</span>'
-      +'</td></tr>';
-    // Lignes prep
-    if(hasPrep){
-      var prepTotal=0;
+
+    // ——— PREPARATION section ———
+    if(day.preps.length>0){
+      // Group by adminDate (different admin dates on same night = different lots)
+      var prepByAdmin={};var adminOrder=[];
       day.preps.forEach(function(item){
-        var entry=item.entry,activ=entry.activity||'entretien';
-        var r=rates[activ]||rates.entretien||{dose:0.2};
-        var cover=Number(entry.coverVol||entry.vol||3.8);
-        var vol=Number(r.dose||0.2)*cover*1.04;
-        prepTotal+=vol;
-        var adminDate=new Date(item.date.getTime()+2*DAY);
-        var bassin=entry.bassin||entry.bassinId||'?';
+        var aDK=dateKey(item.adminDate);
+        if(!prepByAdmin[aDK]){prepByAdmin[aDK]={adminDate:item.adminDate,items:[]};adminOrder.push(aDK);}
+        prepByAdmin[aDK].items.push(item);
+      });
+      adminOrder.forEach(function(aDK){
+        var grp=prepByAdmin[aDK];
+        var lot=getLot(dk,aDK);
+        var gapH=Math.round((grp.adminDate-day.date)/3600000);
+        // Header amber — lot badge + date
+        html+='<tr>'
+          +'<td colspan="4" style="background:#92400e;color:#fff;padding:8px 10px;font-weight:700;font-size:11.5px">'
+          +'<span style="display:inline-block;background:#fbbf24;color:#78350f;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:900;margin-right:8px;vertical-align:middle">'+esc2(lot)+'</span>'
+          +'PREPARATION &nbsp;·&nbsp; '+fmtD(day.date)+' soir'
+          +'</td>'
+          +'</tr>';
+        // Sub-row : arrow to admin date
+        html+='<tr style="background:#fef3c7">'
+          +'<td colspan="4" style="padding:5px 12px;font-size:10px;color:#78350f;border-bottom:1px solid #fde68a">'
+          +'<span style="font-size:13px;margin-right:6px">&#8594;</span>'
+          +'Administration prevue : <strong>'+fmtD(grp.adminDate)+' soir</strong>'
+          +'<span style="margin-left:10px;background:#d97706;color:#fff;padding:1px 7px;border-radius:8px;font-size:9px;font-weight:700">H+'+gapH+'</span>'
+          +'</td>'
+          +'</tr>';
+        // Column labels
         html+='<tr style="background:#fffbeb">'
-          +'<td style="padding:5px 10px;font-size:10px;color:#92400e;border-bottom:1px solid #fde68a">Bullage soir</td>'
-          +'<td style="padding:5px 8px;font-size:10px;color:#d97706;border-bottom:1px solid #fde68a">Prep. pour admin du '+fmtDLong(adminDate)+'</td>'
-          +'<td style="padding:5px 8px;font-size:10px;border-bottom:1px solid #fde68a">'+esc2(bassin)+'</td>'
-          +'<td style="padding:5px 8px;font-size:10px;color:#6b7280;border-bottom:1px solid #fde68a;text-align:right">'+fmt2(cover)+' m3</td>'
-          +'<td style="padding:5px 10px;font-size:10px;font-weight:700;color:#d97706;border-bottom:1px solid #fde68a;text-align:right">'+fmt2(vol)+' L</td>'
+          +'<td style="padding:3px 10px;font-size:9px;color:#a16207;font-weight:700;border-bottom:1px solid #fde68a">BASSIN</td>'
+          +'<td style="padding:3px 8px;font-size:9px;color:#a16207;font-weight:700;border-bottom:1px solid #fde68a">ACTIVITE</td>'
+          +'<td style="padding:3px 8px;font-size:9px;color:#a16207;font-weight:700;text-align:right;border-bottom:1px solid #fde68a">VOL. COUVERT</td>'
+          +'<td style="padding:3px 10px;font-size:9px;color:#a16207;font-weight:700;text-align:right;border-bottom:1px solid #fde68a">QTE A PREPARER</td>'
+          +'</tr>';
+        var prepTotal=0;
+        grp.items.forEach(function(item){
+          var entry=item.entry,activ2=entry.activity||'entretien';
+          var r=rates[activ2]||rates.entretien||{dose:0.2};
+          var cover=Number(entry.coverVol||entry.vol||3.8);
+          var vol=Number(r.dose||0.2)*cover*1.04;
+          prepTotal+=vol;
+          var bassin=entry.bassin||entry.bassinId||'?';
+          html+='<tr style="background:#fffbeb">'
+            +'<td style="padding:5px 10px;font-size:10px;font-weight:700;border-bottom:1px solid #fde68a">'+esc2(bassin)+'</td>'
+            +'<td style="padding:5px 8px;font-size:10px;color:#d97706;border-bottom:1px solid #fde68a">'+esc2(r.label||activ2)+'</td>'
+            +'<td style="padding:5px 8px;font-size:10px;color:#6b7280;text-align:right;border-bottom:1px solid #fde68a">'+fmt2(cover)+' m&#179;</td>'
+            +'<td style="padding:5px 10px;font-size:10px;font-weight:700;color:#d97706;text-align:right;border-bottom:1px solid #fde68a">'+fmt2(vol)+' L</td>'
+            +'</tr>';
+        });
+        // TOTAL row — lot number + large qty
+        html+='<tr style="background:#fef08a">'
+          +'<td colspan="3" style="padding:7px 10px;font-size:11px;font-weight:800;color:#78350f;border-bottom:3px solid #f59e0b">'
+          +'TOTAL '+esc2(lot)+' A PREPARER CE SOIR'
+          +'</td>'
+          +'<td style="padding:7px 10px;font-size:16px;font-weight:900;color:#b45309;text-align:right;border-bottom:3px solid #f59e0b">'+fmt2(prepTotal)+' L</td>'
           +'</tr>';
       });
-      // Ligne total prep du jour
-      html+='<tr style="background:#fef3c7">'
-        +'<td colspan="4" style="padding:6px 10px;font-size:11px;font-weight:800;color:#92400e;border-bottom:2px solid #f59e0b">TOTAL A PREPARER CE SOIR</td>'
-        +'<td style="padding:6px 10px;font-size:14px;font-weight:900;color:#b45309;border-bottom:2px solid #f59e0b;text-align:right">'+fmt2(prepTotal)+' L</td>'
-        +'</tr>';
     }
-    // Lignes admin
-    if(hasAdmin){
+
+    // ——— APPLICATION section ———
+    if(day.admins.length>0){
+      // Group by prepDate (different prep origins)
+      var adminByPrep={};var prepOrder=[];
       day.admins.forEach(function(item){
-        var entry=item.entry,activ=entry.activity||'entretien';
-        var r=rates[activ]||rates.entretien||{dose:0.2};
-        var cover=Number(entry.coverVol||entry.vol||3.8);
-        var vol=Number(r.dose||0.2)*cover;
-        var bassin=entry.bassin||entry.bassinId||'?';
-        var j1b=new Date(entry.j1||entry.dateDebut);j1b.setHours(0,0,0,0);
-        var jLabel='';
-        if(activ==='entretien'){var diff=Math.round((item.date-j1b)/DAY);var cycOff=((diff%10)+10)%10;var idx=ADMIN_OFF.indexOf(cycOff);jLabel=' J'+(idx>=0?ADMIN_J[idx]:(cycOff+1));}
-        else if(activ==='tan'){var diff=Math.round((item.date-j1b)/DAY);var idx=TAN_ADMIN_OFF.indexOf(diff);jLabel=' J'+(idx>=0?TAN_J[idx]:(diff+1));}
-        else if(activ==='primo'){jLabel=' J1';}
-        var bg=activ==='primo'?'#f0f9ff':(activ==='entretien'?'#f0fdf4':(activ==='tan'?'#fff7ed':'#fefce8'));
-        html+='<tr style="background:'+bg+'">'
-          +'<td style="padding:5px 10px;font-size:10px;color:#0d9488;font-weight:700;border-bottom:1px solid #d1fae5">Admin soir'+jLabel+'</td>'
-          +'<td style="padding:5px 8px;font-size:10px;font-weight:600;border-bottom:1px solid #d1fae5">'+esc2(r.label||activ)+'</td>'
-          +'<td style="padding:5px 8px;font-size:10px;border-bottom:1px solid #d1fae5">'+esc2(bassin)+'</td>'
-          +'<td style="padding:5px 8px;font-size:10px;color:#6b7280;border-bottom:1px solid #d1fae5;text-align:right">'+fmt2(cover)+' m3</td>'
-          +'<td style="padding:5px 10px;font-size:11px;font-weight:800;color:#0d9488;border-bottom:1px solid #d1fae5;text-align:right">'+fmt2(vol)+' L</td>'
+        var pDK=item.prepDate?dateKey(item.prepDate):'?';
+        if(!adminByPrep[pDK]){adminByPrep[pDK]={prepDate:item.prepDate,items:[]};prepOrder.push(pDK);}
+        adminByPrep[pDK].items.push(item);
+      });
+      prepOrder.forEach(function(pDK){
+        var grp2=adminByPrep[pDK];
+        var lot=getLot(pDK,dk);
+        // Header teal — lot badge + date
+        html+='<tr>'
+          +'<td colspan="4" style="background:#0f766e;color:#fff;padding:8px 10px;font-weight:700;font-size:11.5px">'
+          +'<span style="display:inline-block;background:#5eead4;color:#134e4a;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:900;margin-right:8px;vertical-align:middle">'+esc2(lot)+'</span>'
+          +'APPLICATION &nbsp;·&nbsp; '+fmtD(day.date)+' soir'
+          +'</td>'
           +'</tr>';
+        // Sub-row : prep date reference
+        var prepDRef=grp2.prepDate?fmtD(grp2.prepDate)+' soir':'?';
+        html+='<tr style="background:#f0fdf4">'
+          +'<td colspan="4" style="padding:5px 12px;font-size:10px;color:#0f766e;border-bottom:1px solid #bbf7d0">'
+          +'<span style="font-size:13px;margin-right:6px">&#8592;</span>'
+          +'Lot prepare le : <strong>'+prepDRef+'</strong>'
+          +'</td>'
+          +'</tr>';
+        // Column labels
+        html+='<tr style="background:#f0fdf4">'
+          +'<td style="padding:3px 10px;font-size:9px;color:#0f766e;font-weight:700;border-bottom:1px solid #bbf7d0">BASSIN</td>'
+          +'<td style="padding:3px 8px;font-size:9px;color:#0f766e;font-weight:700;border-bottom:1px solid #bbf7d0">ACTIVITE</td>'
+          +'<td style="padding:3px 8px;font-size:9px;color:#0f766e;font-weight:700;text-align:right;border-bottom:1px solid #bbf7d0">VOL. COUVERT</td>'
+          +'<td style="padding:3px 10px;font-size:9px;color:#0f766e;font-weight:700;text-align:right;border-bottom:1px solid #bbf7d0">DOSE A VERSER</td>'
+          +'</tr>';
+        grp2.items.forEach(function(item){
+          var entry=item.entry,activ2=entry.activity||'entretien';
+          var r=rates[activ2]||rates.entretien||{dose:0.2};
+          var cover=Number(entry.coverVol||entry.vol||3.8);
+          var vol=Number(r.dose||0.2)*cover;
+          var bassin=entry.bassin||entry.bassinId||'?';
+          var j1b=new Date(entry.j1||entry.dateDebut);j1b.setHours(0,0,0,0);
+          var jLabel='';
+          if(activ2==='entretien'){var diff2=Math.round((item.date-j1b)/DAY);var co=((diff2%10)+10)%10;var ix=ADMIN_OFF.indexOf(co);jLabel=' J'+(ix>=0?ADMIN_J[ix]:(co+1));}
+          else if(activ2==='tan'){var diff2=Math.round((item.date-j1b)/DAY);var ix=TAN_ADMIN_OFF.indexOf(diff2);jLabel=' J'+(ix>=0?TAN_J[ix]:(diff2+1));}
+          else if(activ2==='primo'){jLabel=' J1';}
+          html+='<tr style="background:#f0fdf4">'
+            +'<td style="padding:5px 10px;font-size:10px;font-weight:700;border-bottom:1px solid #bbf7d0">'+esc2(bassin)+'</td>'
+            +'<td style="padding:5px 8px;font-size:10px;color:#0d9488;border-bottom:1px solid #bbf7d0">'+esc2(r.label||activ2)+jLabel+'</td>'
+            +'<td style="padding:5px 8px;font-size:10px;color:#6b7280;text-align:right;border-bottom:1px solid #bbf7d0">'+fmt2(cover)+' m&#179;</td>'
+            +'<td style="padding:5px 10px;font-size:11px;font-weight:800;color:#0d9488;text-align:right;border-bottom:1px solid #bbf7d0">'+fmt2(vol)+' L</td>'
+            +'</tr>';
+        });
       });
     }
-    // Espaceur
-    html+='<tr><td colspan="5" style="height:6px;background:#f9fafb"></td></tr>';
+
+    // Spacer between days
+    html+='<tr><td colspan="4" style="height:10px;background:#f3f4f6"></td></tr>';
     return html;
   }).join('');
-  var periodLabel=fmtDLong(dFrom)+' au '+fmtDLong(dTo);
-  var w=window.open('','_blank','width=820,height=750');
+
+  var periodLabel=fmtD(dFrom)+' au '+fmtD(dTo);
+  var w=window.open('','_blank','width=820,height=780');
   if(!w){alert('Autorisez les pop-ups pour exporter en PDF.');return;}
   w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Planning PWA - '+esc2(farmName)+'</title>'
     +'<style>'
     +'*{margin:0;padding:0;box-sizing:border-box}'
-    +'body{font-family:Arial,sans-serif;font-size:11px;color:#111;background:#f9fafb;padding:0}'
-    +'.page{max-width:800px;margin:0 auto;background:#fff;padding:20px 24px}'
-    +'.header{border-left:4px solid #0d9488;padding-left:12px;margin-bottom:14px}'
-    +'.header h1{font-size:17px;color:#0d9488;margin-bottom:2px}'
-    +'.header p{font-size:10px;color:#6b7280}'
-    +'.seq-box{background:#f0fdf4;border:1px solid #6ee7b7;border-radius:6px;padding:8px 12px;margin-bottom:14px;font-size:10px}'
-    +'.seq-box strong{color:#0d9488}'
-    +'.seq-steps{display:flex;gap:0;margin-top:4px}'
-    +'.seq-step{flex:1;text-align:center;padding:4px 6px;background:#0d9488;color:#fff;font-size:10px;font-weight:700}'
-    +'.seq-step:first-child{border-radius:4px 0 0 4px}'
-    +'.seq-step:last-child{border-radius:0 4px 4px 0}'
-    +'.seq-step.amber{background:#d97706}'
-    +'.seq-step.gray{background:#6b7280}'
-    +'.seq-arrow{align-self:center;color:#9ca3af;font-size:10px;padding:0 2px}'
+    +'body{font-family:Arial,sans-serif;font-size:11px;color:#111;background:#f9fafb}'
+    +'.page{max-width:780px;margin:0 auto;background:#fff;padding:22px 26px}'
+    +'.hdr{border-left:5px solid #0d9488;padding-left:14px;margin-bottom:16px}'
+    +'.hdr h1{font-size:18px;color:#0d9488;font-weight:800;margin-bottom:3px}'
+    +'.hdr p{font-size:10px;color:#6b7280}'
+    +'.seq-box{background:#f0fdf4;border:1px solid #6ee7b7;border-radius:7px;padding:9px 13px;margin-bottom:16px}'
+    +'.seq-box b{color:#0f766e;font-size:10px}'
+    +'.seq-steps{display:flex;align-items:center;gap:3px;margin-top:5px}'
+    +'.ss{flex:1;text-align:center;padding:5px 3px;border-radius:5px;color:#fff;font-size:9.5px;font-weight:800;line-height:1.4}'
+    +'.sa{color:#9ca3af;font-size:12px;flex-shrink:0;padding:0 1px}'
     +'table{width:100%;border-collapse:collapse}'
-    +'th{background:#0d9488;color:#fff;padding:6px 10px;text-align:left;font-size:10px;font-weight:700}'
-    +'.legend{font-size:9px;color:#9ca3af;margin-top:14px;line-height:1.7;padding-top:8px;border-top:1px solid #e5e7eb}'
-    +'@media print{body{background:#fff}.page{padding:12px}button{display:none}}'
+    +'.leg{font-size:9px;color:#9ca3af;margin-top:16px;line-height:1.9;padding-top:9px;border-top:1px solid #e5e7eb}'
+    +'@media print{body{background:#fff}.page{padding:14px 16px}button{display:none}}'
     +'</style></head><body>'
     +'<div class="page">'
-    +'<div class="header">'
+    +'<div class="hdr">'
     +'<h1>Planning previsionnel PWA</h1>'
-    +'<p>Ferme : <strong>'+esc2(farmName)+'</strong> &nbsp;|&nbsp; Periode : <strong>'+periodLabel+'</strong> &nbsp;|&nbsp; Exporte le '+new Date().toLocaleDateString('fr-FR')+'</p>'
+    +'<p>Ferme : <strong>'+esc2(farmName)+'</strong> &nbsp;&#183;&nbsp; Periode : <strong>'+periodLabel+'</strong> &nbsp;&#183;&nbsp; Exporte le '+new Date().toLocaleDateString('fr-FR')+'</p>'
     +'</div>'
     +'<div class="seq-box">'
-    +'<strong>Sequence obligatoire d\'application (le soir)</strong>'
-    +'<div class="seq-steps" style="margin-top:6px">'
-    +'<div class="seq-step amber">PWA<br><span style="font-weight:400;font-size:9px">T+0</span></div>'
-    +'<div class="seq-arrow">→</div>'
-    +'<div class="seq-step">BC100+<br><span style="font-weight:400;font-size:9px">T+1h</span></div>'
-    +'<div class="seq-arrow">→</div>'
-    +'<div class="seq-step">BC100<br><span style="font-weight:400;font-size:9px">T+2h</span></div>'
-    +'<div class="seq-arrow">→</div>'
-    +'<div class="seq-step" style="background:#b45309">Melasse<br><span style="font-weight:400;font-size:9px">T+4h min.</span></div>'
+    +'<b>Sequence obligatoire d\'administration (chaque soir d\'application)</b>'
+    +'<div class="seq-steps">'
+    +'<div class="ss" style="background:#d97706">PWA<br><span style="font-weight:400;font-size:8.5px">T + 0</span></div>'
+    +'<div class="sa">&#8594;</div>'
+    +'<div class="ss" style="background:#0d9488">BC100+<br><span style="font-weight:400;font-size:8.5px">T + 1h</span></div>'
+    +'<div class="sa">&#8594;</div>'
+    +'<div class="ss" style="background:#0d9488">BC100<br><span style="font-weight:400;font-size:8.5px">T + 2h</span></div>'
+    +'<div class="sa">&#8594;</div>'
+    +'<div class="ss" style="background:#7c3aed">Melasse<br><span style="font-weight:400;font-size:8.5px">T + 4h min.</span></div>'
     +'</div></div>'
-    +'<table>'
-    +'<thead><tr>'
-    +'<th>Moment</th><th>Activite</th><th>Bassin</th>'
-    +'<th style="text-align:right">Vol. couvert</th>'
-    +'<th style="text-align:right">Quantite (L)</th>'
-    +'</tr></thead>'
-    +'<tbody>'+sections+'</tbody>'
-    +'</table>'
-    +'<div class="legend">'
-    +'Bullage : lancer H+48 avant administration &nbsp;|&nbsp; Quantites prep = dose x vol x 1,04 (+4% marge) &nbsp;|&nbsp; Entretien J3-J5-J7-J8-J10 &nbsp;|&nbsp; Test Maturite TAN J12-J14'
+    +'<table><tbody>'+sections+'</tbody></table>'
+    +'<div class="leg">'
+    +'<strong>PREPARATION</strong> : dose x vol. couvert x 1,04 (marge +4%) &nbsp;&#183;&nbsp; Activation ~36-48h avant administration &nbsp;&#183;&nbsp; Entretien J3·J5·J7·J8·J10 &nbsp;&#183;&nbsp; Test Maturite TAN J12·J14<br>'
+    +'<strong>SUIVI LOTS</strong> : chaque badge LOT-XXX relie la preparation a son administration — conserver ce document comme registre de traitement'
     +'</div>'
-    +'<br><button onclick="window.print()" style="padding:8px 20px;background:#0d9488;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700">Imprimer / Sauvegarder PDF</button>'
+    +'<br><button onclick="window.print()" style="padding:8px 22px;background:#0d9488;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700">Imprimer / Sauvegarder PDF</button>'
     +'</div>'
     +'</body></html>');
   w.document.close();
