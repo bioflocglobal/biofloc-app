@@ -4701,10 +4701,8 @@ function calcPWA(){
     +'<button class="sbtn" onclick="setPwaExportWeek()" style="font-size:10px;padding:4px 6px">Sem.</button>'
     +'<button class="sbtn" onclick="setPwaExportMonth()" style="font-size:10px;padding:4px 6px">Mois</button>'
     +'</div>'
-    +'<div style="display:flex;gap:.4rem">'
-    +'<button class="sbtn" onclick="exportPWAPlanningPdf()" style="font-size:11px;flex:1">📄 Planning prévisionnel</button>'
-    +'<button class="sbtn" style="font-size:11px;flex:1;background:rgba(0,212,180,.2);border-color:var(--acc)" onclick="enregistrerConsommationPWA('+total.toFixed(4)+')">✅ → Comptabilité</button>'
-    +'</div></div>';
+    +'<button class="sbtn" onclick="exportPWAPlanningPdf()" style="font-size:11px;width:100%">📄 Planning prévisionnel</button>'
+    +'</div>';
   if(typeof setPwaExportWeek==='function')setPwaExportWeek();
   // Rafraîchir aussi le calendrier mensuel
   setTimeout(function(){if(typeof window.renderPWAMonthlyCalendar==='function')window.renderPWAMonthlyCalendar();},30);
@@ -4758,14 +4756,23 @@ function exportPWAPlanningPdf(){
   var farmName=(window.APP&&APP.state&&APP.state.farmName)||'Ferme';
   var DAY=86400000;
   // Offsets relatifs à la date sélectionnée = premier jour d'administration
-  // Entretien : selectedDate = J3 (premier admin)
+  // Entretien : selectedDate = J3 (premier admin) — NON RÉCURRENT
   var ADMIN_OFF=[0,2,4,5,7];   // J3=+0, J5=+2, J7=+4, J8=+5, J10=+7
   var PREP_OFF=[-2,0,2,3,5];   // prép 2j avant chaque admin
   var ADMIN_J=[3,5,7,8,10];
-  // TAN : selectedDate = J12 (premier admin)
+  // TAN : selectedDate = J12 — NON RÉCURRENT
   var TAN_ADMIN_OFF=[0,2];     // J12=+0, J14=+2
-  var TAN_PREP_OFF=[-2,0];     // prép 2j avant J12 et J14
+  var TAN_PREP_OFF=[-2,0];
   var TAN_J=[12,14];
+  // Postintro : selectedDate = J14 — 4 sessions sur 7j, NON RÉCURRENT
+  var POST_ADMIN_OFF=[0,2,4,7];  // J14, J16, J18, J21
+  var POST_PREP_OFF=[-2,0,2,5];
+  // Rotation : 2x/semaine ~48-72h écart — RÉCURRENT indéfiniment
+  // Cycle de 7j : admin J+0 et J+3, prep J-2 et J+1
+  var ROT_ADMIN_OFF=[0,3];
+  var ROT_PREP_OFF=[-2,1];
+  // Abréviations activité pour chips APPLI
+  var ACT_ABBR={primo:'PRIMO',entretien:'ENT',tan:'TAN',rotation:'ROT',postintro:'POST'};
   var dFrom=new Date(fromStr);dFrom.setHours(0,0,0,0);
   var dTo=new Date(toStr);dTo.setHours(23,59,59,999);
   var DAY_LONG=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
@@ -4776,38 +4783,42 @@ function exportPWAPlanningPdf(){
   var dateKey=function(d){return d.toISOString().slice(0,10);};
 
   // Build allEvents — prep items carry adminDate, admin items carry prepDate
+  function pushAdminPrep(evs,adminOffs,prepOffs,base,df,dt,entry){
+    adminOffs.forEach(function(off,idx){
+      var d=new Date(base.getTime()+off*DAY);
+      var prepD=new Date(base.getTime()+prepOffs[idx]*DAY);
+      if(d>=df&&d<=dt)evs.push({date:d,type:'admin',prepDate:prepD,entry:entry});
+    });
+    prepOffs.forEach(function(off,idx){
+      var d=new Date(base.getTime()+off*DAY);
+      var adminD=new Date(base.getTime()+adminOffs[idx]*DAY);
+      if(d>=df&&d<=dt)evs.push({date:d,type:'prep',adminDate:adminD,entry:entry});
+    });
+  }
   function cycleEvents(entry,df,dt){
     var j1s=entry.j1||entry.dateDebut;if(!j1s)return[];
     var activ=entry.activity||'entretien';
     var j1=new Date(j1s);j1.setHours(0,0,0,0);
     var evs=[];
     if(activ==='tan'){
-      TAN_ADMIN_OFF.forEach(function(off,idx){
-        var d=new Date(j1.getTime()+off*DAY);
-        var prepD=new Date(j1.getTime()+TAN_PREP_OFF[idx]*DAY);
-        if(d>=df&&d<=dt)evs.push({date:d,type:'admin',prepDate:prepD,entry:entry});
-      });
-      TAN_PREP_OFF.forEach(function(off,idx){
-        var d=new Date(j1.getTime()+off*DAY);
-        var adminD=new Date(j1.getTime()+TAN_ADMIN_OFF[idx]*DAY);
-        if(d>=df&&d<=dt)evs.push({date:d,type:'prep',adminDate:adminD,entry:entry});
-      });
+      pushAdminPrep(evs,TAN_ADMIN_OFF,TAN_PREP_OFF,j1,df,dt,entry);
       return evs;
     }
-    for(var c=0;c<25;c++){
-      var cs=new Date(j1.getTime()+c*10*DAY);
-      ADMIN_OFF.forEach(function(off,idx){
-        var d=new Date(cs.getTime()+off*DAY);
-        var prepD=new Date(cs.getTime()+PREP_OFF[idx]*DAY);
-        if(d>=df&&d<=dt)evs.push({date:d,type:'admin',prepDate:prepD,entry:entry});
-      });
-      PREP_OFF.forEach(function(off,idx){
-        var d=new Date(cs.getTime()+off*DAY);
-        var adminD=new Date(cs.getTime()+ADMIN_OFF[idx]*DAY);
-        if(d>=df&&d<=dt)evs.push({date:d,type:'prep',adminDate:adminD,entry:entry});
-      });
-      if(cs>dt)break;
+    if(activ==='postintro'){
+      pushAdminPrep(evs,POST_ADMIN_OFF,POST_PREP_OFF,j1,df,dt,entry);
+      return evs;
     }
+    if(activ==='rotation'){
+      // Récurrent : cycle de 7j (ROT_ADMIN_OFF=[0,3]), jusqu'à fin de plage
+      for(var c=0;c<104;c++){
+        var cs=new Date(j1.getTime()+c*7*DAY);
+        if(cs>dt)break;
+        pushAdminPrep(evs,ROT_ADMIN_OFF,ROT_PREP_OFF,cs,df,dt,entry);
+      }
+      return evs;
+    }
+    // entretien (et autres non listés) : une seule occurrence
+    pushAdminPrep(evs,ADMIN_OFF,PREP_OFF,j1,df,dt,entry);
     return evs;
   }
 
@@ -5070,7 +5081,8 @@ function exportPWAPlanningPdf(){
       // admin: toujours ajouter même si lot inconnu (prep hors plage)
       var lot=getLot(dateKey(ev.prepDate||new Date(0)),dateKey(ev.date));
       var vol=dose*cover;
-      addCalItem(dateKey(ev.date),{type:'admin',lot:lot,bassin:bassin,vol:vol});
+      var abbr=ACT_ABBR[activ2]||activ2.slice(0,4).toUpperCase();
+      addCalItem(dateKey(ev.date),{type:'admin',lot:lot,bassin:bassin,vol:vol,abbr:abbr});
     }
   });
   // Table condensée récap lots
@@ -5151,7 +5163,7 @@ function exportPWAPlanningPdf(){
           // ADMIN chips (per bassin, individual vol)
           dayC.admins.forEach(function(a){
             html+='<div class="cal-chip" style="background:#0f766e">'
-              +'<span class="cal-chip-lbl">APPLI</span>'
+              +'<span class="cal-chip-lbl">'+(a.abbr||'APPLI')+'</span>'
               +'<span class="cal-chip-lot">'+(a.lot?esc2(a.lot)+' · ':'')+esc2(a.bassin)+'</span>'
               +'<span class="cal-chip-vol">'+fmt2(a.vol)+'L</span>'
               +'</div>';
@@ -5170,93 +5182,79 @@ function exportPWAPlanningPdf(){
   var calHtml=months.map(function(m){return buildMonthCal(m.year,m.month);}).join('');
 
   var periodLabel=fmtD(dFrom)+' au '+fmtD(dTo);
-  var w=window.open('','_blank','width=900,height=800');
+  var w=window.open('','_blank','width=1100,height=800');
   if(!w){alert('Autorisez les pop-ups pour exporter en PDF.');return;}
   w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Planning PWA - '+esc2(farmName)+'</title>'
     +'<style>'
     +'*{margin:0;padding:0;box-sizing:border-box}'
-    +'body{font-family:Arial,sans-serif;font-size:11px;color:#111;background:#f9fafb}'
-    +'.page{max-width:780px;margin:0 auto;background:#fff;padding:22px 26px}'
-    +'.hdr{border-left:5px solid #0d9488;padding-left:14px;margin-bottom:16px}'
-    +'.hdr h1{font-size:18px;color:#0d9488;font-weight:800;margin-bottom:3px}'
-    +'.hdr p{font-size:10px;color:#6b7280}'
-    +'.seq-box{background:#f0fdf4;border:1px solid #6ee7b7;border-radius:7px;padding:9px 13px;margin-bottom:16px}'
-    +'.seq-box b{color:#0f766e;font-size:10px}'
-    +'.seq-steps{display:flex;align-items:center;gap:3px;margin-top:5px}'
-    +'.ss{flex:1;text-align:center;padding:5px 3px;border-radius:5px;color:#fff;font-size:9.5px;font-weight:800;line-height:1.4}'
-    +'.sa{color:#9ca3af;font-size:12px;flex-shrink:0;padding:0 1px}'
+    +'html,body{height:100%}'
+    +'body{font-family:Arial,sans-serif;font-size:12px;color:#111;background:#fff}'
+    +'@page{size:A4 landscape;margin:8mm}'
+    +'.cover{height:100vh;display:flex;flex-direction:column;justify-content:space-between;padding:10px 14px;page-break-after:always}'
+    +'.hdr{border-left:5px solid #0d9488;padding-left:12px;display:flex;justify-content:space-between;align-items:flex-end}'
+    +'.hdr-left h1{font-size:18px;color:#0d9488;font-weight:800;margin-bottom:2px}'
+    +'.hdr-left p{font-size:10px;color:#6b7280}'
+    +'.seq-inline{display:flex;align-items:center;gap:4px}'
+    +'.si{text-align:center;padding:5px 8px;border-radius:4px;color:#fff;font-size:9px;font-weight:800;line-height:1.3}'
+    +'.sa{color:#9ca3af;font-size:13px}'
     +'table{width:100%;border-collapse:collapse}'
-    +'.leg{font-size:9px;color:#9ca3af;margin-top:16px;line-height:1.9;padding-top:9px;border-top:1px solid #e5e7eb}'
-    /* Calendar styles */
-    +'.cal-page{max-width:1050px;margin:0 auto;background:#fff;padding:18px 20px}'
-    +'.cal-page-hdr{border-left:5px solid #0d9488;padding-left:14px;margin-bottom:18px}'
-    +'.cal-page-hdr h2{font-size:16px;color:#0d9488;font-weight:800}'
-    +'.cal-page-hdr p{font-size:10px;color:#6b7280;margin-top:2px}'
-    +'.cal-legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px}'
+    +'.sum-tbl th{background:#f3f4f6;padding:5px 8px;font-size:9px;text-align:left;border-bottom:1px solid #e5e7eb}'
+    +'.sum-tbl td{padding:4px 8px;font-size:9px;border-bottom:1px solid #f3f4f6}'
+    +'.cal-legend{display:flex;gap:14px;flex-wrap:wrap}'
     +'.cal-legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:#374151}'
-    +'.cal-legend-dot{width:12px;height:12px;border-radius:3px}'
-    +'.cal-month{margin-bottom:24px}'
-    +'.cal-month-title{font-size:13px;font-weight:800;color:#1f2937;margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid #0d9488}'
-    +'.cal-table{width:100%;border-collapse:collapse;table-layout:fixed}'
-    +'.cal-th{padding:5px 3px;font-size:10px;font-weight:700;text-align:center;background:#0d9488;color:#fff;border:1px solid #0f766e}'
+    +'.cal-legend-dot{width:12px;height:12px;border-radius:2px;flex-shrink:0}'
+    +'.cal-month{height:100vh;display:flex;flex-direction:column;padding:8px 10px;page-break-before:always;page-break-inside:avoid;break-inside:avoid}'
+    +'.cal-month-title{font-size:16px;font-weight:800;color:#1f2937;margin-bottom:4px;padding-bottom:4px;border-bottom:3px solid #0d9488;flex-shrink:0}'
+    +'.cal-table{flex:1;border-collapse:collapse;table-layout:fixed;width:100%;height:1px}'
+    +'.cal-th{padding:6px 3px;font-size:11px;font-weight:700;text-align:center;background:#0d9488;color:#fff;border:1px solid #0f766e}'
     +'.cal-th.cal-we{background:#e5e7eb;color:#6b7280}'
-    +'.cal-day{vertical-align:top;padding:3px 4px;border:1px solid #e5e7eb;background:#fff;min-height:62px}'
-    +'.cal-day.cal-out{background:#f9fafb}'
+    +'.cal-table tbody{height:100%}'
+    +'.cal-table tr{height:1%}'
+    +'.cal-day{vertical-align:top;padding:4px 4px;border:1px solid #e5e7eb;background:#fff}'
+    +'.cal-day.cal-out{background:#fafafa}'
     +'.cal-day.cal-today{background:#eff6ff;border-color:#3b82f6}'
-    +'.cal-daynum{font-size:10px;font-weight:700;color:#374151;margin-bottom:2px}'
+    +'.cal-daynum{font-size:11px;font-weight:700;color:#374151;margin-bottom:2px}'
     +'.cal-daynum.cal-we-num{color:#9ca3af}'
     +'.cal-out .cal-daynum{color:#d1d5db}'
     +'.cal-chip{border-radius:3px;padding:2px 4px;margin-bottom:2px;display:flex;align-items:center;gap:3px}'
-    +'.cal-chip-lbl{font-size:7.5px;font-weight:900;color:#fff;flex-shrink:0}'
-    +'.cal-chip-lot{font-size:7.5px;font-weight:700;color:rgba(255,255,255,.85);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}'
-    +'.cal-chip-vol{font-size:7px;font-weight:700;color:rgba(255,255,255,.9);white-space:nowrap;flex-shrink:0}'
-    +'@media print{'
-    +'body{background:#fff}'
-    +'.page{padding:12px 14px}'
-    +'button{display:none}'
-    +'.cal-break{page-break-before:always}'
-    +'@page cal{size:A4 landscape}'
-    +'.cal-page{page:cal;padding:10px 12px;max-width:none}'
-    +'}'
+    +'.cal-chip-lbl{font-size:8.5px;font-weight:900;color:#fff;flex-shrink:0}'
+    +'.cal-chip-lot{font-size:8px;font-weight:700;color:rgba(255,255,255,.9);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}'
+    +'.cal-chip-vol{font-size:8px;font-weight:700;color:rgba(255,255,255,.9);white-space:nowrap;flex-shrink:0}'
+    +'@media print{button{display:none}}'
     +'</style></head><body>'
-    /* ——— PAGE 1 : Planning détaillé ——— */
-    +'<div class="page">'
+    /* Page de couverture : en-tête + récap + légende */
+    +'<div class="cover">'
     +'<div class="hdr">'
-    +'<h1>Planning previsionnel PWA &mdash; Detail</h1>'
+    +'<div class="hdr-left">'
+    +'<h1>Planning previsionnel PWA</h1>'
     +'<p>Ferme : <strong>'+esc2(farmName)+'</strong> &nbsp;&#183;&nbsp; Periode : <strong>'+periodLabel+'</strong> &nbsp;&#183;&nbsp; Exporte le '+new Date().toLocaleDateString('fr-FR')+'</p>'
     +'</div>'
-    +'<div class="seq-box">'
-    +'<b>Sequence d\'administration (chaque soir d\'application)</b>'
-    +'<div class="seq-steps">'
-    +'<div class="ss" style="background:#d97706">PWA<br><span style="font-weight:400;font-size:8.5px">T + 0</span></div>'
+    +'<div class="seq-inline">'
+    +'<div class="si" style="background:#ca8a04">PREP<br><span style="font-weight:400;font-size:7.5px">J-2</span></div>'
     +'<div class="sa">&#8594;</div>'
-    +'<div class="ss" style="background:#0d9488">BC100+<br><span style="font-weight:400;font-size:8.5px">T + 1h</span></div>'
+    +'<div class="si" style="background:#dc2626">BULL<br><span style="font-weight:400;font-size:7.5px">J-1</span></div>'
     +'<div class="sa">&#8594;</div>'
-    +'<div class="ss" style="background:#0d9488">BC100<br><span style="font-weight:400;font-size:8.5px">T + 2h</span></div>'
+    +'<div class="si" style="background:#0d9488">APPLI<br><span style="font-weight:400;font-size:7.5px">J0</span></div>'
+    +'<div class="sa" style="margin:0 8px;color:#d1d5db">|</div>'
+    +'<div class="si" style="background:#d97706">PWA<br><span style="font-weight:400;font-size:7.5px">T+0</span></div>'
     +'<div class="sa">&#8594;</div>'
-    +'<div class="ss" style="background:#7c3aed">Melasse<br><span style="font-weight:400;font-size:8.5px">T + 4h min.</span></div>'
+    +'<div class="si" style="background:#0d9488">BC100+<br><span style="font-weight:400;font-size:7.5px">T+1h</span></div>'
+    +'<div class="sa">&#8594;</div>'
+    +'<div class="si" style="background:#0d9488">BC100<br><span style="font-weight:400;font-size:7.5px">T+2h</span></div>'
+    +'<div class="sa">&#8594;</div>'
+    +'<div class="si" style="background:#7c3aed">Melasse<br><span style="font-weight:400;font-size:7.5px">T+4h</span></div>'
     +'</div></div>'
     +sumHtml
-    +'<table><tbody>'+sections+'</tbody></table>'
-    +'<div class="leg">'
-    +'<strong>BULLAGE/PREP</strong> : dose x vol. couvert x 1,04 (+4% marge) &nbsp;&#183;&nbsp; 3 phases : PREP J-2 soir &#8594; BULLAGE J-1 soir &#8594; APPLICATION J0 soir &nbsp;&#183;&nbsp; Entretien J3·J5·J7·J8·J10 &nbsp;&#183;&nbsp; TAN J12·J14<br>'
-    +'<strong>LOTS</strong> : chaque badge LOT-XXX trace la preparation jusqu\'a l\'administration &mdash; registre de traitement'
-    +'</div>'
-    +'</div>'
-    /* ——— PAGE 2 : Calendrier (paysage) ——— */
-    +'<div class="cal-break cal-page">'
-    +'<div class="cal-page-hdr">'
-    +'<h2>Vue calendrier &mdash; Planning PWA</h2>'
-    +'<p>Ferme : <strong>'+esc2(farmName)+'</strong> &nbsp;&#183;&nbsp; Periode : <strong>'+periodLabel+'</strong></p>'
-    +'</div>'
     +'<div class="cal-legend">'
     +'<div class="cal-legend-item"><div class="cal-legend-dot" style="background:#ca8a04"></div>PREP &mdash; Preparation initiale J-2 soir</div>'
     +'<div class="cal-legend-item"><div class="cal-legend-dot" style="background:#dc2626"></div>BULL &mdash; Bullage / Aeration J-1 soir</div>'
     +'<div class="cal-legend-item"><div class="cal-legend-dot" style="background:#0f766e"></div>APPLI &mdash; Administration au bassin</div>'
+    +'<div class="cal-legend-item" style="margin-left:auto;font-size:9px;color:#9ca3af">Rotation = recurrent &nbsp;&#183;&nbsp; Primo / Entretien / TAN / Post-intro = occurrence unique</div>'
     +'</div>'
+    +'<button onclick="window.print()" style="padding:8px 22px;background:#0d9488;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700;align-self:flex-start">Imprimer / Sauvegarder PDF (paysage A4)</button>'
+    +'</div>'
+    /* Un div par mois, chacun pleine page */
     +calHtml
-    +'</div>'
-    +'<br><button onclick="window.print()" style="margin:16px;padding:8px 22px;background:#0d9488;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700">Imprimer / Sauvegarder PDF</button>'
     +'</body></html>');
   w.document.close();
 }
@@ -6791,13 +6789,32 @@ function calcCharges(){
     +'</div>';
 }
 
-function upComptaSynthese(){
+async function upComptaSynthese(){
   const pVente=fv('c-vente')||4000,tarif=fv('c-elec')||120,watts=fv('c-watts')||150;
   const heures=fv('c-heures')||24,eau=fv('c-eau')||25000,batiment=fv('c-batiment')||150000;
   const mo=fv('c-mo')||100000,duree=fv('c-duree')||154,autres=fv('c-autres')||50000;
   const cElecJour=(watts/1000)*heures*tarif;
   const nBassins=APP.state.bassins.filter(b=>b.statut==='Actif').length||1;
   const fixeParBassin=(cElecJour*duree+(eau+batiment+mo*(duree/30)+autres)/nBassins);
+
+  // Cumul historique du probiot par bassin sur la période (duree jours)
+  const probiotHistory={};
+  try{
+    const endD=new Date();
+    const startD=new Date(endD);startD.setDate(startD.getDate()-Math.round(duree));
+    const endStr=endD.toISOString().slice(0,10);
+    const startStr=startD.toISOString().slice(0,10);
+    const snap=await farmCol('daily')
+      .where(firebase.firestore.FieldPath.documentId(),'>=',startStr)
+      .where(firebase.firestore.FieldPath.documentId(),'<=',endStr)
+      .get();
+    snap.forEach(doc=>{
+      (doc.data().bassins||[]).forEach(bh=>{
+        if(bh.name&&bh.probiot>0)
+          probiotHistory[bh.name]=(probiotHistory[bh.name]||0)+(bh.probiot||0);
+      });
+    });
+  }catch(e){/* fallback to estimate below */}
 
   const tb=G('compta-tbody');if(!tb)return;tb.innerHTML='';
   let tAlim=0,tProbio=0,tCarb=0,tBas=0,tElec=0,tFixe=0,tCout=0,tRev=0,tM=0,tBio=0;
@@ -6808,10 +6825,11 @@ function upComptaSynthese(){
     const feedItem=APP_INTRANTS.find(i=>i.category==='aliment'&&(i.id===c.ft||i.feedId===c.ft||i.name?.includes(c.ft)));
     const cumpAlim=feedItem?getCUMP(feedItem.id):0;
     const cAlim=c.alimReel>0?c.alimReel*cumpAlim:c.alimTheo*(duree/7)*cumpAlim;
-    // Probio via CUMP — quantité réelle b.probiot (ml/j) ÷ 1000 → L/j × duree
-    const probioItem=APP_INTRANTS.find(i=>i.id?.includes('PWA')||i.name?.toLowerCase().includes('pwa'));
+    // Probio via CUMP — cumul historique si dispo, sinon estimation linéaire
+    const probioItem=APP_INTRANTS.find(i=>i.id?.toLowerCase().includes('pwa')||i.name?.toLowerCase().includes('pwa'));
     const cumpProbio=probioItem?getCUMP(probioItem.id):0;
-    const probioQtL=b.probiot>0?(b.probiot*duree/1000):c.biomasse*(duree/7)*0.5;
+    const histMl=probiotHistory[b.name]||0;
+    const probioQtL=histMl>0?(histMl/1000):b.probiot>0?(b.probiot*duree/1000):c.biomasse*(duree/7)*0.5;
     const cProbio=cumpProbio>0?probioQtL*cumpProbio:0;
     // Mélasse / Carbohydrate via CUMP — b.carb (ml ou g / j) ÷ 1000 → L ou kg
     const carbId=b.carbType||'melasse';
