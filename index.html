@@ -4093,13 +4093,15 @@ function exportAnalysePDF(){
   const date=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const content=G('analyse-results')?.innerHTML||'';
   const printWin=window.open('','_blank','width=800,height=600');
+  const logoUrl=APP.state.logoUrl||'';
+  const logoHtml=logoUrl?`<img src="${logoUrl}" style="height:52px;width:auto;object-fit:contain">`:'<span style="font-size:28px">🐟</span>';
   printWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <title>Analyse Paramètres — ${farmName}</title>
     <style>
       body{font-family:Arial,sans-serif;padding:20px;color:#1a1a1a;font-size:12px}
-      h1{font-size:18px;color:#004466;border-bottom:2px solid #004466;padding-bottom:8px}
-      .header{background:#f0f8ff;padding:12px;border-radius:8px;margin-bottom:16px}
-      .header p{margin:2px 0;font-size:11px}
+      .doc-header{display:flex;align-items:center;gap:14px;border-bottom:2px solid #004466;padding-bottom:10px;margin-bottom:14px}
+      .doc-header h1{font-size:15px;color:#004466;margin-bottom:2px}
+      .doc-header .sub{font-size:10px;color:#666}
       .bassin{margin-bottom:12px;border:2px solid #ccc;border-radius:8px;overflow:hidden}
       .bassin-head{padding:8px 12px;font-weight:700;font-size:13px}
       .bassin-body{padding:8px 12px}
@@ -4107,11 +4109,9 @@ function exportAnalysePDF(){
       .ok{color:#006644;font-size:11px;padding:8px 12px}
       @media print{body{margin:0}}
     </style></head><body>
-    <div class="header">
-      <h1>🔬 Rapport d\'Analyse des Paramètres</h1>
-      <p><strong>Ferme :</strong> ${farmName}</p>
-      <p><strong>Date :</strong> ${date}</p>
-      <p><strong>Généré par :</strong> Bio Aqua Tech — Système de Gestion Aquacole</p>
+    <div class="doc-header">
+      ${logoHtml}
+      <div><h1>${farmName} — Rapport d\'Analyse des Paramètres</h1><p class="sub">${date}</p></div>
     </div>
     <div id="pdf-content">${content}</div>
 </body></html>`);
@@ -11156,27 +11156,47 @@ if(window.fillPwaBassinSelect)window.fillPwaBassinSelect();
   var esc=function(v){return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
 
   // ── CSS commun pour les PDF ──────────────────────────────
-  var pdfCss='<style>*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;font-size:11px}body{padding:14px;color:#1a2233}h1{font-size:16px;color:#1a4fa0;margin-bottom:4px}h2{font-size:13px;color:#1a4fa0;margin:10px 0 4px}p.sub{font-size:10px;color:#666;margin-bottom:10px}table{width:100%;border-collapse:collapse;margin-bottom:12px}th{background:#1a4fa0;color:#fff;padding:5px 7px;text-align:left}td{padding:4px 7px;border-bottom:1px solid #e2e8f0}tr:nth-child(even)td{background:#f6f9ff}.total td{font-weight:700;background:#e8f0fb}.warn{color:#b45309;font-weight:700}.ok{color:#166534;font-weight:700}.badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10px}.badge-ok{background:#dcfce7;color:#166534}.badge-warn{background:#fef3c7;color:#92400e}@media print{button{display:none}}</style>';
+  var pdfCss='<style>*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;font-size:11px}body{padding:14px;color:#1a2233}.doc-header{display:flex;align-items:center;gap:14px;border-bottom:2px solid #1a4fa0;padding-bottom:10px;margin-bottom:12px}.doc-header img{height:52px;width:auto;object-fit:contain}.doc-header-text{}  .doc-header-text h1{font-size:15px;color:#1a4fa0;margin-bottom:2px}.doc-header-text .sub{font-size:10px;color:#666}h2{font-size:13px;color:#1a4fa0;margin:10px 0 4px}table{width:100%;border-collapse:collapse;margin-bottom:12px}th{background:#1a4fa0;color:#fff;padding:5px 7px;text-align:left}td{padding:4px 7px;border-bottom:1px solid #e2e8f0}tr:nth-child(even)td{background:#f6f9ff}.total td{font-weight:700;background:#e8f0fb}.warn{color:#b45309;font-weight:700}.ok{color:#166534;font-weight:700}.badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10px}.badge-ok{background:#dcfce7;color:#166534}.badge-warn{background:#fef3c7;color:#92400e}@media print{button{display:none}}</style>';
+
+  // ── En-tête commun logo+ferme ────────────────────────────
+  var pdfHeader=function(title,subtitle){
+    var logoUrl=(window.APP&&APP.state&&APP.state.logoUrl)||'';
+    var farm=(window.APP&&(APP.farmName||APP.farmCode))||'';
+    var logoHtml=logoUrl?'<img src="'+logoUrl+'" alt="logo">':'<div style="width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:28px;border-radius:8px;background:#f0f6ff">🐟</div>';
+    return '<div class="doc-header">'+logoHtml+'<div class="doc-header-text"><h1>'+esc(farm)+(title?' — '+esc(title):'')+'</h1><p class="sub">'+(subtitle||new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))+'</p></div></div>';
+  };
 
   // ── Helper XLSX download (SheetJS) ──────────────────────
   var downloadXLSX=function(sheets,filename){
     if(typeof XLSX==='undefined'){alert('Bibliothèque Excel non chargée. Vérifiez votre connexion internet.');return;}
+    var farm=(window.APP&&(APP.farmName||APP.farmCode))||'';
+    var dateStr=new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
     var wb=XLSX.utils.book_new();
     sheets.forEach(function(s){
-      var ws=XLSX.utils.aoa_to_sheet(s.rows);
-      // Largeur automatique colonnes
+      // Ajouter 3 lignes d'en-tête : ferme, date, vide
+      var headerRows=[
+        [farm+' — '+(s.name||'Export'),dateStr,'','','','','',''],
+        [],
+      ];
+      var allRows=headerRows.concat(s.rows);
+      var ws=XLSX.utils.aoa_to_sheet(allRows);
+      // Largeur automatique colonnes (basée sur les données, sans les lignes d'en-tête)
       var cols=s.rows[0]?s.rows[0].map(function(_,ci){
         var max=0;
         s.rows.forEach(function(r){var v=String(r[ci]||'');if(v.length>max)max=v.length;});
         return {wch:Math.min(Math.max(max+2,8),40)};
       }):[];
       ws['!cols']=cols;
-      // Gras sur la première ligne (en-têtes)
+      // Style ligne titre (row 0)
+      var titleRef=XLSX.utils.encode_cell({r:0,c:0});
+      if(ws[titleRef])ws[titleRef].s={font:{bold:true,sz:13,color:{rgb:'1A4FA0'}}};
+      // Gras+couleur sur la ligne d'en-têtes colonnes (row 2 = index 2)
+      var colHeaderRow=2;
       if(s.rows[0]){
         s.rows[0].forEach(function(_,ci){
-          var ref=XLSX.utils.encode_cell({r:0,c:ci});
+          var ref=XLSX.utils.encode_cell({r:colHeaderRow,c:ci});
           if(!ws[ref])return;
-          ws[ref].s={font:{bold:true},fill:{fgColor:{rgb:'1A4FA0'}},font:{bold:true,color:{rgb:'FFFFFF'}}};
+          ws[ref].s={font:{bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'1A4FA0'}}};
         });
       }
       XLSX.utils.book_append_sheet(wb,ws,s.name||'Données');
@@ -11185,10 +11205,10 @@ if(window.fillPwaBassinSelect)window.fillPwaBassinSelect();
   };
 
   // ── Helper PDF open ──────────────────────────────────────
-  var openPDF=function(html){
+  var openPDF=function(html,title){
     var w=window.open('','_blank','width=960,height=720');
     if(!w)return alert('Autorisez les pop-ups pour exporter en PDF');
-    w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Export</title>'+pdfCss+'</head><body>'+html+'<br><button onclick="window.print()" style="padding:6px 18px;background:#1a4fa0;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-top:8px">🖨️ Imprimer / Enregistrer PDF</button></body></html>');
+    w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+(title||'Export')+'</title>'+pdfCss+'</head><body>'+pdfHeader(title)+'<div>'+html+'</div><br><button onclick="window.print()" style="padding:6px 18px;background:#1a4fa0;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-top:8px">🖨️ Imprimer / Enregistrer PDF</button></body></html>');
     w.document.close();
   };
 
