@@ -1652,7 +1652,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
           <div class="card" style="border-color:rgba(0,201,167,.2)">
             <div class="ctitle"><span class="dot" style="background:var(--acc)"></span>Logo de la ferme</div>
             <p style="font-size:10px;color:var(--t2);line-height:1.7;margin-bottom:.8rem">
-            Le logo s'affiche dans la barre supérieure et sur la page de connexion. Formats acceptés : JPG, PNG. Taille max : <strong>200 Ko</strong>. Stockage dans Firestore — aucune configuration supplémentaire requise.
+            Le logo s'affiche dans la barre supérieure et sur la page de connexion. Formats acceptés : JPG, PNG, SVG, WebP. Taille max : <strong>5 Mo</strong>. Stockage dans Firebase Storage.
             </p>
 
             <!-- Aperçu logo actuel -->
@@ -1690,7 +1690,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
             <div style="font-size:10px;color:var(--t2);line-height:1.9">
               <div>📐 <strong style="color:var(--t1)">Format idéal</strong> : carré ou rectangulaire · fond transparent (PNG) ou blanc</div>
               <div>🎨 <strong style="color:var(--t1)">Résolution</strong> : 300×300 px recommandé · 500×500 px maximum</div>
-              <div>⚖️ <strong style="color:var(--t1)">Taille fichier</strong> : <strong style="color:var(--warn)">200 Ko maximum</strong> · compressez sur <a href="https://tinypng.com" target="_blank" style="color:var(--acc2)">tinypng.com</a> si nécessaire</div>
+              <div>⚖️ <strong style="color:var(--t1)">Taille fichier</strong> : <strong style="color:var(--acc)">5 Mo maximum</strong> · Firebase Storage — aucune compression requise</div>
               <div>🔄 <strong style="color:var(--t1)">Remplacement</strong> : uploader un nouveau logo écrase l'ancien automatiquement</div>
               <div style="margin-top:.6rem;padding:.4rem .6rem;background:rgba(251,191,36,.08);border-radius:6px;border:1px solid rgba(251,191,36,.2)">
                 ⚠️ Le logo est visible par tous les utilisateurs de cette ferme. Utilisez le logo officiel de votre structure.
@@ -2324,7 +2324,7 @@ if(typeof firebase === 'undefined'){
         onAuthStateChanged:function(){return function(){};}
       };
     },
-    storage: function(){ return { ref:function(){ return { child:function(){return this;}, put:function(){return Promise.reject(new Error('Firebase indisponible'));}, getDownloadURL:function(){return Promise.resolve('');} }; } }; }
+    storage: function(){ const fakeTask={on:function(_,__,errCb){if(errCb)errCb(new Error('Firebase indisponible'));},then:function(){return this;},catch:function(fn){fn(new Error('Firebase indisponible'));return this;}}; return { ref:function(){ return { child:function(){return this;}, put:function(){return fakeTask;}, delete:function(){return Promise.reject(new Error('Firebase indisponible'));}, getDownloadURL:function(){return Promise.reject(new Error('Firebase indisponible'));} }; } }; }
   };
 }
 firebase.initializeApp(firebaseConfig);
@@ -6161,9 +6161,8 @@ function renderLogoTab(){
 function onLogoFileSelected(input){
   const file=input.files[0];
   if(!file)return;
-  // Vérification taille
-  if(file.size>200*1024){
-    showLogoError('Fichier trop volumineux (max 200 Ko). Compressez votre image sur tinypng.com puis réessayez.');
+  if(file.size>5*1024*1024){
+    showLogoError('Fichier trop volumineux (max 5 Mo).');
     return;
   }
   LOGO_PENDING_FILE=file;
@@ -6197,31 +6196,40 @@ async function uploadFarmLogo(){
   hideLogoError();
 
   try{
-    // Vérification taille stricte pour base64 Firestore
-    if(LOGO_PENDING_FILE.size>200*1024){
-      showLogoError('Fichier trop volumineux. Maximum 200 Ko pour le stockage Firestore. Compressez votre image sur tinypng.com puis réessayez.');
-      if(wrap)wrap.style.display='none';
-      if(saveBtn)saveBtn.disabled=false;
-      return;
+    if(LOGO_PENDING_FILE.size>5*1024*1024){
+      showLogoError('Fichier trop volumineux (max 5 Mo).');
+      if(wrap)wrap.style.display='none';if(saveBtn)saveBtn.disabled=false;return;
     }
-    // Convertir en base64
-    const base64=await new Promise((res,rej)=>{
-      const r=new FileReader();
-      r.onload=e=>res(e.target.result);
-      r.onerror=()=>rej(new Error('Lecture fichier impossible'));
-      r.readAsDataURL(LOGO_PENDING_FILE);
+    // Détecter l'extension
+    const ext=LOGO_PENDING_FILE.name.split('.').pop().toLowerCase()||'png';
+    const storageRef=storage.ref(`logos/${APP.farmCode}/logo.${ext}`);
+    if(bar)bar.style.width='20%';
+    if(txt)txt.textContent='Upload en cours...';
+    // Upload avec suivi de progression
+    const uploadTask=storageRef.put(LOGO_PENDING_FILE,{contentType:LOGO_PENDING_FILE.type});
+    await new Promise((res,rej)=>{
+      uploadTask.on('state_changed',
+        snap=>{
+          const pct=Math.round((snap.bytesTransferred/snap.totalBytes)*70)+20;
+          if(bar)bar.style.width=pct+'%';
+          if(txt)txt.textContent=`Upload : ${pct-20}%`;
+        },
+        rej,
+        res
+      );
     });
-    if(bar)bar.style.width='70%';
-    if(txt)txt.textContent='Sauvegarde dans Firestore...';
-    // Sauvegarder dans Firestore (farms/{farmCode}.logoUrl)
+    if(bar)bar.style.width='95%';
+    if(txt)txt.textContent='Récupération de l\'URL...';
+    const downloadUrl=await storageRef.getDownloadURL();
+    // Sauvegarder l'URL dans Firestore
     await db.collection('farms').doc(APP.farmCode).set({
-      logoUrl:base64,
-      logoType:'base64',
+      logoUrl:downloadUrl,
+      logoType:'storage',
       logoUpdatedAt:firebase.firestore.FieldValue.serverTimestamp()
     },{merge:true});
     if(bar)bar.style.width='100%';
-    APP.state.logoUrl=base64;
-    applyFarmLogo(base64);
+    APP.state.logoUrl=downloadUrl;
+    applyFarmLogo(downloadUrl);
     if(wrap)wrap.style.display='none';
     if(saveBtn){saveBtn.disabled=false;saveBtn.style.display='none';}
     const st=G('logo-status-text');
