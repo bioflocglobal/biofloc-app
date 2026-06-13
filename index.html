@@ -592,6 +592,8 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
       <div id="session-badge" class="session-badge">—</div>
       <button onclick="openThemeModal()" title="Changer de thème" style="background:none;border:1px solid var(--b2);border-radius:6px;color:var(--t2);font-size:13px;padding:3px 7px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--b2)'">🎨</button>
       <div id="sync-dot" title="Sync Firebase" style="width:7px;height:7px;border-radius:50%;background:var(--acc);transition:background .3s"></div>
+      <button onclick="requestNotifPermission()" title="Activer les notifications" id="notif-btn" style="background:none;border:1px solid var(--b2);border-radius:6px;color:var(--t2);font-size:13px;padding:3px 7px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--warn)'" onmouseout="this.style.borderColor='var(--b2)'">🔔</button>
+      <button onclick="openFarmSwitcherModal()" title="Changer de ferme" style="background:none;border:1px solid var(--b2);border-radius:6px;color:var(--t2);font-size:10px;padding:3px 7px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--acc2)'" onmouseout="this.style.borderColor='var(--b2)'">🏠</button>
       <button class="logout-btn" onclick="doLogout()">⏻ Déconnexion</button>
     </div>
   </div>
@@ -623,6 +625,8 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
         </div>
         <div style="font-size:9px;color:var(--t2);padding:2px 8px;border:1px solid var(--b2);border-radius:6px">✏️ Changer</div>
       </div>
+      <!-- KPIs Dashboard -->
+      <div id="t0-kpis"></div>
       <div class="two">
         <div>
           <div class="card">
@@ -1007,6 +1011,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
           <div id="date-mode-badge" style="display:none;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;background:rgba(245,166,35,.15);color:var(--warn);border:1px solid rgba(245,166,35,.3)">📅 Mode historique</div>
         </div>
         <button class="abtn" onclick="addBassin()" id="btn-add-bassin">➕ Ajouter bassin</button>
+        <button class="sbtn" onclick="openSaisieRapide()" style="background:rgba(167,139,250,.15);border-color:var(--purp);color:var(--purp);font-size:11px">⚡ Saisie rapide multi-bassins</button>
       </div>
 
       <!-- Sélection bassins + Bouton ANALYSE -->
@@ -1142,6 +1147,8 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
         <button class="tb" id="lt-seuils" onclick="swLog('seuils')" style="font-size:11px">🔔 Stock & alertes</button>
         <button class="tb" id="lt-analyse" onclick="swLog('analyse')" style="font-size:11px">📊 Tableau stock</button>
         <button class="tb" id="lt-probio" onclick="swLog('probio')" style="font-size:11px">🧫 Probiotiques</button>
+        <button class="tb" id="lt-mouvements" onclick="swLog('mouvements')" style="font-size:11px">🔄 Historique mouvements</button>
+        <button class="tb" id="lt-rapportstock" onclick="swLog('rapportstock')" style="font-size:11px">📊 Rapport hebdo</button>
       </div>
 
       <!-- Panneau Intrants -->
@@ -1183,7 +1190,10 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
       <div id="lp-stock" class="log-pane" style="display:none">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem">
           <div style="font-size:13px;font-weight:700;color:var(--t1)">📥 Entrées en stock</div>
-          <button class="sbtn" onclick="openAddStock()">➕ Nouvelle entrée</button>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+            <button class="sbtn" onclick="openAddStock()">➕ Nouvelle entrée</button>
+            <button class="sbtn" onclick="openImportCSV()" style="background:rgba(0,170,255,.15);border-color:var(--acc2);color:var(--acc2);font-size:11px">📂 Importer CSV/Excel</button>
+          </div>
         </div>
         <div id="stock-entries-list" style="font-size:11px"></div>
       </div>
@@ -1303,6 +1313,55 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
           </div>
         </div>
       </div>
+
+      <!-- Panneau Historique mouvements -->
+      <div id="lp-mouvements" class="log-pane" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem">
+          <div style="font-size:13px;font-weight:700;color:var(--t1)">🔄 Historique des mouvements de stock</div>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+            <button class="sbtn" onclick="exportMovementsCSV()" style="font-size:11px;background:var(--acc2)">📥 Exporter CSV</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:.7rem">
+          <select id="mov-filter-type" class="si" style="font-size:11px" onchange="renderMovementsHistory()">
+            <option value="">Tous types</option>
+            <option value="sortie">Sorties</option>
+            <option value="entree">Entrées</option>
+          </select>
+          <select id="mov-filter-intrant" class="si" style="font-size:11px;max-width:160px" onchange="renderMovementsHistory()">
+            <option value="">Tous intrants</option>
+          </select>
+          <input type="date" id="mov-filter-from" class="si" style="font-size:11px" onchange="renderMovementsHistory()">
+          <span style="font-size:10px;color:var(--t3)">→</span>
+          <input type="date" id="mov-filter-to" class="si" style="font-size:11px" onchange="renderMovementsHistory()">
+          <input type="text" id="mov-filter-bassin" class="si" placeholder="Bassin…" style="font-size:11px;width:90px" oninput="renderMovementsHistory()">
+          <button class="sbtn" onclick="document.getElementById('mov-filter-type').value='';document.getElementById('mov-filter-intrant').value='';document.getElementById('mov-filter-from').value='';document.getElementById('mov-filter-to').value='';document.getElementById('mov-filter-bassin').value='';renderMovementsHistory()" style="font-size:10px;background:var(--inp)">✕ Reset</button>
+        </div>
+        <div id="mov-count" style="font-size:10px;color:var(--t3);margin-bottom:.4rem"></div>
+        <div class="tw" style="max-height:500px;overflow-y:auto">
+          <table style="font-size:10px;width:100%"><thead><tr>
+            <th>Date</th><th>Type</th><th>Intrant</th><th>Quantité</th><th>Unité</th><th>Bassin</th><th>Source</th><th>Enregistré par</th>
+          </tr></thead>
+          <tbody id="mov-tbody"></tbody>
+        </table></div>
+      </div>
+
+      <!-- Panneau Rapport hebdo stock -->
+      <div id="lp-rapportstock" class="log-pane" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem">
+          <div style="font-size:13px;font-weight:700;color:var(--t1)">📊 Rapport d'activité hebdomadaire</div>
+          <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap">
+            <label style="font-size:10px;color:var(--t2)">Semaine du</label>
+            <input type="date" id="rapport-week-start" class="si" style="font-size:11px">
+            <button class="sbtn" onclick="genRapportHebdo()" style="font-size:11px">📋 Générer</button>
+            <button class="sbtn" onclick="printRapportHebdo()" style="font-size:11px;background:var(--acc2)">🖨️ Imprimer PDF</button>
+          </div>
+        </div>
+        <div id="rapport-hebdo-content" style="font-size:11px;color:var(--t2)">
+          <p style="text-align:center;padding:2rem;color:var(--t3)">Sélectionnez une date de début de semaine puis cliquez sur Générer.</p>
+        </div>
+      </div>
+
     </div>
 
     <!-- T5 COMPTABILITÉ -->
@@ -1963,6 +2022,44 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
 </div>
 
 <!-- Modal Entrée Stock -->
+<!-- Modal Saisie Rapide Multi-Bassins -->
+<div id="saisie-rapide-modal" class="modal-overlay hidden" style="align-items:flex-start;padding-top:2rem">
+  <div class="modal-box" style="max-width:900px;width:98vw">
+    <div class="modal-title">⚡ Saisie rapide — tous les bassins actifs</div>
+    <div style="font-size:10px;color:var(--t3);margin-bottom:.7rem">Saisissez rapidement les données de tous les bassins. Cliquez sur "Tout enregistrer" pour sauvegarder en une seule fois.</div>
+    <div class="tw" style="max-height:60vh;overflow-y:auto">
+      <table style="font-size:11px;width:100%">
+        <thead><tr>
+          <th>Bassin</th><th>Alim réel (kg)</th><th>Alim Morts</th><th>Temp °C</th><th>pH</th><th>DO</th><th>NH₃</th><th>TAN</th><th>Mélasse (mL)</th>
+        </tr></thead>
+        <tbody id="saisie-rapide-tbody"></tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.8rem;flex-wrap:wrap">
+      <button class="sbtn" onclick="G('saisie-rapide-modal').classList.add('hidden')" style="background:var(--inp)">Fermer</button>
+      <button class="sbtn" onclick="saveSaisieRapide()" style="background:var(--acc);color:#04101e;font-weight:700">💾 Tout enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Import CSV -->
+<div id="csv-import-modal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-title">📂 Importer des réceptions depuis CSV / Excel</div>
+    <div style="font-size:10px;color:var(--t3);margin-bottom:.8rem">Format attendu (colonnes) : <strong>date, intrant, quantité, lot, fournisseur, expiration</strong><br>La première ligne doit être un en-tête. Les colonnes supplémentaires sont ignorées.</div>
+    <div style="margin-bottom:.6rem">
+      <label class="form-lbl">Fichier CSV ou Excel (.csv, .xlsx, .xls)</label>
+      <input type="file" id="csv-file-input" accept=".csv,.xlsx,.xls" class="form-inp" style="padding:.4rem">
+    </div>
+    <div id="csv-preview" style="max-height:260px;overflow-y:auto;font-size:10px;background:var(--inp);border-radius:8px;padding:.5rem;margin-bottom:.7rem;display:none"></div>
+    <div id="csv-import-status" style="font-size:11px;margin-bottom:.6rem"></div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end">
+      <button class="sbtn" onclick="G('csv-import-modal').classList.add('hidden')" style="background:var(--inp)">Annuler</button>
+      <button class="sbtn" id="csv-import-btn" onclick="importCSVStock()" style="display:none">✅ Importer les lignes valides</button>
+    </div>
+  </div>
+</div>
+
 <div id="stock-modal" class="modal-overlay hidden">
   <div class="modal-box" style="max-width:500px">
     <div class="modal-title">📥 Nouvelle entrée en stock</div>
@@ -3668,10 +3765,16 @@ async function openBassinStats(bassinName){
           {label:'DO (ppm)',data:records.map(r=>r.DO??null),borderColor:'#00c9a7',backgroundColor:'rgba(0,201,167,.1)',tension:.3,fill:true,spanGaps:true,pointRadius:3},
           {label:'TAN (mg/L)',data:records.map(r=>r.TAN??null),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.1)',tension:.3,fill:false,spanGaps:true,pointRadius:3},
           {label:'pH',data:records.map(r=>r.ph??null),borderColor:'#a78bfa',backgroundColor:'transparent',tension:.3,fill:false,spanGaps:true,pointRadius:3,hidden:true},
+          {label:'Poids (g)',data:records.map(r=>r.poids??null),borderColor:'#ffd670',backgroundColor:'transparent',tension:.3,fill:false,spanGaps:true,pointRadius:3,yAxisID:'y2',hidden:false},
+          {label:'Alim réel (kg)',data:records.map(r=>r.alimReel??null),borderColor:'#f87171',backgroundColor:'transparent',tension:.3,fill:false,spanGaps:true,pointRadius:2,hidden:true},
         ]
       },
       options:{responsive:true,plugins:{legend:{labels:{font:{size:9},color:'#6a90b8'}}},
-        scales:{x:{ticks:{font:{size:8},color:'#3d6080'}},y:{ticks:{font:{size:8},color:'#3d6080'}}}}
+        scales:{
+          x:{ticks:{font:{size:8},color:'#3d6080'}},
+          y:{ticks:{font:{size:8},color:'#3d6080'}},
+          y2:{position:'right',ticks:{font:{size:8},color:'#ffd670'},grid:{drawOnChartArea:false}}
+        }}
     });
   }
 
@@ -4164,6 +4267,268 @@ function swLog(panel){
   if(panel==='seuils')renderSeuilsPanel();
   if(panel==='analyse')loadAnalyseStock();
   if(panel==='probio'){calcPWA();updateLactoStatus();}
+  if(panel==='mouvements')renderMovementsHistory();
+  if(panel==='rapportstock'){
+    const el=G('rapport-week-start');
+    if(el&&!el.value){const d=new Date();d.setDate(d.getDate()-d.getDay()+1);el.value=d.toISOString().slice(0,10);}
+  }
+}
+
+// ── FEATURE 7: HISTORIQUE MOUVEMENTS ────────────────────────────────
+function renderMovementsHistory(){
+  const tbody=G('mov-tbody');if(!tbody)return;
+  // Populate intrant select first (so fIntrant read below is accurate)
+  const sel=G('mov-filter-intrant');
+  if(sel&&sel.options.length<=1){
+    const ids=new Set(APP_STOCK_MOVEMENTS.map(m=>m.intrantId));
+    ids.forEach(id=>{
+      const it=APP_INTRANTS.find(x=>x.id===id);
+      const opt=document.createElement('option');opt.value=id;opt.textContent=it?it.name:id;sel.appendChild(opt);
+    });
+  }
+  const fType=G('mov-filter-type')?.value||'';
+  const fIntrant=sel?.value||'';
+  const fFrom=G('mov-filter-from')?.value||'';
+  const fTo=G('mov-filter-to')?.value||'';
+  const fBassin=(G('mov-filter-bassin')?.value||'').toLowerCase();
+  let movs=[...(APP_STOCK_MOVEMENTS||[])].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  if(fType)movs=movs.filter(m=>m.type===fType);
+  if(fIntrant)movs=movs.filter(m=>m.intrantId===fIntrant);
+  if(fFrom)movs=movs.filter(m=>m.date>=fFrom);
+  if(fTo)movs=movs.filter(m=>m.date<=fTo);
+  if(fBassin)movs=movs.filter(m=>(m.bassin||'').toLowerCase().includes(fBassin));
+  const cntEl=G('mov-count');if(cntEl)cntEl.textContent=movs.length+' mouvement(s) affiché(s)';
+  const intrantName=id=>{const it=APP_INTRANTS.find(x=>x.id===id);return it?it.name:id;};
+  tbody.innerHTML=movs.map(m=>`<tr>
+    <td>${m.date||'—'}</td>
+    <td><span style="padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;background:${m.type==='sortie'?'rgba(255,61,87,.15)':'rgba(0,201,167,.15)'};color:${m.type==='sortie'?'var(--dng)':'var(--acc)'}">${m.type||'—'}</span></td>
+    <td>${intrantName(m.intrantId)}</td>
+    <td style="text-align:right;font-weight:700">${fmt(m.quantity,3)}</td>
+    <td>${m.unit||'—'}</td>
+    <td>${m.bassin||'—'}</td>
+    <td style="font-size:9px;color:var(--t3)">${m.source||'—'}</td>
+    <td style="font-size:9px;color:var(--t3)">${m.who||'—'}</td>
+  </tr>`).join('');
+}
+
+function exportMovementsCSV(){
+  const movs=[...(APP_STOCK_MOVEMENTS||[])].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const intrantName=id=>{const it=APP_INTRANTS.find(x=>x.id===id);return it?it.name:id;};
+  const rows=[['Date','Type','Intrant','Quantité','Unité','Bassin','Source','Enregistré par']];
+  movs.forEach(m=>rows.push([m.date||'',m.type||'',intrantName(m.intrantId),m.quantity||0,m.unit||'',m.bassin||'',m.source||'',m.who||'']));
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,﻿'+encodeURIComponent(csv);
+  a.download='mouvements_stock_'+(APP.farmCode||'ferme')+'_'+today()+'.csv';a.click();
+}
+
+// ── FEATURE 10: IMPORT CSV STOCK ─────────────────────────────────────
+function openImportCSV(){
+  G('csv-import-modal').classList.remove('hidden');
+  G('csv-preview').style.display='none';
+  G('csv-import-status').textContent='';
+  G('csv-import-btn').style.display='none';
+  const fi=G('csv-file-input');if(fi)fi.value='';
+  window._csvImportRows=null;
+}
+
+document.addEventListener('DOMContentLoaded',()=>{G('csv-file-input')?.addEventListener('change',async function(){
+  const file=this.files[0];if(!file)return;
+  G('csv-import-status').textContent='Lecture en cours…';
+  try{
+    let rows=[];
+    if(file.name.endsWith('.csv')){
+      const text=await file.text();
+      rows=text.split('\n').map(l=>l.split(',').map(c=>c.replace(/^"|"$/g,'').trim()));
+    } else {
+      const ab=await file.arrayBuffer();
+      const wb=XLSX.read(ab,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    }
+    if(rows.length<2){G('csv-import-status').textContent='❌ Fichier vide ou sans données.';return;}
+    const header=rows[0].map(h=>String(h).toLowerCase().trim());
+    const colIdx={date:header.findIndex(h=>h.includes('date')),intrant:header.findIndex(h=>h.includes('intrant')||h.includes('produit')),qty:header.findIndex(h=>h.includes('qua')||h.includes('qty')||h.includes('quantit')),lot:header.findIndex(h=>h.includes('lot')||h.includes('batch')),fournisseur:header.findIndex(h=>h.includes('fourn')||h.includes('supplier')),expiry:header.findIndex(h=>h.includes('expir')||h.includes('perim'))};
+    const dataRows=rows.slice(1).filter(r=>r.some(c=>c!==''));
+    const parsed=dataRows.map(r=>{
+      const intrantRaw=colIdx.intrant>=0?String(r[colIdx.intrant]||'').trim():'';
+      const matched=APP_INTRANTS.find(i=>i.name.toLowerCase().includes(intrantRaw.toLowerCase())||i.id===intrantRaw);
+      return{date:colIdx.date>=0?String(r[colIdx.date]||''):today(),intrantRaw,intrantId:matched?.id||null,intrantName:matched?.name||intrantRaw,qty:colIdx.qty>=0?parseFloat(r[colIdx.qty])||0:0,lot:colIdx.lot>=0?String(r[colIdx.lot]||''):'',fournisseur:colIdx.fournisseur>=0?String(r[colIdx.fournisseur]||''):'',expiry:colIdx.expiry>=0?String(r[colIdx.expiry]||''):'',valid:!!matched&&parseFloat(colIdx.qty>=0?r[colIdx.qty]:0)>0};
+    });
+    window._csvImportRows=parsed;
+    const valid=parsed.filter(r=>r.valid).length;
+    G('csv-preview').style.display='block';
+    G('csv-preview').innerHTML='<table style="width:100%;border-collapse:collapse">'
+      +'<tr style="background:var(--b1)"><th style="padding:2px 6px">Date</th><th>Intrant</th><th>Qté</th><th>Lot</th><th>Statut</th></tr>'
+      +parsed.map(r=>`<tr style="border-bottom:1px solid var(--b1)${r.valid?'':';opacity:.5'}"><td style="padding:2px 6px">${r.date}</td><td>${r.intrantName}</td><td style="text-align:right">${r.qty}</td><td>${r.lot}</td><td>${r.valid?'<span style="color:var(--acc)">✅</span>':'<span style="color:var(--dng)" title="Intrant non reconnu ou quantité 0">⚠️</span>'}</td></tr>`).join('')
+      +'</table>';
+    G('csv-import-status').textContent=`${valid} ligne(s) valide(s) sur ${parsed.length} — les lignes en rouge seront ignorées.`;
+    G('csv-import-btn').style.display=valid>0?'inline-flex':'none';
+  }catch(e){G('csv-import-status').textContent='❌ Erreur: '+e.message;}
+});});
+
+async function importCSVStock(){
+  const rows=(window._csvImportRows||[]).filter(r=>r.valid);
+  if(!rows.length)return;
+  G('csv-import-status').textContent='Import en cours…';
+  let imported=0;
+  for(const r of rows){
+    try{
+      const id=farmCol('stock_entries').doc().id;
+      const entry={id,intrantId:r.intrantId,quantity:r.qty,date:r.date,lot:r.lot||'',fournisseur:r.fournisseur||'',expiry:r.expiry||'',validated:false,createdBy:APP.user?.name||'Import CSV',createdAt:new Date().toISOString()};
+      await farmCol('stock_entries').doc(id).set(entry);
+      APP_STOCK_ENTRIES.push(entry);
+      imported++;
+    }catch(e){console.warn('Import row:',e);}
+  }
+  G('csv-import-status').textContent=`✅ ${imported} entrée(s) importée(s) avec succès.`;
+  G('csv-import-btn').style.display='none';
+  setTimeout(()=>{G('csv-import-modal').classList.add('hidden');renderStockEntries();},1500);
+}
+
+// ── FEATURE 5: SAISIE RAPIDE MULTI-BASSINS ──────────────────────────
+function openSaisieRapide(){
+  const tbody=G('saisie-rapide-tbody');if(!tbody)return;
+  const bassins=APP.state.bassins.filter(b=>b.statut==='Actif');
+  if(!bassins.length){showToast('Aucun bassin actif','warn');return;}
+  tbody.innerHTML=bassins.map((b,i)=>{
+    const idx=APP.state.bassins.indexOf(b);
+    return `<tr data-idx="${idx}">
+      <td style="font-weight:700;color:var(--acc);padding:4px 6px">${b.name}</td>
+      <td><input type="number" class="ci" value="${b.alimReel??''}" step="0.001" style="width:70px" data-field="alimReel" oninput="srAutoCN(this,${idx})"></td>
+      <td><input type="number" class="ci" value="${b.mort??''}" style="width:50px" data-field="mort"></td>
+      <td><input type="number" class="ci opt" value="${b.temp??''}" step="0.1" style="width:52px" data-field="temp" placeholder="—"></td>
+      <td><input type="number" class="ci opt" value="${b.ph??''}" step="0.01" style="width:50px" data-field="ph" placeholder="—"></td>
+      <td><input type="number" class="ci opt" value="${b.DO??''}" step="0.1" style="width:50px" data-field="DO" placeholder="—"></td>
+      <td><input type="number" class="ci opt" value="${b.NH3??''}" step="0.01" style="width:52px" data-field="NH3" placeholder="—"></td>
+      <td><input type="number" class="ci opt" value="${b.TAN??''}" step="0.01" style="width:52px" data-field="TAN" placeholder="—" oninput="srAutoCN(this,${idx})"></td>
+      <td><input type="number" class="ci opt" id="sr-carb-${idx}" value="${b.carb??''}" step="1" style="width:60px" data-field="carb" placeholder="auto"></td>
+    </tr>`;
+  }).join('');
+  G('saisie-rapide-modal').classList.remove('hidden');
+}
+
+function srAutoCN(inp,idx){
+  const tr=inp.closest('tr');if(!tr)return;
+  const alimInp=tr.querySelector('[data-field="alimReel"]');
+  const tanInp=tr.querySelector('[data-field="TAN"]');
+  const carbInp=G('sr-carb-'+idx);if(!carbInp)return;
+  const b=APP.state.bassins[idx];if(!b)return;
+  const alimKg=parseFloat(alimInp?.value)||b.alimReel||0;
+  const tan=parseFloat(tanInp?.value)??b.TAN;
+  const ft=getRationEntry(b.poids||1);
+  const prot=ft.protein/100||0.32;
+  let mel;
+  if(tan!==null&&tan!==undefined&&!isNaN(tan)&&tan>=1){
+    mel=calcMolassePhase2(tan,(b.vol||3.8)*1000);
+  } else {
+    mel=calcMolassePhase1(alimKg,prot);
+  }
+  const dose=Math.round(mel);
+  if(dose>0&&!carbInp.dataset.manual)carbInp.value=dose;
+}
+async function saveSaisieRapide(){
+  const tbody=G('saisie-rapide-tbody');if(!tbody)return;
+  const rows=tbody.querySelectorAll('tr');
+  let saved=0;
+  for(const row of rows){
+    const idx=parseInt(row.dataset.idx);
+    if(isNaN(idx))continue;
+    const b=APP.state.bassins[idx];if(!b)continue;
+    const get=(field)=>{const inp=row.querySelector('[data-field="'+field+'"]');return inp?inp.value===''?null:+inp.value:null;};
+    b.alimReel=get('alimReel')??b.alimReel;
+    b.mort=get('mort')??b.mort;
+    if(get('temp')!==null)b.temp=get('temp');
+    if(get('ph')!==null)b.ph=get('ph');
+    if(get('DO')!==null)b.DO=get('DO');
+    if(get('NH3')!==null)b.NH3=get('NH3');
+    if(get('TAN')!==null)b.TAN=get('TAN');
+    if(get('carb')!==null)b.carb=get('carb');
+    try{await saveBassinRow(idx);saved++;}catch(e){console.warn('SR save:',e);}
+  }
+  showToast(`✅ ${saved} bassin(s) enregistré(s)`,'ok');
+  G('saisie-rapide-modal').classList.add('hidden');
+  upConfigCalcs();
+}
+
+// ── FEATURE 3: RAPPORT HEBDOMADAIRE ──────────────────────────────────
+async function genRapportHebdo(){
+  const startStr=G('rapport-week-start')?.value;
+  if(!startStr){showToast('Sélectionnez une date de début','warn');return;}
+  const start=new Date(startStr);
+  const end=new Date(start);end.setDate(end.getDate()+6);
+  const endStr=end.toISOString().slice(0,10);
+  const el=G('rapport-hebdo-content');if(!el)return;
+  el.innerHTML='<p style="color:var(--t3)">Chargement…</p>';
+  let records=[];
+  try{
+    const snap=await farmCol('daily').where(firebase.firestore.FieldPath.documentId(),'>=',startStr).where(firebase.firestore.FieldPath.documentId(),'<=',endStr).orderBy(firebase.firestore.FieldPath.documentId(),'asc').get();
+    snap.forEach(doc=>{
+      const d=doc.data();
+      (d.bassins||[]).forEach(b=>{if(b.statut==='Actif')records.push({date:doc.id,...b});});
+    });
+  }catch(e){el.innerHTML='<p style="color:var(--dng)">Erreur: '+e.message+'</p>';return;}
+  if(!records.length){el.innerHTML='<p style="color:var(--t3)">Aucune donnée pour cette semaine.</p>';return;}
+  const bassins=[...new Set(records.map(r=>r.name))];
+  const totalAlimReel=records.reduce((s,r)=>s+(r.alimReel||0),0);
+  const totalAlimTheo=records.reduce((s,r)=>s+(calcBassin(r).alimTheo||0),0);
+  const totalMorts=records.reduce((s,r)=>s+(r.mort||0),0);
+  const totalProbiot=records.reduce((s,r)=>s+(r.probiot||0),0);
+  const days=[...new Set(records.map(r=>r.date))].sort();
+  const avgDO=records.filter(r=>r.DO!=null);
+  const avgTAN=records.filter(r=>r.TAN!=null);
+  const doAlert=records.filter(r=>r.DO!=null&&r.DO<4).length;
+  const tanAlert=records.filter(r=>r.TAN!=null&&r.TAN>=1).length;
+  // Mouvements de la semaine
+  const movs=(APP_STOCK_MOVEMENTS||[]).filter(m=>m.date>=startStr&&m.date<=endStr);
+  const movsByIntrant={};
+  movs.forEach(m=>{if(!movsByIntrant[m.intrantId])movsByIntrant[m.intrantId]=0;movsByIntrant[m.intrantId]+=m.quantity||0;});
+  el.innerHTML=`
+    <div style="background:var(--inp);border-radius:8px;padding:.8rem;margin-bottom:.7rem">
+      <div style="font-size:13px;font-weight:800;color:var(--t1);margin-bottom:.4rem">📅 Semaine du ${startStr} au ${endStr}</div>
+      <div style="font-size:10px;color:var(--t3)">${days.length} jour(s) avec données · ${bassins.length} bassin(s) · ${records.length} enregistrement(s)</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.5rem;margin-bottom:.8rem">
+      <div class="card" style="text-align:center"><div style="font-size:11px;color:var(--t3)">Alim réel total</div><div style="font-size:18px;font-weight:800;color:var(--acc)">${fmt(totalAlimReel,2)} kg</div></div>
+      <div class="card" style="text-align:center"><div style="font-size:11px;color:var(--t3)">Alim théorique</div><div style="font-size:18px;font-weight:800;color:var(--t2)">${fmt(totalAlimTheo,2)} kg</div></div>
+      <div class="card" style="text-align:center"><div style="font-size:11px;color:var(--t3)">Écart aliment</div><div style="font-size:18px;font-weight:800;color:${Math.abs(totalAlimReel-totalAlimTheo)>totalAlimTheo*0.1?'var(--warn)':'var(--acc)'}">${fmt(totalAlimReel-totalAlimTheo,2)} kg</div></div>
+      <div class="card" style="text-align:center"><div style="font-size:11px;color:var(--t3)">Mortalités</div><div style="font-size:18px;font-weight:800;color:${totalMorts>10?'var(--dng)':'var(--t1)'}">${totalMorts} poissons</div></div>
+      <div class="card" style="text-align:center"><div style="font-size:11px;color:var(--t3)">Probiot total</div><div style="font-size:18px;font-weight:800;color:var(--purp)">${(totalProbiot/1000).toFixed(2)} L</div></div>
+      <div class="card" style="text-align:center"><div style="font-size:11px;color:var(--t3)">Alertes DO/TAN</div><div style="font-size:18px;font-weight:800;color:${doAlert+tanAlert>0?'var(--dng)':'var(--acc)'}">${doAlert+tanAlert}</div></div>
+    </div>
+    <div class="card">
+      <div class="ctitle"><span class="dot"></span>Consommations intrants (mouvements)</div>
+      ${Object.keys(movsByIntrant).length?'<table style="width:100%;font-size:11px"><thead><tr><th>Intrant</th><th style="text-align:right">Quantité sortie</th><th>Unité</th></tr></thead><tbody>'
+        +Object.entries(movsByIntrant).map(([id,qty])=>{const it=APP_INTRANTS.find(x=>x.id===id);return `<tr><td>${it?it.name:id}</td><td style="text-align:right;font-weight:700">${fmt(qty,3)}</td><td>${it?it.unit:'—'}</td></tr>`;}).join('')
+        +'</tbody></table>':'<p style="color:var(--t3);font-size:10px">Aucun mouvement enregistré cette semaine.</p>'}
+    </div>
+    <div class="card" style="margin-top:.5rem">
+      <div class="ctitle"><span class="dot"></span>Données par bassin</div>
+      <table style="width:100%;font-size:10px"><thead><tr><th>Bassin</th><th>Jours</th><th>Alim réel (kg)</th><th>Morts</th><th>Probiot (mL)</th><th>DO moy</th><th>TAN moy</th></tr></thead><tbody>
+        ${bassins.map(name=>{
+          const br=records.filter(r=>r.name===name);
+          const bAlim=br.reduce((s,r)=>s+(r.alimReel||0),0);
+          const bMort=br.reduce((s,r)=>s+(r.mort||0),0);
+          const bPro=br.reduce((s,r)=>s+(r.probiot||0),0);
+          const bDO=br.filter(r=>r.DO!=null);const bTAN=br.filter(r=>r.TAN!=null);
+          const avgDOv=bDO.length?(bDO.reduce((s,r)=>s+r.DO,0)/bDO.length).toFixed(1):'—';
+          const avgTANv=bTAN.length?(bTAN.reduce((s,r)=>s+r.TAN,0)/bTAN.length).toFixed(2):'—';
+          return `<tr><td style="font-weight:700;color:var(--acc)">${name}</td><td>${br.length}</td><td>${fmt(bAlim,2)}</td><td>${bMort}</td><td>${bPro}</td><td>${avgDOv}</td><td>${avgTANv}</td></tr>`;
+        }).join('')}
+      </tbody></table>
+    </div>`;
+  window._rapportHebdoData={startStr,endStr,records,totalAlimReel,totalAlimTheo};
+}
+
+function printRapportHebdo(){
+  const content=G('rapport-hebdo-content')?.innerHTML;
+  if(!content||content.includes('Sélectionnez')||content.includes('Chargement')){showToast('Générez le rapport d\'abord','warn');return;}
+  const w=window.open('','_blank','width=900,height=700');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rapport hebdomadaire</title>
+  <style>body{font-family:Arial,sans-serif;font-size:11px;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:4px 8px}th{background:#f0f0f0}.card{border:1px solid #ccc;border-radius:6px;padding:8px;margin-bottom:8px}</style></head>
+  <body><h2>Rapport d'activité — ${window._rapportHebdoData?.startStr||''} au ${window._rapportHebdoData?.endStr||''}</h2>
+  <p style="color:#666">Ferme : ${APP.farmName||APP.farmCode||'—'}</p>
+  ${content}</body></html>`);
+  w.document.close();setTimeout(()=>w.print(),500);
 }
 
 async function loadIntrants(){
@@ -6111,8 +6476,21 @@ async function saveBassinRow(i){
       const mkMov=(type,intrantId,qty,unit)=>({id:'mov_'+type+'_'+sn+'_'+dateStr,intrantId,quantity:qty,unit,date:dateStr,type:'sortie',source:'daily',bassin:b.name,createdAt:new Date().toISOString(),createdBy:who});
       if(b.alimReel>0){const feedId=b.feedId||'aliment';const m=mkMov('alim',feedId,b.alimReel/1000,'kg');batch.set(farmCol('stock_movements').doc(m.id),m);pendingMovs.push(m);}
       if(b.probiot>0){const m=mkMov('pwa','pwa_prep',b.probiot/1000,'L');batch.set(farmCol('stock_movements').doc(m.id),m);pendingMovs.push(m);}
-      if(b.carb>0){const carbId=b.carbType||'melasse';const carbUnit=carbId==='melasse'?'L':'kg';const m=mkMov('carb',carbId,b.carb/1000,carbUnit);batch.set(farmCol('stock_movements').doc(m.id),m);pendingMovs.push(m);}
-      if(b.basifiant>0){const m=mkMov('bas',b.basifiantType||'caco3',b.basifiant/1000,'kg');batch.set(farmCol('stock_movements').doc(m.id),m);pendingMovs.push(m);}
+      if(b.carb>0){
+        // Résoudre l'id intrant depuis le libellé carbType (ex: 'Mélasse' → 'melasse')
+        const carbIntrant=APP_INTRANTS.find(x=>x.category==='carbohydrate'&&(x.id===(b.carbType||'').toLowerCase().replace(/[éèê]/g,'e').replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'')||x.name.toLowerCase().includes((b.carbType||'').toLowerCase())));
+        const carbId=carbIntrant?.id||'melasse';
+        const carbUnit=carbIntrant?.unit||'L';
+        // carb est en mL (melasse) ou g (farines) dans le bassin → convertir en L ou kg
+        const carbQty=b.carb/1000;
+        const m=mkMov('carb',carbId,carbQty,carbUnit);batch.set(farmCol('stock_movements').doc(m.id),m);pendingMovs.push(m);
+      }
+      if(b.basifiant>0){
+        // Résoudre l'id intrant depuis le libellé basifiantType (ex: 'CaCO₃' → 'caco3')
+        const basIntrant=APP_INTRANTS.find(x=>x.category==='basifiant'&&(x.id===(b.basifiantType||'').toLowerCase().replace(/[₃₂]/g,'').replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'')||x.name.toLowerCase().includes((b.basifiantType||'').toLowerCase())));
+        const basId=basIntrant?.id||'caco3';
+        const m=mkMov('bas',basId,b.basifiant/1000,'kg');batch.set(farmCol('stock_movements').doc(m.id),m);pendingMovs.push(m);
+      }
     }
 
     await batch.commit();
@@ -6253,7 +6631,7 @@ function buildBTable(){
       <td class="cf" id="bb-${i}">—</td>
       <td class="cf" id="br-${i}">—</td>
       <td class="cf" id="bt-${i}">—</td>
-      <td><input type="number" class="ci" value="${fmt(b.alimReel,3)}" step="0.001" style="width:65px" onchange="if(!APP_historyDate)APP.state.bassins[${i}].alimReel=+this.value;else APP_historyData[${i}].alimReel=+this.value;upConfigCalcs()"></td>
+      <td><input type="number" class="ci" value="${fmt(b.alimReel,3)}" step="0.001" style="width:65px" title="Aliment réel (kg) — le champ Mélasse se calcule automatiquement (C:N 15:1)" onchange="const v=+this.value;if(!APP_historyDate)APP.state.bassins[${i}].alimReel=v;else APP_historyData[${i}].alimReel=v;upConfigCalcs();autoCarbCN(${i});"></td>
       <td><input type="number" id="bT-${i}" class="${optCls(b.temp)}" value="${optVal(b.temp)}" step="0.1" style="width:52px" placeholder="—" onchange="const v=this.value===''?null:+this.value;if(!APP_historyDate)APP.state.bassins[${i}].temp=v;else APP_historyData[${i}].temp=v;upConfigCalcs()">
         <div id="bTst-${i}" style="font-size:7.5px;font-weight:700;text-align:center;margin-top:1px;white-space:nowrap"></div></td>
       <td><input type="number" id="bP-${i}" class="${optCls(b.ph)}" value="${optVal(b.ph)}" step="0.01" style="width:50px" placeholder="—" onchange="const v=this.value===''?null:+this.value;if(!APP_historyDate)APP.state.bassins[${i}].ph=v;else APP_historyData[${i}].ph=v;upConfigCalcs()">
@@ -6481,6 +6859,67 @@ function upConfigCalcs(){
     ${avgImh!==null?`<div class="met${avgImh<10||avgImh>45?' dng':avgImh>=25&&avgImh<=40?' ok':' warn'}"><div class="mlbl">Imhoff moy</div><div class="mval" style="color:${avgImh<10||avgImh>45?'var(--dng)':avgImh>=25&&avgImh<=40?'var(--acc)':'var(--warn)'}">${fmt(avgImh,1)}<span class="munit">ml/L</span></div></div>`:''}
     ${tMelas>0?`<div class="met warn"><div class="mlbl">Mélasse totale/j</div><div class="mval" style="color:var(--warn)">${Math.round(tMelas)}<span class="munit">ml</span></div></div>`:''}`;
   G('s-actifs').textContent=actifs;G('s-bio').textContent=fmt(tBio,1)+' kg';G('s-alim').textContent=fmt(tTheo,3)+' kg';G('s-recolte').textContent=recoltes;
+  renderDashboardKPIs();
+  if(typeof checkAndNotify==='function')checkAndNotify();
+}
+
+// ── FEATURE 11: C/N AUTOMATIQUE ──────────────────────────────────────
+function autoCarbCN(i){
+  const b=APP_historyDate?APP_historyData?.[i]:APP.state.bassins[i];
+  if(!b)return;
+  const carbInp=G('bCARB-'+i);
+  const carbTypeSel=G('bCARB-type-'+i);
+  if(!carbInp||!carbTypeSel)return;
+  const carbType=carbTypeSel.value;
+  const isMelasse=!carbType||carbType==='Mélasse';
+  if(!isMelasse)return;
+  if(!carbType){
+    carbTypeSel.value='Mélasse';
+    if(!APP_historyDate)APP.state.bassins[i].carbType='Mélasse';
+    else if(APP_historyData)APP_historyData[i].carbType='Mélasse';
+    const unitEl=G('bCARB-unit-'+i);if(unitEl)unitEl.textContent='mL';
+  }
+  const ft=getRationEntry(b.poids||1);
+  const prot=ft.protein/100||0.32;
+  const alimKg=b.alimReel||0;
+  let mel;
+  if(b.TAN!==null&&b.TAN!==undefined&&b.TAN>=1){
+    mel=calcMolassePhase2(b.TAN,(b.vol||3.8)*1000);
+  } else {
+    mel=calcMolassePhase1(alimKg,prot);
+  }
+  const dose=Math.round(mel);
+  if(dose>0){
+    carbInp.value=dose;
+    if(!APP_historyDate)APP.state.bassins[i].carb=dose;
+    else if(APP_historyData)APP_historyData[i].carb=dose;
+  }
+}
+
+// ── FEATURE 1: DASHBOARD KPIs ────────────────────────────────────────
+function renderDashboardKPIs(){
+  const el=G('t0-kpis');if(!el)return;
+  const bassins=APP.state.bassins||[];
+  const actifs=bassins.filter(b=>b.statut==='Actif');
+  const totalBio=actifs.reduce((s,b)=>s+(calcBassin(b).biomasse||0),0);
+  const doCritique=actifs.filter(b=>b.DO!==null&&b.DO<(sp().doAlerte||4)).length;
+  const nh3Critique=actifs.filter(b=>b.NH3!==null&&b.NH3>(sp().nh3Alerte||0.5)).length;
+  const tanHaut=actifs.filter(b=>b.TAN!==null&&b.TAN>=1).length;
+  const lowStock=APP_INTRANTS.filter(i=>!i.amortissable&&i.seuil&&i.seuil>0&&getItemCurrentStock(i.id)<i.seuil).length;
+  const kpis=[
+    {ico:'🐠',lbl:'Bassins actifs',val:actifs.length,tot:bassins.length,color:'var(--acc)',alert:false},
+    {ico:'⚖️',lbl:'Biomasse totale',val:fmt(totalBio,1)+' kg',color:'var(--acc)',alert:false},
+    {ico:'💨',lbl:'DO critique',val:doCritique,color:doCritique>0?'var(--dng)':'var(--acc)',alert:doCritique>0},
+    {ico:'⚗️',lbl:'NH₃ critique',val:nh3Critique,color:nh3Critique>0?'var(--dng)':'var(--acc)',alert:nh3Critique>0},
+    {ico:'🧪',lbl:'TAN ≥ 1 mg/L',val:tanHaut,color:tanHaut>0?'var(--warn)':'var(--acc)',alert:tanHaut>0},
+    {ico:'📦',lbl:'Alertes stock',val:lowStock,color:lowStock>0?'var(--warn)':'var(--acc)',alert:lowStock>0},
+  ];
+  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.5rem;margin-bottom:.75rem">'
+    +kpis.map(k=>`<div style="background:var(--card);border:1px solid ${k.alert?k.color:'var(--b1)'};border-radius:8px;padding:.55rem .7rem;text-align:center">
+      <div style="font-size:16px;margin-bottom:2px">${k.ico}</div>
+      <div style="font-size:18px;font-weight:800;color:${k.color}">${typeof k.val==='number'&&k.tot!==undefined?k.val+'/'+k.tot:k.val}</div>
+      <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">${k.lbl}</div>
+    </div>`).join('')+'</div>';
 }
 
 function getParamStatus(param, value){
@@ -10898,6 +11337,124 @@ if(window.fillPwaBassinSelect)window.fillPwaBassinSelect();
 
   console.log('ICHTUS exports PDF/CSV chargés');
 })();
+</script>
+
+<script>
+// ── FEATURE 8: SERVICE WORKER (mode hors-ligne) ──────────────────────
+(function(){
+  if(!('serviceWorker' in navigator))return;
+  navigator.serviceWorker.register('./sw.js',{scope:'./'})
+    .then(reg=>{
+      window._swReg=reg;
+      console.log('[SW] Enregistré — mode hors-ligne actif');
+      setTimeout(checkOfflineQueue,1000);
+    })
+    .catch(e=>console.warn('[SW] Erreur (non bloquant):',e));
+})();
+
+// ── FILE D'ATTENTE HORS-LIGNE ────────────────────────────────────────
+const OFFLINE_QUEUE_KEY='ichtus_offline_queue';
+function queueOfflineWrite(collection,docId,data){
+  const q=JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY)||'[]');
+  q.push({collection,docId,data,ts:Date.now()});
+  localStorage.setItem(OFFLINE_QUEUE_KEY,JSON.stringify(q));
+}
+async function checkOfflineQueue(){
+  if(!navigator.onLine)return;
+  if(!APP.farmCode)return;
+  const q=JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY)||'[]');
+  if(!q.length)return;
+  let synced=0;
+  for(const item of q){
+    try{
+      if(item.collection&&item.docId&&db){
+        await farmCol(item.collection).doc(item.docId).set(item.data,{merge:true});
+        synced++;
+      }
+    }catch(e){break;}
+  }
+  if(synced>0){
+    localStorage.setItem(OFFLINE_QUEUE_KEY,JSON.stringify(q.slice(synced)));
+    showToast(`✅ ${synced} écriture(s) synchronisée(s) depuis le mode hors-ligne`,'ok');
+  }
+}
+window.addEventListener('online',()=>{showToast('📶 Connexion rétablie — synchronisation en cours…','ok');setTimeout(checkOfflineQueue,1000);});
+window.addEventListener('offline',()=>showToast('📵 Mode hors-ligne activé — les saisies seront synchronisées au retour','warn'));
+
+// ── FEATURE 2: ALERTES / NOTIFICATIONS ──────────────────────────────
+async function requestNotifPermission(){
+  if(!('Notification' in window)){showToast('Notifications non supportées sur ce navigateur','warn');return;}
+  const perm=await Notification.requestPermission();
+  if(perm==='granted'){
+    showToast('✅ Notifications activées','ok');
+    new Notification('ICHTUS ERP',{body:'Vous recevrez les alertes importantes (DO critique, stock bas, PWA…)',icon:''});
+  } else {
+    showToast('Notifications refusées par le navigateur','warn');
+  }
+}
+
+function sendLocalNotif(title,body,tag){
+  if(Notification.permission==='granted'){
+    new Notification(title,{body,tag:tag||'ichtus',icon:''});
+  }
+}
+
+function checkAndNotify(){
+  if(Notification.permission!=='granted')return;
+  const bassins=APP.state.bassins||[];
+  bassins.filter(b=>b.statut==='Actif').forEach(b=>{
+    if(b.DO!==null&&b.DO<(sp().doAlerte||4))
+      sendLocalNotif('⚠️ DO Critique','Bassin '+b.name+' — DO '+b.DO+' ppm (< '+(sp().doAlerte||4)+')','do_'+b.name);
+    if(b.NH3!==null&&b.NH3>(sp().nh3Alerte||0.5))
+      sendLocalNotif('⚠️ NH₃ Élevé','Bassin '+b.name+' — NH₃ '+b.NH3+' mg/L','nh3_'+b.name);
+    if(b.TAN!==null&&b.TAN>=1)
+      sendLocalNotif('⚗️ TAN ≥ 1','Bassin '+b.name+' — Ajouter mélasse corrective','tan_'+b.name);
+  });
+  const lowStock=APP_INTRANTS.filter(i=>!i.amortissable&&i.seuil&&getItemCurrentStock(i.id)<i.seuil);
+  if(lowStock.length)sendLocalNotif('📦 Stock bas',lowStock.map(i=>i.name).join(', '),'stock_low');
+}
+
+// ── FEATURE 9: GESTION MULTI-FERME ───────────────────────────────────
+async function switchFarm(newFarmCode){
+  if(!newFarmCode||newFarmCode===APP.farmCode)return;
+  if(!confirm(`Changer de ferme vers "${newFarmCode}" ? Les données en cours seront sauvegardées.`))return;
+  // Sauvegarder si nécessaire
+  APP.farmCode=newFarmCode;
+  try{
+    const snap=await db.collection('farms').doc(newFarmCode).get();
+    if(!snap.exists){showToast('Ferme introuvable: '+newFarmCode,'dng');return;}
+    APP.farmName=snap.data().name||newFarmCode;
+    APP.state.bassins=[];
+    APP.state.suivi=[];
+    APP_STOCK_ENTRIES=[];
+    APP_STOCK_MOVEMENTS=[];
+    APP_INTRANTS=[...DEFAULT_INTRANTS];
+    await loadIntrants();
+    await loadBassinsByDate(today());
+    buildBTable();
+    upAll();
+    showToast('🏠 Ferme changée: '+APP.farmName,'ok');
+  }catch(e){showToast('Erreur changement ferme: '+e.message,'dng');}
+}
+
+function openFarmSwitcherModal(){
+  const modal=G('farm-switcher-modal');
+  if(!modal){
+    const m=document.createElement('div');m.id='farm-switcher-modal';m.className='modal-overlay';
+    m.style.cssText='position:fixed;inset:0;background:rgba(4,16,30,.85);z-index:9000;display:flex;align-items:center;justify-content:center;padding:1rem';
+    m.innerHTML=`<div class="modal-box" style="max-width:360px">
+      <div class="modal-title">🏠 Changer de ferme</div>
+      <div style="font-size:10px;color:var(--t3);margin-bottom:.7rem">Ferme actuelle: <strong style="color:var(--acc)">${APP.farmCode||'—'}</strong></div>
+      <div><label class="form-lbl">Code de la nouvelle ferme</label>
+      <input type="text" id="farm-switch-code" class="form-inp" placeholder="ex: FERME02" style="text-transform:uppercase"></div>
+      <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.8rem">
+        <button class="sbtn" onclick="G('farm-switcher-modal').remove()" style="background:var(--inp)">Annuler</button>
+        <button class="sbtn" onclick="switchFarm(G('farm-switch-code').value.trim().toUpperCase());G('farm-switcher-modal').remove()">✅ Changer</button>
+      </div>
+    </div>`;
+    document.body.appendChild(m);
+  } else {modal.style.display='flex';}
+}
 </script>
 </body>
 </html>
