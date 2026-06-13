@@ -3082,13 +3082,6 @@ async function loadFarmData(){
     if(!fSnap.empty){fSnap.docs.forEach(d=>{const ft=FEED_TYPES.find(f=>f.id===d.id);if(ft&&d.data().batches)ft.batches=d.data().batches;});}
     if(cfgSnap.exists&&cfgSnap.data().probioStock!==undefined&&G('g-probio'))G('g-probio').value=cfgSnap.data().probioStock;
     if(window.fillPwaBassinSelect){setTimeout(fillPwaBassinSelect,100);setTimeout(fillPwaBassinSelect,800);}
-    // Auto-sync ERP bassins → production if ERP has entries but Firebase is empty/default
-    // Sync ERP → production si Firebase vide et ERP a des bassins
-    setTimeout(function(){
-      var erpBs=typeof window.bassins==='function'?window.bassins():[];
-      var prodBs=Array.isArray(APP.state.bassins)?APP.state.bassins:[];
-      if(erpBs.length>0&&prodBs.length===0&&window.syncERPBassinsToProduction)syncERPBassinsToProduction(false);
-    },500);
   }catch(e){
     console.error('loadFarmData error:',e);
     // Continuer avec des données vides plutôt que de bloquer la connexion
@@ -11148,7 +11141,7 @@ if(window.fillPwaBassinSelect)window.fillPwaBassinSelect();
 // ═══════════════════════════════════════════════════════════
 
 (function(){
-  var farmName=function(){return (window.APP&&APP.state&&APP.state.farmName)||'Ferme';};
+  var farmName=function(){return (window.APP&&(APP.farmName||APP.farmCode))||'Ferme';};
   var d=function(){return new Date().toLocaleDateString('fr-FR');};
   var currency=function(){try{return (JSON.parse(localStorage.getItem('finance_cfg')||'{}')).currency||'XOF';}catch(e){return 'XOF';}};
   var fmt=function(v){return Number(v||0).toLocaleString('fr-FR')+ ' '+currency();};
@@ -11224,11 +11217,10 @@ if(window.fillPwaBassinSelect)window.fillPwaBassinSelect();
         +'<td>'+(b.temp||'—')+'</td><td>'+(b.ph||'—')+'</td><td>'+(b.DO||'—')+'</td><td>'+(b.NH3||'—')+'</td>'
         +'<td>'+(b.statut||'')+'</td></tr>';
     }).join('');
-    var html='<h1>'+esc(farmName())+' — Fiche Journalière Bassins</h1><p class="sub">Date : '+d()+'</p>'
-      +'<table><thead><tr><th>Bassin</th><th>Vol m³</th><th>Poids g</th><th>Nb vivants</th><th>Biomasse kg</th>'
+    var html='<table><thead><tr><th>Bassin</th><th>Vol m³</th><th>Poids g</th><th>Nb vivants</th><th>Biomasse kg</th>'
       +'<th>Alim théo g</th><th>Alim réelle g</th><th>Temp °C</th><th>pH</th><th>DO mg/L</th><th>NH₃ mg/L</th><th>Statut</th></tr></thead><tbody>'
       +rows+'</tbody></table>';
-    openPDF(html);
+    openPDF(html,'Fiche Journalière Bassins');
   };
 
   // ════════════════════════════════════════════════════════
@@ -11256,10 +11248,9 @@ if(window.fillPwaBassinSelect)window.fillPwaBassinSelect();
         +'<td>'+n(s.fcr||0).toFixed(2)+'</td><td>'+n(s.temp||0)+'</td><td>'+n(s.ph||0)+'</td>'
         +'<td>'+n(s.DO||0)+'</td><td>'+esc(s.note||'')+'</td></tr>';
     }).join('');
-    var html='<h1>'+esc(farmName())+' — Suivi Croissance / FCR</h1><p class="sub">Date export : '+d()+'</p>'
-      +'<table><thead><tr><th>Date</th><th>Bassin</th><th>Poids g</th><th>Nb</th><th>Biomasse kg</th><th>FCR</th><th>Temp</th><th>pH</th><th>DO</th><th>Note</th></tr></thead><tbody>'
+    var html='<table><thead><tr><th>Date</th><th>Bassin</th><th>Poids g</th><th>Nb</th><th>Biomasse kg</th><th>FCR</th><th>Temp</th><th>pH</th><th>DO</th><th>Note</th></tr></thead><tbody>'
       +rows+'</tbody></table>';
-    openPDF(html);
+    openPDF(html,'Suivi Croissance / FCR');
   };
 
   // ════════════════════════════════════════════════════════
@@ -11283,8 +11274,8 @@ if(window.fillPwaBassinSelect)window.fillPwaBassinSelect();
     var tableHTML='<table><thead><tr><th>Bassin</th><th>Durée j</th><th>Biomasse kg</th><th>FCR</th><th>Aliment</th><th>Probio</th><th>Carb</th><th>Basifiant</th><th>Élec</th><th>Charges fixes</th><th>Total charges</th></tr></thead><tbody>';
     if(tbody){tableHTML+=tbody.innerHTML;}
     tableHTML+='</tbody></table>';
-    var html='<h1>'+esc(farmName())+' — Comptabilité Synthèse</h1><p class="sub">Date export : '+d()+'</p>'+tableHTML;
-    openPDF(html);
+    var html=tableHTML;
+    openPDF(html,'Comptabilité Synthèse');
   };
 
   // ════════════════════════════════════════════════════════
@@ -11322,11 +11313,10 @@ if(window.fillPwaBassinSelect)window.fillPwaBassinSelect();
     }).join('');
     var totalKg=ss.reduce(function(a,s){return a+n2(s.kg);},0);
     var totalCA=ss.reduce(function(a,s){return a+n2(s.kg)*n2(s.price);},0);
-    var html='<h1>'+esc(farmName())+' — Rapport Récoltes & Ventes</h1><p class="sub">Date export : '+d()+'</p>'
-      +'<h2>Récoltes</h2><table><thead><tr><th>Date</th><th>Cycle</th><th>Bassin</th><th>Nb</th><th>Récolté kg</th><th>Vendu kg</th><th>Stock restant</th></tr></thead><tbody>'+hrRows+'</tbody></table>'
+    var html='<h2>Récoltes</h2><table><thead><tr><th>Date</th><th>Cycle</th><th>Bassin</th><th>Nb</th><th>Récolté kg</th><th>Vendu kg</th><th>Stock restant</th></tr></thead><tbody>'+hrRows+'</tbody></table>'
       +'<h2>Ventes</h2><table><thead><tr><th>Date</th><th>Client</th><th>Récolte</th><th>Kg</th><th>Prix/kg</th><th>CA</th></tr></thead><tbody>'+saleRows+'</tbody>'
       +'<tr class="total"><td colspan="3">TOTAL</td><td>'+totalKg.toFixed(2)+' kg</td><td></td><td>'+fmt(totalCA)+'</td></tr></table>';
-    openPDF(html);
+    openPDF(html,'Rapport Récoltes & Ventes');
   };
 
   // ════════════════════════════════════════════════════════
@@ -11352,8 +11342,8 @@ if(window.fillPwaBassinSelect)window.fillPwaBassinSelect();
   window.exportRationnementPDF=function(){
     var container=document.getElementById('rat-results');
     var inner=container?container.innerHTML:'<p>Aucun plan de rationnement calculé.</p>';
-    var html='<h1>'+esc(farmName())+' — Plan de Rationnement</h1><p class="sub">Date export : '+d()+'</p>'+inner;
-    openPDF(html);
+    var html=inner;
+    openPDF(html,'Plan de Rationnement');
   };
 
   // ════════════════════════════════════════════════════════
@@ -11369,8 +11359,7 @@ if(window.fillPwaBassinSelect)window.fillPwaBassinSelect();
     var coût=charges+amort;
     var marge=ca-coût;
     var margeP=ca>0?(marge/ca*100):0;
-    var html='<h1>'+esc(farmName())+' — Rapport Rentabilité</h1><p class="sub">Date export : '+d()+'</p>'
-      +'<table><thead><tr><th>Indicateur</th><th>Valeur</th></tr></thead><tbody>'
+    var html='<table><thead><tr><th>Indicateur</th><th>Valeur</th></tr></thead><tbody>'
       +'<tr><td>Chiffre d\'affaires total</td><td class="ok">'+fmt(ca)+'</td></tr>'
       +'<tr><td>Charges opérationnelles</td><td>'+fmt(charges)+'</td></tr>'
       +'<tr><td>Amortissements mensuels</td><td>'+fmt(amort)+'</td></tr>'
@@ -11380,7 +11369,7 @@ if(window.fillPwaBassinSelect)window.fillPwaBassinSelect();
       +'<tr><td>Total investissements</td><td>'+fmt(inv)+'</td></tr>'
       +'<tr><td>Marge cible (paramètre)</td><td>'+(cfg.margin||30)+' %</td></tr>'
       +'</tbody></table>';
-    openPDF(html);
+    openPDF(html,'Rapport Rentabilité');
   };
 
   // ════════════════════════════════════════════════════════
