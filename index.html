@@ -1047,7 +1047,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
       <div class="tw">
         <table>
           <thead><tr>
-            <th>Bassin <small style="color:var(--t3);cursor:pointer" title="Cliquer sur le nom du bassin pour voir les statistiques">📊</small></th><th>Statut</th><th>Vol (m³)</th><th>Nb Init</th><th>Mortalité</th><th>Nb Actuel</th>
+            <th>Bassin <small style="color:var(--t3);cursor:pointer" title="Cliquer sur le nom du bassin pour voir les statistiques">📊</small></th><th>Statut</th><th>Démarrage</th><th>Vol (m³)</th><th>Nb Init</th><th>Mortalité</th><th>Nb Actuel</th>
             <th>Poids Moy (g)</th><th>Type Alim</th><th>Biomasse (kg)</th><th>Ration (%)</th>
             <th>Alim Théo (kg)</th><th>Alim Réel (kg)</th>
             <th style="color:#a8d8ff">Temp °C <small style="color:var(--t3)">(opt.)</small></th>
@@ -2646,8 +2646,8 @@ let FEED_TYPES=JSON.parse(JSON.stringify(FEED_TYPES_DEFAULT));
 // K4–K4b Grower 32%CP 2mm : 271 GHS/20kg → 705 XOF/kg · sac 20kg
 // K5–K5b Grower 32%CP 3mm : 241 GHS/20kg → 627 XOF/kg · sac 20kg
 // K6–K6b Grower 32%CP 4.5mm : 219 GHS/20kg → 569 XOF/kg · sac 20kg
-FEED_TYPES[0].batches=[{id:1,qty:20,price:705}];    // K4  Floating 2mm  — sac 20kg
-FEED_TYPES[1].batches=[{id:1,qty:20,price:705}];    // K4b Floating 2mm  — sac 20kg
+FEED_TYPES[0].batches=[{id:1,qty:20,price:627}];    // K4  Floating 2mm  — sac 20kg
+FEED_TYPES[1].batches=[{id:1,qty:20,price:627}];    // K4b Floating 2mm  — sac 20kg
 FEED_TYPES[2].batches=[{id:1,qty:20,price:627}];    // K5  Floating 3mm  — sac 20kg
 FEED_TYPES[3].batches=[{id:1,qty:20,price:627}];    // K5b Floating 3mm  — sac 20kg
 FEED_TYPES[4].batches=[{id:1,qty:20,price:569}];    // K6  Floating 4.5mm — sac 20kg
@@ -2924,7 +2924,7 @@ async function showFarmApp(){
   loadParamLists();
   loadIntrants(); // Module Logistique
   // Appliquer les doses biofloc sauvegardées aux PWA_RATES
-  (function(){var cfg=load('biofloc_cfg',{});if(window.PWA_RATES){if(cfg.primo)PWA_RATES.primo.dose=cfg.primo;if(cfg.entretien){PWA_RATES.entretien.dose=cfg.entretien;if(PWA_RATES.rotation)PWA_RATES.rotation.dose=cfg.entretien;}if(cfg.postintro&&PWA_RATES.postintro)PWA_RATES.postintro.dose=cfg.postintro;}})();
+  (function(){var cfg=load('biofloc_cfg',{});if(typeof PWA_RATES!=='undefined'&&PWA_RATES){if(cfg.primo)PWA_RATES.primo.dose=cfg.primo;if(cfg.entretien){PWA_RATES.entretien.dose=cfg.entretien;if(PWA_RATES.rotation)PWA_RATES.rotation.dose=cfg.entretien;}if(cfg.postintro&&PWA_RATES.postintro)PWA_RATES.postintro.dose=cfg.postintro;}})();
   const role=APP.user?.role||'Opérateur';
   if(role==='Responsable'||role==='Administrateur'){
     checkNotifications();
@@ -4635,10 +4635,17 @@ function setPrevHorizon(jours){
     if(b.textContent.trim()==='🔄 Calculer')return;
     b.style.background='';
   });
+  // Highlight le bouton cliqué
+  var map={'7':'1 sem','14':'2 sem','30':'1 mois','90':'3 mois','0':'Fin cycle'};
+  var label=map[String(jours)];
+  if(label){document.querySelectorAll('#lp-previsionnel .sbtn').forEach(function(b){
+    if(b.textContent.trim()===label)b.style.background='var(--acc)';
+  });}
 }
 
 function renderPrevisionnel(){
   var el=G('prev-content');if(!el)return;
+  var esc=window.esc||escapeHtml||function(s){return String(s??'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
   var lastEl=G('prev-last-calc');
   if(lastEl)lastEl.textContent='Calculé le '+new Date().toLocaleString('fr-FR');
 
@@ -4654,8 +4661,8 @@ function renderPrevisionnel(){
     return;
   }
 
-  var intrants=window.APP_INTRANTS||[];
-  var mouvements=window.APP_STOCK_MOVEMENTS||[];
+  var intrants=window.APP_INTRANTS||(typeof APP_INTRANTS!=='undefined'?APP_INTRANTS:[])||[];
+  var mouvements=window.APP_STOCK_MOVEMENTS||(typeof APP_STOCK_MOVEMENTS!=='undefined'?APP_STOCK_MOVEMENTS:[])||[];
   var today=new Date().toISOString().slice(0,10);
   var gmq=2.9;
   try{if(window.SPECIES_PARAMS&&SPECIES_PARAMS.gmqCible)gmq=Number(SPECIES_PARAMS.gmqCible)||2.9;}catch(e){}
@@ -4705,7 +4712,7 @@ function renderPrevisionnel(){
 
   bassins.forEach(function(b){
     // Date démarrage : essayer tous les champs possibles
-    var debut=b.dateDebut||b.startDate||b.debut||b.dateStart||today;
+    var debut=b.startDate||b.dateDebut||b.debut||b.dateStart||(b.harvestDate?new Date(new Date(b.harvestDate).getTime()-154*24*60*60*1000).toISOString().slice(0,10):today);
     var d1=new Date(debut);
     if(isNaN(d1.getTime()))d1=new Date(today);
     var d2=new Date(today);
@@ -4719,7 +4726,7 @@ function renderPrevisionnel(){
     if(!volBassin||isNaN(volBassin))volBassin=3.8;
 
     // Paramètres poisson
-    var alevins=Number(b.alevins||b.nbAlevins||b.nombreAlevins||570);
+    var alevins=Number(b.alevins||b.nbAlevins||b.nombreAlevins||b.nbInit||570);
     var survie=Number(b.survie||b.tauxSurvie||b.survivalRate||0.90);
     // Survie en % ou décimal
     if(survie>1)survie=survie/100;
@@ -4743,7 +4750,7 @@ function renderPrevisionnel(){
     // PWA — calcul par phase précis
     // Phase init (J1–J14) : primo(1) + entretien J3,J5,J7,J8,J10(5) + TAN J12,J14(2) = 8 apps
     // Rotation mature (J14–fin) : 2×/semaine × vol bassin dose fixe 0.38L si vol=3.8m³
-    var doseRot=Math.abs(volBassin-3.8)<0.01?0.38:(0.2*volBassin);
+    var doseRot=(typeof PWA_RATES!=='undefined'&&PWA_RATES&&PWA_RATES.rotation?PWA_RATES.rotation.dose:0.2)*volBassin;
     var pwaConso=0,pwaPrev=0;
 
     // PWA phase init : J1(primo) + J3,J5,J7,J8,J10(entretien) + J12,J14(TAN) = 8 applications
@@ -5488,7 +5495,7 @@ const PWA_RATES={
   primo:{label:'Primo inoculation J1',moment:'Soirée · dose unique · avant BC100+ (+1h) Melasse (+4h)',dose:4.7},
   entretien:{label:'Entretien J3 · J5 · J7 · J8 · J10',moment:'Soirée · dose unique · avant BC100+ (+1h) Melasse (+4h)',dose:0.2},
   tan:{label:'Test Maturite TAN J12-J14',moment:'Soirée · dose unique · avant BC100+ (+1h) Melasse (+4h)',dose:0.2},
-  rotation:{label:'Systeme mature — post introduction alevins',moment:'Soirée · dose unique · avant BC100+ (+1h) Melasse (+4h)',dose:0.2,vol380Fixed:0.38},
+  rotation:{label:'Systeme mature — post introduction alevins',moment:'Soirée · dose unique · avant BC100+ (+1h) Melasse (+4h)',dose:0.2,vol380Fixed:0.76},
   postintro:{label:'Systeme immature_post introduction alevins J14-J21',moment:'Soirée · dose unique',dose:0.1}
 };
 
@@ -6833,7 +6840,7 @@ function getDisplayBassins(){
 
 function addBassin(){
   if(APP_historyDate){alert('⚠️ Impossible d\'ajouter un bassin en mode historique.');return;}
-  APP.state.bassins.push({name:`Bassin ${String(APP.bCount).padStart(2,'0')}`,vol:3.8,nbInit:1000,mort:0,poids:5,alimReel:0,temp:null,ph:null,DO:null,NH3:null,statut:'Actif',feedId:FEED_TYPES[0]?.id||'K4',harvestDate:null,_hasData:false});
+  APP.state.bassins.push({name:`Bassin ${String(APP.bCount).padStart(2,'0')}`,vol:3.8,nbInit:1000,mort:0,poids:5,alimReel:0,temp:null,ph:null,DO:null,NH3:null,statut:'Actif',feedId:FEED_TYPES[0]?.id||'K4',startDate:today(),harvestDate:null,_hasData:false});
   APP.bCount++;buildBTable();popSelects();upAll();saveBassins();
 }
 
@@ -7037,6 +7044,7 @@ function buildBTable(){
         <option${b.statut==='Récolté'?' selected':''}>Récolté</option>
         <option${b.statut==='Vide'?' selected':''}>Vide</option>
       </select></td>
+      <td><input type="date" class="ci" value="${b.startDate||''}" style="font-size:9px;width:98px;padding:1px 3px" title="Date de démarrage du cycle" onchange="if(!APP_historyDate)APP.state.bassins[${i}].startDate=this.value;else APP_historyData[${i}].startDate=this.value;upConfigCalcs()"></td>
       <td><input type="number" class="ci" value="${fmt(b.vol,1)}" step="0.1" style="width:52px" onchange="if(!APP_historyDate)APP.state.bassins[${i}].vol=+this.value;else APP_historyData[${i}].vol=+this.value;upConfigCalcs()"></td>
       <td><input type="number" class="ci" value="${b.nbInit}" style="width:60px" onchange="if(!APP_historyDate)APP.state.bassins[${i}].nbInit=+this.value;else APP_historyData[${i}].nbInit=+this.value;upConfigCalcs()"></td>
       <td><input type="number" class="ci" value="${b.mort}" style="width:50px" onchange="if(!APP_historyDate)APP.state.bassins[${i}].mort=+this.value;else APP_historyData[${i}].mort=+this.value;upConfigCalcs()"></td>
@@ -7294,6 +7302,7 @@ function upConfigCalcs(){
   G('s-actifs').textContent=actifs;G('s-bio').textContent=fmt(tBio,1)+' kg';G('s-alim').textContent=fmt(tTheo,3)+' kg';G('s-recolte').textContent=recoltes;
   renderDashboardKPIs();
   if(typeof checkAndNotify==='function')checkAndNotify();
+  if(typeof saveBassins==='function')saveBassins();
 }
 
 // ── FEATURE 11: C/N AUTOMATIQUE ──────────────────────────────────────
@@ -8263,6 +8272,7 @@ function upAll(){
   if(G('t6')?.classList.contains('active'))upCons();
   if(G('t7')?.classList.contains('active'))renderRecoltes();
   if(G('t8')?.classList.contains('active'))renderFiche();
+  if(G('lp-previsionnel')?.style.display!=='none')renderPrevisionnel();
   // Toujours propager aux modules financiers même si onglets inactifs
   if(window.refreshFinancials)setTimeout(refreshFinancials,200);
 }
