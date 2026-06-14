@@ -1041,7 +1041,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
           <button onclick="openAnalyse()" style="background:linear-gradient(135deg,var(--acc2),var(--purp));color:#fff;border:none;border-radius:12px;padding:10px 32px;font-size:13px;font-weight:800;cursor:pointer;letter-spacing:.5px;box-shadow:0 4px 20px rgba(61,142,245,.35)">
             🔬 Analyser les paramètres sélectionnés
           </button>
-          <div style="font-size:9px;color:var(--t3);margin-top:4px">Interprétation et mesures correctives selon le dossier technique ICHTUS</div>
+          <div style="font-size:9px;color:var(--t3);margin-top:4px">Interprétation et mesures correctives selon les normes de production</div>
         </div>
       </div>
       <div class="tw">
@@ -1379,12 +1379,27 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
       <!-- Panneau Prévisionnel stock -->
       <div id="lp-previsionnel" class="log-pane" style="display:none">
         <div class="card" style="border-color:rgba(0,201,167,.25);margin-bottom:.75rem">
-          <div class="ctitle"><span class="dot" style="background:var(--acc)"></span>📈 Stock prévisionnel — fin de cycle</div>
-          <div style="font-size:11px;color:var(--t2);line-height:1.8">Basé sur les consommations réelles saisies à ce jour, extrapolées jusqu'à la récolte selon les ratios du dossier technique ICHTUS v8. Les bassins actifs sont pris en compte individuellement.</div>
+          <div class="ctitle"><span class="dot" style="background:var(--acc)"></span>📈 Stock prévisionnel — horizon personnalisable</div>
+          <div style="font-size:11px;color:var(--t2);line-height:1.8">Besoins en intrants entre aujourd'hui et la date horizon choisie. Basé sur les données réelles des bassins actifs et les ratios du protocole de production.</div>
         </div>
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem;align-items:center">
-          <button class="sbtn" onclick="renderPrevisionnel()" style="background:var(--acc)">🔄 Calculer</button>
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:.75rem;align-items:center;padding:.6rem 1rem;background:var(--card);border:1px solid var(--b2);border-radius:10px">
+          <div>
+            <div style="font-size:10px;color:var(--t3);margin-bottom:3px">Horizon de calcul</div>
+            <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap">
+              <button onclick="setPrevHorizon(7)"  class="sbtn" style="font-size:10px;padding:3px 8px">1 sem</button>
+              <button onclick="setPrevHorizon(14)" class="sbtn" style="font-size:10px;padding:3px 8px">2 sem</button>
+              <button onclick="setPrevHorizon(30)" class="sbtn" style="font-size:10px;padding:3px 8px;background:var(--acc)">1 mois</button>
+              <button onclick="setPrevHorizon(90)" class="sbtn" style="font-size:10px;padding:3px 8px">3 mois</button>
+              <button onclick="setPrevHorizon(0)"  class="sbtn" style="font-size:10px;padding:3px 8px">Fin cycle</button>
+              <span style="font-size:10px;color:var(--t2)">ou</span>
+              <input type="date" id="prev-horizon-date" class="si" style="font-size:11px">
+            </div>
+          </div>
+          <button class="sbtn" onclick="renderPrevisionnel()" style="background:var(--acc);margin-left:auto">🔄 Calculer</button>
+        </div>
+        <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">
           <span style="font-size:10px;color:var(--t3)" id="prev-last-calc"></span>
+          <span style="font-size:10px;color:var(--acc);font-weight:700" id="prev-horizon-label"></span>
         </div>
         <div id="prev-content" style="font-size:11px;color:var(--t2)">
           <p style="text-align:center;padding:2rem;color:var(--t3)">Cliquez sur Calculer pour générer le prévisionnel.</p>
@@ -1970,7 +1985,7 @@ input[type=date].di2::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1
       <span style="font-size:22px">🔬</span>
       <div style="flex:1">
         <div class="modal-title" style="margin-bottom:0">Analyse des paramètres — <span id="analyse-date"></span></div>
-        <div style="font-size:10px;color:var(--t3)">Source : Mémo paramètres eau v4.1 · Dossier technique ICHTUS v8.9</div>
+        <div style="font-size:10px;color:var(--t3)">Analyse des paramètres de qualité d'eau</div>
       </div>
       <button onclick="G('analyse-modal').classList.add('hidden')" style="background:none;border:1px solid var(--b2);border-radius:6px;color:var(--t2);padding:4px 12px;cursor:pointer">✕ Fermer</button>
       <button onclick="exportAnalysePDF()" style="background:var(--dng);color:#fff;border:none;border-radius:6px;padding:4px 12px;cursor:pointer;font-size:11px;font-weight:700">📄 Export PDF</button>
@@ -4396,7 +4411,12 @@ function swLog(panel){
     const el=G('rapport-week-start');
     if(el&&!el.value){const d=new Date();d.setDate(d.getDate()-d.getDay()+1);el.value=d.toISOString().slice(0,10);}
   }
-  if(panel==='previsionnel')renderPrevisionnel();
+  if(panel==='previsionnel'){
+    // Initialiser horizon à 30j si pas encore défini
+    var inp=G('prev-horizon-date');
+    if(inp&&!inp.value){var d=new Date();d.setDate(d.getDate()+30);inp.value=d.toISOString().slice(0,10);}
+    renderPrevisionnel();
+  }
 }
 
 // ── FEATURE 7: HISTORIQUE MOUVEMENTS ────────────────────────────────
@@ -4606,6 +4626,17 @@ async function saveSaisieRapide(){
 }
 
 // ── MODULE PRÉVISIONNEL STOCK ───────────────────────────────────────────
+function setPrevHorizon(jours){
+  var inp=G('prev-horizon-date');if(!inp)return;
+  if(jours===0){inp.value='';} // fin cycle = pas de borne → calculé par bassin
+  else{var d=new Date();d.setDate(d.getDate()+jours);inp.value=d.toISOString().slice(0,10);}
+  // Mettre en évidence le bouton actif
+  document.querySelectorAll('#lp-previsionnel .sbtn').forEach(function(b){
+    if(b.textContent.trim()==='🔄 Calculer')return;
+    b.style.background='';
+  });
+}
+
 function renderPrevisionnel(){
   var el=G('prev-content');if(!el)return;
   var lastEl=G('prev-last-calc');
@@ -4628,6 +4659,18 @@ function renderPrevisionnel(){
   var today=new Date().toISOString().slice(0,10);
   var gmq=2.9;
   try{if(window.SPECIES_PARAMS&&SPECIES_PARAMS.gmqCible)gmq=Number(SPECIES_PARAMS.gmqCible)||2.9;}catch(e){}
+
+  // Horizon de calcul
+  var horizonDateStr=G('prev-horizon-date')&&G('prev-horizon-date').value;
+  var horizonDate=horizonDateStr?new Date(horizonDateStr):null;
+  var horizonJours=horizonDate?Math.max(1,Math.round((horizonDate-new Date())/(1000*60*60*24))):null;
+  var labelEl=G('prev-horizon-label');
+  if(labelEl){
+    if(horizonDate&&!isNaN(horizonDate.getTime()))
+      labelEl.textContent='Horizon : '+horizonDate.toLocaleDateString('fr-FR');
+    else
+      labelEl.textContent='Horizon : fin de cycle (S22)';
+  }
 
   // Catégoriser intrants par mots-clés sur nom OU catégorie
   function findIds(keywords){
@@ -4668,7 +4711,10 @@ function renderPrevisionnel(){
     var d2=new Date(today);
     var joursEcoules=Math.max(0,Math.round((d2-d1)/(1000*60*60*24)));
     var semaineActuelle=Math.min(22,Math.floor(joursEcoules/7)+1);
-    var semainesRestantes=Math.max(0,22-semaineActuelle);
+    // Jours restants : borné par l'horizon si défini, sinon fin de cycle S22
+    var joursRestantsCycle=Math.max(0,(22*7)-joursEcoules);
+    var joursRestantsTotal=horizonJours!==null?Math.min(horizonJours,joursRestantsCycle):joursRestantsCycle;
+    var semainesRestantes=Math.floor(joursRestantsTotal/7);
     var volBassin=Number(b.volume||b.vol||b.volumeBassin||3.8);
     if(!volBassin||isNaN(volBassin))volBassin=3.8;
 
@@ -4714,12 +4760,9 @@ function renderPrevisionnel(){
     if(joursEcoules<1)pwaPrev+=4.7*volBassin;   // primo pas encore fait
     pwaPrev+=entretienRestants*0.2*volBassin;    // entretien+TAN restants
 
-    // Rotation mature : commence à J14, soit environ semaine 3
-    // semRotFaites = semaines complètes de rotation effectuées
+    // Rotation mature : commence à J14
     var joursDepuisRot=Math.max(0,joursEcoules-14);
     var semRotFaites=Math.floor(joursDepuisRot/7);
-    // semRotRestantes = semaines de rotation restantes jusqu'à fin cycle (J154)
-    var joursRestantsTotal=Math.max(0,(22*7)-joursEcoules);
     var joursRestantsRot=Math.max(0,joursRestantsTotal-(joursEcoules<14?14-joursEcoules:0));
     var semRotRestantes=Math.floor(joursRestantsRot/7);
     pwaConso+=semRotFaites*2*doseRot;
@@ -4737,7 +4780,7 @@ function renderPrevisionnel(){
     totPrev.pfa+=pfaPrev;
 
     rows.push({
-      nom:b.nom||b.name||b.id||'?',
+      nom:esc(b.nom||b.name||b.id||'?'),
       semaineActuelle:semaineActuelle,
       semainesRestantes:semainesRestantes,
       poidsActuel:poidsActuel,
